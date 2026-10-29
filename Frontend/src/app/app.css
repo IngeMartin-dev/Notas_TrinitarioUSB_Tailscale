@@ -1027,3 +1027,81 @@ input:checked + .slider:before {
     width: 100%;
   }
 }
+
+/* ============================================================
+   Animación del menú lateral en celular y tablet pequeña
+   El cajón entra con el mismo rebote que en escritorio y los
+   apartados aparecen escalonados CADA vez que se abre con las
+   tres rayitas (antes solo se animaba una vez al iniciar sesión,
+   cuando el cajón aún estaba escondido).
+   ============================================================ */
+@keyframes sidebarBackdropIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (max-width: 768px) {
+  .sidebar,
+  .sidebar.sidebar-animated {
+    animation: none;
+    will-change: transform;
+    /* al cerrar: salida suave */
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .sidebar.open,
+  .sidebar.sidebar-animated.open {
+    /* al abrir: entrada con rebote, como en escritorio */
+    transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .sidebar-backdrop.show {
+    animation: sidebarBackdropIn 0.3s ease both;
+  }
+
+  /* Cerrado: los apartados se quedan visibles mientras el cajón se desliza hacia fuera */
+  .sidebar.sidebar-animated:not(.open) .nav-menu li,
+  .sidebar.sidebar-animated:not(.open) .user-profile {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  /* Abierto: cada apartado entra escalonado, otra vez en cada apertura */
+  .sidebar.sidebar-animated.open .nav-menu li {
+    animation: menuItemSlideIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+  .sidebar.sidebar-animated.open .user-profile {
+    animation: userProfileSlideIn 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    animation-delay: 0.45s;
+  }
+  .sidebar.sidebar-animated.open .nav-menu li:nth-child(1) { animation-delay: 0.08s; }
+  .sidebar.sidebar-animated.open .nav-menu li:nth-child(2) { animation-delay: 0.12s; }
+  .sidebar.sidebar-animated.open .nav-menu li:nth-child(3) { animation-delay: 0.16s; }
+  .sidebar.sidebar-animated.open .nav-menu li:nth-child(4) { animation-delay: 0.2s; }
+  .sidebar.sidebar-animated.open .nav-menu li:nth-child(5) { animation-delay: 0.24s; }
+  .sidebar.sidebar-animated.open .nav-menu li:nth-child(6) { animation-delay: 0.28s; }
+  .sidebar.sidebar-animated.open .nav-menu li:nth-child(7) { animation-delay: 0.32s; }
+  .sidebar.sidebar-animated.open .nav-menu li:nth-child(8) { animation-delay: 0.36s; }
+  .sidebar.sidebar-animated.open .nav-menu li:nth-child(9) { animation-delay: 0.4s; }
+  .sidebar.sidebar-animated.open .nav-menu li:nth-child(10) { animation-delay: 0.44s; }
+  .sidebar.sidebar-animated.open .nav-menu li:nth-child(11) { animation-delay: 0.48s; }
+  .sidebar.sidebar-animated.open .nav-menu li:nth-child(12) { animation-delay: 0.52s; }
+  .sidebar.sidebar-animated.open .nav-menu li:nth-child(13) { animation-delay: 0.56s; }
+  .sidebar.sidebar-animated.open .nav-menu li:nth-child(14) { animation-delay: 0.6s; }
+  .sidebar.sidebar-animated.open .nav-menu li:nth-child(15) { animation-delay: 0.64s; }
+  .sidebar.sidebar-animated.open .nav-menu li:nth-child(16) { animation-delay: 0.68s; }
+}
+
+@media (max-width: 768px) and (prefers-reduced-motion: reduce) {
+  .sidebar,
+  .sidebar.open,
+  .sidebar.sidebar-animated,
+  .sidebar.sidebar-animated.open {
+    transition: none;
+  }
+  .sidebar.sidebar-animated.open .nav-menu li,
+  .sidebar.sidebar-animated.open .user-profile,
+  .sidebar-backdrop.show {
+    animation: none;
+  }
+}
