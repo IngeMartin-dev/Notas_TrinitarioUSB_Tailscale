@@ -6,4 +6,4 @@ if (-not (Test-Path node_modules)) { npm install }
 tailscale funnel --bg 4200
 tailscale funnel status
 Write-Host "Frontend en http://localhost:4200 (Ctrl+C para detener; 'tailscale funnel reset' cierra el acceso público)"
-npm start -- --live-reload=false
+npx ng serve --host=127.0.0.1 --live-reload=false
