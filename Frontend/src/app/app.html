@@ -336,11 +336,12 @@
   </div>
 }
 
-<!-- Notificaciones de generación de boletines (tipo "push"): se montan
-     siempre, fuera de los dos bloques de arriba, para que la pila de
-     notificaciones con la barra de progreso se vea sin importar en qué
-     apartado esté el usuario y no desaparezca al navegar entre secciones. -->
-<app-generation-notifications></app-generation-notifications>
+<!-- Notificaciones de generación de boletines (tipo "push"): se ven en
+     cualquier apartado de la app, pero NUNCA en el login ni sin sesión
+     iniciada (antes aparecían en el login y un clic entraba a la app). -->
+@if (showGenerationNotifications()) {
+  <app-generation-notifications></app-generation-notifications>
+}
 
 <!-- Diálogo global (alert/confirm) con pantalla propia de la app, en vez
      de los cuadros nativos del navegador ("localhost:4200 dice..."). -->

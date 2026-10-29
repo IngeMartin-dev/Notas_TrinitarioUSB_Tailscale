@@ -83,6 +83,11 @@ export class GenerationService {
     // (eso es lo que se veía repetido en la consola en la pantalla de
     // login). Ahora, si no hay sesión, ni siquiera se hace la petición.
     if (!this.authService.isAuthenticated()) {
+      // Sin sesión también se vacía la lista: si no, los jobs de la sesión
+      // anterior seguían en memoria y reaparecían como recuadro en el login.
+      if (this.jobsSubject.value.length > 0) {
+        this.jobsSubject.next([]);
+      }
       return;
     }
     this.http.get<GenerationJob[]>(`${API_BASE}/generaciones`).subscribe({
@@ -111,6 +116,11 @@ export class GenerationService {
 
   /** Click en una notificación: navega a Boletines y deja marcado qué job enfocar. */
   openJob(job: GenerationJob) {
+    // Defensa extra: sin sesión (o desde el login) un clic nunca navega.
+    const path = this.router.url.split(/[?#]/)[0];
+    if (!this.authService.isAuthenticated() || path === '/login' || path === '/') {
+      return;
+    }
     this.focusJobId = job.jobId;
     this.focusRequestSubject.next(job.jobId);
     this.router.navigate(['/boletines']);

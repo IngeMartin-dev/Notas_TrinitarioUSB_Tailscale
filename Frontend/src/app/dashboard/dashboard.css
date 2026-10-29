@@ -1621,3 +1621,18 @@
   .role-banner { flex-direction: column; text-align: center; }
   .quick-grid { grid-template-columns: 1fr; }
 }
+/* Móvil: las tarjetas nunca fuerzan un ancho mayor que la pantalla. */
+.quick-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(250px, 100%), 1fr));
+}
+.actions-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
+}
+.quick-card,
+.quick-card > *,
+.action-btn {
+  min-width: 0;
+}
+.quick-card {
+  overflow-wrap: anywhere;
+}

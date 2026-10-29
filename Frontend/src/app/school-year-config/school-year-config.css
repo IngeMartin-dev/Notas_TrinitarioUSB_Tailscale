@@ -613,3 +613,40 @@
   display: flex;
   padding: 4px;
 }
+
+/* Roles y permisos: la lista de usuarios vive en un recuadro pequeño con su
+   propio scroll vertical (ya no empuja toda la página hacia abajo). */
+.syc-users-scroll {
+  max-height: 340px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+.syc-users-scroll::-webkit-scrollbar { width: 8px; }
+.syc-users-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+/* Botones de grado/salón: si son muchos, también en un recuadro con scroll. */
+.syc-grado-salon-filtros {
+  max-height: 132px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+@media (max-width: 768px) {
+  .syc-users-scroll { max-height: 55vh; }
+  .syc-user-row { min-width: 0; }
+  .syc-user-info { min-width: 0; overflow-wrap: anywhere; }
+}
+
+/* Las etiquetas de hijos se parten en varias líneas en vez de salirse del recuadro. */
+.syc-hijo-badge {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}

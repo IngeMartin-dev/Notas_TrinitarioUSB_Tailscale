@@ -80,11 +80,13 @@ export class App implements OnInit, OnDestroy {
       filter(event => event instanceof NavigationEnd)
     ).subscribe((event: NavigationEnd) => {
       console.log('Navigation to:', event.url);
-      this.isLoginRoute.set(event.url === '/login' || event.url === '/');
-      this.isDashboardRoute.set(event.url === '/dashboard');
-      
+      // Se ignora ?query y #fragmento para que "/login?x=1" también cuente como login.
+      const path = event.url.split(/[?#]/)[0];
+      this.isLoginRoute.set(path === '/login' || path === '/');
+      this.isDashboardRoute.set(path === '/dashboard');
+
       // Extract route name from URL for menu highlighting
-      const routeName = event.url.split('/')[1] || 'dashboard';
+      const routeName = path.split('/')[1] || 'dashboard';
       console.log('Setting active route to:', routeName);
       this.activeRoute.set(routeName);
     });
@@ -194,6 +196,12 @@ export class App implements OnInit, OnDestroy {
 
   toggleSidebar() {
     this.sidebarOpen.set(!this.sidebarOpen());
+  }
+
+  /** El recuadro de generación de boletines solo se muestra dentro de la
+   *  app con sesión iniciada: nunca en el login ni con la sesión cerrada. */
+  showGenerationNotifications(): boolean {
+    return !this.isLoginRoute() && this.authService.isAuthenticated();
   }
 
   toggleTheme() {

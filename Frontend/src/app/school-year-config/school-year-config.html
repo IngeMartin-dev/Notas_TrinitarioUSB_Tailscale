@@ -124,10 +124,6 @@
 
     @if (activeRoleTab === 'PARENT' && gradosSalonesConPadres.length > 0) {
       <div class="syc-grado-salon-filtros">
-        <button type="button" class="syc-filtro-chip" [class.active]="selectedParentGradoSalon === null"
-                (click)="selectGradoSalonFiltro(null)">
-          Todos
-        </button>
         @for (gs of gradosSalonesConPadres; track gs) {
           <button type="button" class="syc-filtro-chip" [class.active]="selectedParentGradoSalon === gs"
                   (click)="selectGradoSalonFiltro(gs)">
@@ -152,7 +148,7 @@
     }
 
     @if (!loadingGestion && usuariosDeLaPestanaActiva.length > 0) {
-      <div class="syc-users-list">
+      <div class="syc-users-list syc-users-scroll" tabindex="0" aria-label="Lista de usuarios, desliza para ver más">
         @for (user of usuariosDeLaPestanaActiva; track user.id) {
           <div class="syc-user-row">
             <div class="syc-user-info">

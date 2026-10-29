@@ -216,3 +216,7 @@
   .reports-layout { flex-direction: column; }
   .reports-sidebar { flex: none; width: 100%; max-height: none; }
 }
+@media (max-width: 900px) {
+  .reports-layout { align-items: stretch; }
+  .reports-content { width: 100%; max-width: 100%; box-sizing: border-box; }
+}

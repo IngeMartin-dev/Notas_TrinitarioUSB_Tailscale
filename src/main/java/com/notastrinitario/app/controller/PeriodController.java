@@ -115,7 +115,10 @@ public class PeriodController {
             
             if (body.containsKey("unlockDate")) {
                 Object unlockDateObj = body.get("unlockDate");
-                if (unlockDateObj != null && !unlockDateObj.toString().isEmpty()) {
+                if (unlockDateObj == null || unlockDateObj.toString().isEmpty()) {
+                    period.setUnlockDate(null); // fecha borrada desde el formulario
+                    period.setNotifiedOpen7d(false);
+                } else {
                     String unlockDateStr = unlockDateObj.toString();
                     if (unlockDateStr.contains("T")) {
                         LocalDateTime dt = LocalDateTime.parse(unlockDateStr.replace("Z", ""));
@@ -125,14 +128,16 @@ public class PeriodController {
                             period.setNotifiedOpen7d(false);
                         }
                         period.setUnlockDate(dt);
-                        period.setIsAutomatic(true);
                     }
                 }
             }
-            
+
             if (body.containsKey("lockDate")) {
                 Object lockDateObj = body.get("lockDate");
-                if (lockDateObj != null && !lockDateObj.toString().isEmpty()) {
+                if (lockDateObj == null || lockDateObj.toString().isEmpty()) {
+                    period.setLockDate(null); // fecha borrada desde el formulario
+                    period.setNotifiedClose7d(false);
+                } else {
                     String lockDateStr = lockDateObj.toString();
                     if (lockDateStr.contains("T")) {
                         LocalDateTime dt = LocalDateTime.parse(lockDateStr.replace("Z", ""));
@@ -140,20 +145,35 @@ public class PeriodController {
                             period.setNotifiedClose7d(false);
                         }
                         period.setLockDate(dt);
-                        period.setIsAutomatic(true);
                     }
                 }
             }
-            
+
+            if (period.getUnlockDate() != null && period.getLockDate() != null
+                    && !period.getLockDate().isAfter(period.getUnlockDate())) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "error", "La fecha de cierre debe ser posterior a la de apertura"));
+            }
+
+            // Automático mientras haya al menos una fecha programada; sin fechas vuelve a manual.
+            period.setIsAutomatic(period.getUnlockDate() != null || period.getLockDate() != null);
+
             periodRepository.save(period);
-            
-            return ResponseEntity.ok(Map.of(
-                "periodNumber", periodNumber,
-                "isUnlocked", period.getIsUnlocked(),
-                "unlockDate", period.getUnlockDate() != null ? period.getUnlockDate().toString() : null,
-                "lockDate", period.getLockDate() != null ? period.getLockDate().toString() : null,
-                "isAutomatic", period.getIsAutomatic()
-            ));
+
+            // Aplica YA el estado que le toca según las nuevas fechas (antes se
+            // quedaba como estaba hasta el siguiente ciclo del scheduler).
+            if (Boolean.TRUE.equals(period.getIsAutomatic())) {
+                periodScheduler.checkAndUpdateAutomaticUnlock(period);
+            }
+
+            // HashMap (no Map.of): Map.of lanza NullPointerException si una fecha es null.
+            Map<String, Object> resp = new java.util.HashMap<>();
+            resp.put("periodNumber", periodNumber);
+            resp.put("isUnlocked", Boolean.TRUE.equals(period.getIsUnlocked()));
+            resp.put("unlockDate", period.getUnlockDate() != null ? period.getUnlockDate().toString() : null);
+            resp.put("lockDate", period.getLockDate() != null ? period.getLockDate().toString() : null);
+            resp.put("isAutomatic", Boolean.TRUE.equals(period.getIsAutomatic()));
+            return ResponseEntity.ok(resp);
         } catch (Exception e) {
             return ResponseEntity.status(500).body(Map.of("error", "Error al guardar: " + e.getMessage()));
         }

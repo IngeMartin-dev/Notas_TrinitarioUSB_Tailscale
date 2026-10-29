@@ -93,29 +93,30 @@ public class PeriodScheduler {
      */
     public void checkAndUpdateAutomaticUnlock(Period period) {
         LocalDateTime now = LocalDateTime.now();
-        boolean changed = false;
 
-        if (period.getUnlockDate() != null && now.isAfter(period.getUnlockDate())) {
-            if (!Boolean.TRUE.equals(period.getIsUnlocked())) {
-                period.setIsUnlocked(true);
-                changed = true;
-                System.out.println("Período " + period.getPeriodNumber() + " desbloqueado automáticamente");
-                enviarNotificacionPeriodo(period, true);
-            }
+        // Estado que le corresponde AHORA según sus fechas (null = sin fechas
+        // que decidan, no se toca). Se calcula de una vez, en vez de abrir y
+        // cerrar por separado: antes, con ambas fechas ya pasadas, el período
+        // se abría y se cerraba en cada ciclo mandando dos notificaciones.
+        //  - Pasó la fecha de cierre            -> cerrado
+        //  - Pasó la fecha de apertura          -> abierto
+        //  - Aún no llega la fecha de apertura  -> cerrado
+        Boolean debeEstarAbierto = null;
+        if (period.getLockDate() != null && !now.isBefore(period.getLockDate())) {
+            debeEstarAbierto = false;
+        } else if (period.getUnlockDate() != null) {
+            debeEstarAbierto = !now.isBefore(period.getUnlockDate());
         }
+        if (debeEstarAbierto == null) return;
 
-        if (period.getLockDate() != null && now.isAfter(period.getLockDate())) {
-            if (Boolean.TRUE.equals(period.getIsUnlocked())) {
-                period.setIsUnlocked(false);
-                changed = true;
-                System.out.println("Período " + period.getPeriodNumber() + " bloqueado automáticamente");
-                enviarNotificacionPeriodo(period, false);
-            }
-        }
+        boolean estaAbierto = Boolean.TRUE.equals(period.getIsUnlocked());
+        if (estaAbierto == debeEstarAbierto) return;
 
-        if (changed) {
-            periodRepository.save(period);
-        }
+        period.setIsUnlocked(debeEstarAbierto);
+        periodRepository.save(period);
+        System.out.println("Período " + period.getPeriodNumber()
+                + (debeEstarAbierto ? " desbloqueado" : " bloqueado") + " automáticamente");
+        enviarNotificacionPeriodo(period, debeEstarAbierto);
     }
 
     /** Notificación push real (FCM) a todos los usuarios cuando un período se abre o se cierra solo. */

@@ -587,3 +587,12 @@ textarea::placeholder {
   outline: 2px solid #3f51b5;
   outline-offset: 2px;
 }
+/* Sin scroll horizontal en ninguna pantalla: solo arriba/abajo.
+   (overflow-x: clip no crea contenedor de scroll, así que no rompe los
+   elementos sticky; hidden queda como respaldo para navegadores viejos.) */
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+  overflow-x: clip;
+}

@@ -1184,3 +1184,6 @@
   .slider:before { background-color: var(--surface); }
   .spam-hint { background: rgba(180, 83, 9, 0.15); border-color: rgba(180, 83, 9, 0.35); color: #fbbf24; }
 }
+/* El correo/enlace de contacto se parte en vez de salirse de la pantalla. */
+.about-contact { min-width: 0; }
+.about-contact-text { min-width: 0; overflow-wrap: anywhere; }

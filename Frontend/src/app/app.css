@@ -916,3 +916,122 @@ input:checked + .slider:before {
 @media (prefers-reduced-motion: reduce) {
   .notification-badge, .message-badge { animation: none; }
 }
+
+/* ============================================================
+   Responsive móvil (≤768px)
+   - El menú de las tres rayitas muestra los NOMBRES de cada apartado
+     (en pantallas táctiles no existe :hover, y las reglas
+     ".sidebar:not(:hover)" los escondían siempre).
+   - Nada se desborda en horizontal: solo se hace scroll arriba/abajo.
+   ============================================================ */
+
+/* Evita scroll horizontal en cualquier pantalla (clip no crea contenedor de scroll). */
+.app-container,
+.main-content,
+.content-wrapper {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Hamburguesa visible: antes era blanca sobre la barra blanca del modo claro. */
+.menu-toggle-btn {
+  color: #1b6aeb;
+}
+:host-context([data-theme="dark"]) .menu-toggle-btn {
+  color: #ffffff;
+}
+
+@media (max-width: 768px) {
+  .sidebar,
+  .sidebar.sidebar-animated {
+    width: min(280px, 86vw) !important;
+    height: 100vh;
+    height: 100dvh;
+  }
+
+  /* Cabecera del cajón: logo + título */
+  .sidebar:not(:hover) .sidebar-header {
+    justify-content: flex-start;
+    padding: 20px;
+  }
+  .sidebar:not(:hover) .logo-container {
+    justify-content: flex-start;
+  }
+  .sidebar:not(:hover) .logo-container h1 {
+    opacity: 1;
+    visibility: visible;
+    width: auto;
+  }
+
+  /* Opciones del menú: ícono + nombre, alineados a la izquierda */
+  .sidebar:not(:hover) .nav-menu a,
+  .nav-menu a {
+    justify-content: flex-start;
+    padding: 14px 20px;
+    min-height: 52px;
+  }
+  .sidebar:not(:hover) .nav-menu .material-icons {
+    margin: 0 !important;
+    font-size: 22px;
+  }
+  .sidebar:not(:hover) .menu-text,
+  .sidebar .menu-text {
+    opacity: 1;
+    visibility: visible;
+    width: auto;
+    overflow: visible;
+    font-size: 15px;
+  }
+
+  /* Perfil del usuario al pie del cajón: nombre y rol visibles */
+  .sidebar:not(:hover) .user-profile {
+    justify-content: flex-start;
+    padding: 16px 20px;
+  }
+  .sidebar:not(:hover) .user-info {
+    position: static;
+    transform: none;
+    opacity: 1;
+    visibility: visible;
+    background: none;
+    padding: 0;
+    margin: 0;
+    min-width: 0;
+  }
+  .user-info h4,
+  .user-info p {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Nada más ancho que la pantalla */
+  .content-wrapper {
+    overflow-x: hidden;
+  }
+  .content-wrapper img,
+  .content-wrapper video,
+  .content-wrapper canvas,
+  .content-wrapper iframe {
+    max-width: 100%;
+    height: auto;
+  }
+  /* Tablas anchas: se deslizan dentro de su propio recuadro, no mueven la página */
+  .content-wrapper table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .top-bar-left {
+    min-width: 0;
+    flex: 1;
+  }
+  .search-bar {
+    min-width: 0;
+    flex: 1;
+  }
+  .search-bar input {
+    min-width: 0;
+    width: 100%;
+  }
+}

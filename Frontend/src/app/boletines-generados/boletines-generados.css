@@ -292,3 +292,7 @@
     max-height: none;
   }
 }
+@media (max-width: 900px) {
+  .bg-layout { align-items: stretch; }
+  .bg-content { width: 100%; max-width: 100%; box-sizing: border-box; }
+}

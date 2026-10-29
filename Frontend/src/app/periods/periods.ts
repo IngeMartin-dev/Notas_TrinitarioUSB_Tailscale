@@ -30,6 +30,8 @@ export class Periods implements OnInit, OnDestroy {
   private authService = inject(AuthService);
   private realtimeService = inject(GlobalRealtimeService);
   private periodsSubscription: Subscription | null = null;
+  private tickHandle: any = null;
+  private lastScheduleSync = 0;
 
   periods = signal<Period[]>([]);
   loading = signal(true);
@@ -57,11 +59,45 @@ export class Periods implements OnInit, OnDestroy {
         this.periods.set(uniquePeriods);
       }
     });
+
+    // Cada segundo se compara el estado mostrado con el que corresponde según
+    // las fechas programadas; si ya pasó una fecha de apertura/cierre se pide
+    // el estado al servidor de inmediato (sin esperar al sondeo de 10 s).
+    this.tickHandle = setInterval(() => this.syncWithSchedule(), 1000);
   }
   
   ngOnDestroy() {
     if (this.periodsSubscription) {
       this.periodsSubscription.unsubscribe();
+    }
+    if (this.tickHandle) {
+      clearInterval(this.tickHandle);
+      this.tickHandle = null;
+    }
+  }
+
+  /** Estado que le toca a un período automático ahora mismo según sus fechas
+   *  (true = abierto, false = cerrado, null = sin fechas que lo decidan).
+   *  Misma regla que el backend (PeriodScheduler.checkAndUpdateAutomaticUnlock). */
+  private expectedUnlocked(p: Period, now: number): boolean | null {
+    const lock = p.lockDate ? new Date(p.lockDate).getTime() : NaN;
+    const unlock = p.unlockDate ? new Date(p.unlockDate).getTime() : NaN;
+    if (!Number.isNaN(lock) && now >= lock) return false;
+    if (!Number.isNaN(unlock)) return now >= unlock;
+    return null;
+  }
+
+  private syncWithSchedule() {
+    const now = Date.now();
+    if (now - this.lastScheduleSync < 4000) return; // no insistir más de una vez cada 4 s
+    const desfasado = this.periods().some(p => {
+      if (!p.isAutomatic) return false;
+      const esperado = this.expectedUnlocked(p, now);
+      return esperado !== null && esperado !== p.isUnlocked;
+    });
+    if (desfasado) {
+      this.lastScheduleSync = now;
+      this.realtimeService.notifyPeriodsChanged();
     }
   }
 
@@ -149,7 +185,7 @@ export class Periods implements OnInit, OnDestroy {
     const currentDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
     
     this.unlockDateTemp.set(period.unlockDate ? this.formatDateForInput(period.unlockDate) : currentDateTime);
-    this.lockDateTemp.set(period.lockDate ? this.formatDateForInput(period.lockDate) : currentDateTime);
+    this.lockDateTemp.set(period.lockDate ? this.formatDateForInput(period.lockDate) : '');
     this.isAutomaticTemp.set(period.isAutomatic || false);
   }
 
@@ -185,6 +221,13 @@ export class Periods implements OnInit, OnDestroy {
   saveSchedule() {
     const period = this.editingPeriod();
     if (!period) return;
+
+    if (this.unlockDateTemp() && this.lockDateTemp()
+        && new Date(this.lockDateTemp()).getTime() <= new Date(this.unlockDateTemp()).getTime()) {
+      this.errorMessage.set('La fecha de cierre debe ser posterior a la de apertura');
+      setTimeout(() => this.errorMessage.set(''), 4000);
+      return;
+    }
 
     this.saving.set(true);
     
@@ -224,7 +267,7 @@ export class Periods implements OnInit, OnDestroy {
       error: (err) => {
         console.error('Error saving schedule:', err);
         this.saving.set(false);
-        this.errorMessage.set('Error al guardar la programación');
+        this.errorMessage.set(err?.error?.error || 'Error al guardar la programación');
       }
     });
   }
