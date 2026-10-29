@@ -1,0 +1,918 @@
+/* App Container Layout */
+.app-container {
+  display: flex;
+  min-height: 100vh;
+  position: relative;
+}
+
+/* Top Header with Greeting */
+.top-header {
+  background: white;
+  padding: 20px 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid #e5e7eb;
+  min-height: 60px;
+}
+
+.header-greeting {
+  text-align: center;
+  width: 100%;
+}
+
+.header-greeting .greeting-text {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+
+.header-greeting .greeting-letter {
+  display: inline-block;
+  animation: letterPopIn 0.3s ease forwards;
+  opacity: 0;
+  transform: scale(0.5);
+}
+
+@keyframes letterPopIn {
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: flex-start;
+}
+
+.sidebar {
+  width: 70px;
+  background: #1b6aeb;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  height: 100vh;
+  left: 0;
+  top: 0;
+  z-index: 1000;
+  overflow: visible;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  transform: translateX(-100%);
+  opacity: 0;
+}
+
+.sidebar:hover {
+  width: 250px;
+}
+
+/* Sidebar animation class - delightful entrance from left */
+.sidebar.sidebar-animated {
+  transform: translateX(0);
+  opacity: 1;
+  animation: sidebarEntrance 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes sidebarEntrance {
+  0% {
+    transform: translateX(-100%) scale(0.8);
+    opacity: 0;
+  }
+  60% {
+    transform: translateX(5%) scale(1.02);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.main-content {
+  flex: 1;
+  margin-left: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Main content margin when sidebar is animated (visible in collapsed state).
+   Use general sibling (~) because .sidebar-backdrop sits between sidebar and main-content. */
+.sidebar.sidebar-animated ~ .main-content {
+  margin-left: 70px;
+}
+
+/* Main content margin when sidebar is expanded on hover */
+.sidebar.sidebar-animated:hover ~ .main-content {
+  margin-left: 250px;
+}
+
+/* Sidebar Styles */
+.sidebar-header {
+  padding: 20px;
+  border-bottom: 1px solid #257bf3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.sidebar:not(:hover) .sidebar-header {
+  justify-content: center;
+  padding: 20px 10px;
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: flex-start;
+}
+
+.sidebar:not(:hover) .logo-container {
+  justify-content: center;
+}
+
+.sidebar:not(:hover) .logo-container h1 {
+  opacity: 0;
+  visibility: hidden;
+  width: 0;
+}
+
+.sidebar:hover .logo-container h1 {
+  opacity: 1;
+  visibility: visible;
+  width: auto;
+}
+
+.logo {
+  width: 40px;
+  height: 40px;
+}
+
+.logo-container h1 {
+  font-size: 18px;
+  margin: 0;
+  color: white;
+}
+
+.menu-toggle {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.nav-menu {
+  flex: 1;
+  min-height: 0; /* necesario para que overflow-y funcione dentro de un flex column */
+  padding: 20px 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.35) transparent;
+}
+
+.nav-menu::-webkit-scrollbar {
+  width: 6px;
+}
+
+.nav-menu::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.35);
+  border-radius: 3px;
+}
+
+.nav-menu::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.nav-menu ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.nav-menu li {
+  margin-bottom: 5px;
+}
+
+.nav-menu a {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 12px 20px;
+  color: #ffffff;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  min-height: 48px;
+}
+
+.sidebar:not(:hover) .nav-menu a {
+  justify-content: center;
+  padding: 12px 8px;
+}
+
+.sidebar:not(:hover) .nav-menu .material-icons {
+  margin: 0 auto;
+}
+
+.sidebar:not(:hover) .menu-text {
+  opacity: 0;
+  visibility: hidden;
+  width: 0;
+  overflow: hidden;
+}
+
+.sidebar:hover .menu-text {
+  opacity: 1;
+  visibility: visible;
+  width: auto;
+}
+
+.nav-menu a:hover,
+.nav-menu li.active a {
+  background: #1761c9;
+  color: white;
+}
+
+/* Staggered animation for menu items when sidebar appears */
+.sidebar.sidebar-animated .nav-menu li {
+  animation: menuItemSlideIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  opacity: 0;
+  transform: translateX(-30px);
+}
+
+.sidebar.sidebar-animated .nav-menu li:nth-child(1) { animation-delay: 0.1s; }
+.sidebar.sidebar-animated .nav-menu li:nth-child(2) { animation-delay: 0.15s; }
+.sidebar.sidebar-animated .nav-menu li:nth-child(3) { animation-delay: 0.2s; }
+.sidebar.sidebar-animated .nav-menu li:nth-child(4) { animation-delay: 0.25s; }
+.sidebar.sidebar-animated .nav-menu li:nth-child(5) { animation-delay: 0.3s; }
+.sidebar.sidebar-animated .nav-menu li:nth-child(6) { animation-delay: 0.35s; }
+.sidebar.sidebar-animated .nav-menu li:nth-child(7) { animation-delay: 0.4s; }
+
+@keyframes menuItemSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.nav-menu .material-icons {
+  font-size: 20px;
+  flex-shrink: 0;
+  display: block;
+}
+
+.sidebar:not(:hover) .nav-menu .material-icons {
+  font-size: 24px;
+  margin: 0 auto !important;
+  text-align: center;
+}
+
+.menu-text {
+  font-size: 14px;
+}
+
+.user-profile {
+  padding: 20px;
+  border-top: 1px solid #1a66d1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+}
+
+.sidebar:not(:hover) .user-profile {
+  justify-content: center;
+  padding: 20px 10px;
+}
+
+.sidebar:not(:hover) .user-info {
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0;
+  visibility: hidden;
+  white-space: nowrap;
+  background: rgba(27, 106, 235, 0.95);
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-left: 10px;
+  z-index: 1001;
+  transition: all 0.3s ease;
+}
+
+.sidebar:hover .user-info {
+  opacity: 1;
+  visibility: visible;
+  position: static;
+  transform: none;
+  background: none;
+  padding: 0;
+  margin: 0;
+}
+
+.user-info h4 {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  color: white;
+  font-weight: 500;
+}
+
+.user-info p {
+  margin: 0;
+  font-size: 12px;
+  color: #cbd5e1;
+}
+
+.user-avatar img,
+.user-initials {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+}
+
+.user-avatar .user-image {
+  object-fit: cover;
+}
+
+.user-initials {
+  background: #1761c9;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.sidebar:not(:hover) .user-avatar {
+  position: relative;
+}
+
+.sidebar:not(:hover) .user-avatar:hover::after {
+  content: attr(data-username);
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 1001;
+  margin-left: 10px;
+}
+
+.sidebar:not(:hover) .user-avatar:hover::before {
+  content: '';
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 5px solid transparent;
+  border-right-color: rgba(0, 0, 0, 0.8);
+  margin-left: 5px;
+  z-index: 1001;
+}
+
+.user-initials-text {
+  font-size: 14px;
+  color: white;
+  margin-left: 10px;
+}
+
+/* User profile animation when sidebar appears */
+.sidebar.sidebar-animated .user-profile {
+  animation: userProfileSlideIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation-delay: 0.5s;
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+@keyframes userProfileSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+/* Main Content Styles */
+.top-bar {
+  background: white;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 15px 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.top-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex: 1;
+}
+
+
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #f8fafc;
+  padding: 8px 15px;
+  border-radius: 8px;
+  flex: 1;
+  max-width: 400px;
+}
+
+.search-bar input {
+  border: none;
+  background: none;
+  outline: none;
+  flex: 1;
+}
+
+.top-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  position: relative;
+}
+
+.notification-container {
+  position: relative;
+  display: inline-block;
+}
+
+.notification-btn {
+  position: relative;
+  background: none;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background 0.3s;
+}
+
+.notification-btn:hover {
+  background: #f1f5f9;
+}
+
+.notification-badge {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: #ef4444;
+  color: white;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.message-container {
+  position: relative;
+  display: inline-block;
+}
+
+.message-btn {
+  position: relative;
+  background: none;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background 0.3s;
+}
+
+.message-btn:hover {
+  background: #f1f5f9;
+}
+
+.message-badge {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: #2196F3;
+  color: white;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.notification-btn-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.notification-btn-disabled:hover {
+  background: none;
+}
+
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 24px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 24px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #3b82f6;
+}
+
+input:checked + .slider:before {
+  transform: translateX(26px);
+}
+
+.content-wrapper {
+  flex: 1;
+  padding: 30px;
+  overflow-y: auto;
+}
+
+.footer {
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  padding: 20px 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.footer-links {
+  display: flex;
+  gap: 20px;
+}
+
+.footer-links a {
+  color: #64748b;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.footer-links a:hover {
+  color: #3b82f6;
+}
+
+/* Mobile Navigation */
+.mobile-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-around;
+  padding: 10px 0;
+  z-index: 1000;
+}
+
+.mobile-nav a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  color: #64748b;
+  text-decoration: none;
+  font-size: 12px;
+  padding: 5px;
+  border-radius: 8px;
+  transition: background 0.3s;
+}
+
+.mobile-nav a:hover,
+.mobile-nav a.active {
+  background: #f1f5f9;
+  color: #3b82f6;
+}
+
+/* ============================================================
+   Comportamiento responsive del shell
+   ============================================================ */
+.menu-toggle-btn {
+  display: none;
+  background: none;
+  border: none;
+  color: #ffffff;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  margin-right: 6px;
+  transition: background 0.2s ease;
+}
+
+.menu-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.menu-toggle-btn .material-icons {
+  font-size: 24px;
+}
+
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  z-index: 999;
+}
+
+/* Teléfono: sidebar como cajón lateral (oculto) + hamburguesa + nav inferior */
+@media (max-width: 768px) {
+  .menu-toggle-btn {
+    display: inline-flex;
+  }
+
+  .sidebar,
+  .sidebar.sidebar-animated {
+    width: 248px !important;
+    transform: translateX(-100%) !important;
+    opacity: 1 !important;
+    z-index: 1001;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.25);
+  }
+
+  .sidebar.open {
+    transform: translateX(0) !important;
+  }
+
+  .sidebar-backdrop.show {
+    display: block;
+  }
+
+  /* Sin margen cuando el sidebar está oculto (usa ~ por el backdrop intermedio) */
+  .sidebar ~ .main-content,
+  .sidebar.sidebar-animated ~ .main-content,
+  .sidebar.sidebar-animated:hover ~ .main-content {
+    margin-left: 0 !important;
+  }
+
+  .content-wrapper {
+    padding: 20px 16px 92px;
+  }
+
+  .top-bar {
+    padding: 12px 16px;
+  }
+
+  .search-bar {
+    max-width: 100%;
+  }
+
+  /* Nav inferior fija solo en teléfono */
+  .mobile-nav {
+    display: flex;
+    padding: 8px 4px calc(8px + env(safe-area-inset-bottom));
+    box-shadow: 0 -2px 12px rgba(15, 23, 42, 0.08);
+  }
+}
+
+/* Escritorio estrecho: sidebar en modo rail compacto */
+@media (min-width: 901px) and (max-width: 1100px) {
+  .sidebar {
+    width: 72px;
+  }
+}
+
+/* Full width layout for dashboard */
+.main-content.full-width {
+  margin-left: 0;
+  width: 100%;
+}
+
+/* Hide mobile nav on dashboard */
+.mobile-nav {
+  display: none;
+}
+
+/* Loading overlay */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  transition: opacity 0.3s ease;
+}
+
+.loading-overlay.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* SIDEBAR: Normal blue color (modo claro únicamente) */
+/* NOTA: el aspecto "solo modo claro" del menú lateral y la barra superior
+   vive en src/styles-ui.css. Dentro de CSS de componente, Angular reescribe
+   `:root:not(...)` y le agrega un atributo interno al <html>, por lo que esas
+   reglas nunca coincidían. */
+
+/* ===== MODO OSCURO (auto) ===== */
+:host-context([data-theme="dark"]) {
+  .header-greeting .greeting-text { color: var(--text-1); }
+  .search-bar { background: var(--surface); }
+  .notification-btn { color: var(--text-3); }
+  .notification-btn:hover { background: var(--surface-2); }
+  .message-btn { color: var(--text-3); }
+  .message-btn:hover { background: var(--surface-2); }
+  .footer { background: var(--surface); }
+  .footer-links a { color: var(--text-3); }
+  .mobile-nav a { color: var(--text-3); }
+  .mobile-nav a:hover,
+.mobile-nav a.active { background: var(--surface-2); color: var(--brand-400, var(--brand)); }
+
+  /* Fase 4: fondos/bordes claros fijos que se colaban en modo oscuro. */
+  .top-header { background: var(--surface); }
+  .top-bar { background: var(--brand); border-bottom-color: var(--border); }
+  .top-bar-actions { background: transparent; }
+  .footer { border-top-color: var(--border); }
+  .mobile-nav { background: var(--surface); border-top-color: var(--border); }
+  .spinner { border-color: var(--border); border-top-color: var(--brand); }
+}
+
+/* ============================================================
+   UI VIBRANTE — detalles del esqueleto (menú, barra superior)
+   ============================================================ */
+
+/* La barra superior queda fija al hacer scroll */
+.top-bar {
+  position: sticky;
+  top: 0;
+  z-index: 900;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+/* Logo con ficha de cristal */
+.logo {
+  box-sizing: border-box;
+  padding: 3px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 8px 18px -6px rgba(0, 0, 0, 0.35);
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.sidebar:hover .logo {
+  transform: rotate(-6deg) scale(1.06);
+}
+.logo-container h1 {
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+/* Elementos del menú: píldoras redondeadas */
+.nav-menu li {
+  margin: 4px 10px;
+}
+.nav-menu a {
+  border-radius: 14px;
+  font-weight: 600;
+  transition: background-color 0.25s ease, transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s ease;
+}
+.sidebar:hover .nav-menu a:hover {
+  transform: translateX(4px);
+}
+.nav-menu a .material-icons {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.nav-menu a:hover .material-icons {
+  transform: scale(1.18) rotate(-4deg);
+}
+
+
+/* Avatar con aro */
+.user-avatar img,
+.user-initials {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.55), 0 8px 16px -6px rgba(0, 0, 0, 0.4);
+}
+.user-avatar img:hover,
+.user-initials:hover {
+  transform: scale(1.08);
+}
+
+
+.notification-badge,
+.message-badge {
+  box-shadow: 0 0 0 2px #fff, 0 4px 10px rgba(0, 0, 0, 0.3);
+  animation: badgePulse 2.2s ease-in-out infinite;
+}
+.message-badge {
+  background: #ff4081;
+}
+@keyframes badgePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.14); }
+}
+
+/* Navegación inferior en teléfono */
+.mobile-nav {
+  border-radius: 20px 20px 0 0;
+}
+.mobile-nav a.active {
+  background: linear-gradient(135deg, rgba(27, 106, 235, 0.14), rgba(63, 81, 181, 0.12));
+  color: #1b6aeb;
+  font-weight: 700;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .notification-badge, .message-badge { animation: none; }
+}

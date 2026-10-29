@@ -1,0 +1,324 @@
+<div class="teachers-container">
+  <div class="teachers-header">
+    <h2>Gestión de Profesores y Materias</h2>
+    <button class="add-teacher-button" (click)="openAddModal()">
+      ➕ Agregar Profesor
+    </button>
+  </div>
+
+  @if (loading) {
+    <!-- Spinner LOCAL en el área de la lista, en vez de una pantalla
+         blanca de carga que tapa todo (encabezado y botón incluidos). -->
+    <div class="teachers-loading">
+      <div class="spinner"></div>
+      <p>Cargando profesores...</p>
+    </div>
+  } @else {
+    <div class="search-bar">
+      <span class="material-icons search-icon">search</span>
+      <input type="text" id="teacher-search" name="teacherSearch" [(ngModel)]="searchTerm" placeholder="Buscar profesor..." autocomplete="off" />
+    </div>
+
+    <div class="two-columns">
+      <div class="column">
+        <h3>Profesores</h3>
+        <div class="teachers-list">
+          @for (teacher of getFilteredTeachers(); track teacher.id) {
+            <div class="teacher-item a11y-clickable" [class.teacher-selected]="selectedTeacherForAssignment?.id === teacher.id" role="button" tabindex="0" [attr.aria-label]="'Seleccionar docente ' + teacher.name" (click)="selectTeacherForAssignment(teacher)" (keydown.enter)="selectTeacherForAssignment(teacher)" (keydown.space)="selectTeacherForAssignment(teacher); $event.preventDefault()">
+              <div class="teacher-item-actions">
+                <button type="button" class="icon-action-button edit-icon-button" (click)="openEditTeacher(teacher); $event.stopPropagation()" title="Editar profesor">✎</button>
+                <button type="button" class="icon-action-button delete-icon-button" (click)="deleteTeacher(teacher); $event.stopPropagation()" title="Eliminar profesor">×</button>
+              </div>
+              <div class="teacher-info">
+                @if (getProfilePictureUrl(teacher)) {
+                  <img class="teacher-photo" [src]="getProfilePictureUrl(teacher)" [alt]="getTeacherFullName(teacher)" />
+                } @else {
+                  <div class="teacher-avatar">{{ teacher.name.charAt(0) }}{{ teacher.surname.charAt(0) }}</div>
+                }
+                <div class="teacher-details">
+                  <div class="teacher-name-row">
+                    <strong class="teacher-name">{{ teacher.name }} {{ teacher.surname }}</strong>
+                  </div>
+                  <span class="teacher-email">{{ teacher.email }}</span>
+                  <span class="teacher-username">{{ teacher.username || 'Sin usuario' }}</span>
+                  <div class="assigned-subjects">
+                    <span class="assigned-subjects-label">Materias asignadas</span>
+                    @if (getTeacherSubjectObjects(teacher).length > 0) {
+                      <div class="teacher-subject-chips">
+                        @for (subject of getTeacherSubjectObjects(teacher); track subject.id) {
+                          <span class="subject-chip" [ngClass]="getSubjectLevelClass(subject)" [title]="subject.name" (click)="unassignSubject(subject, teacher); $event.stopPropagation()">
+                            {{ getSubjectAcronym(subject) }}
+                          </span>
+                        }
+                      </div>
+                    } @else {
+                      <span class="empty-subjects">Sin materias asignadas</span>
+                    }
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+          @if (teachers.length === 0) {
+            <div class="empty-state">
+              <span class="empty-icon">📭</span>
+              <p class="empty-text">No hay profesores registrados</p>
+              <small>Agrega el primer profesor con el boton superior</small>
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="column">
+        <h3>Materias</h3>
+        @if (selectedTeacherForAssignment) {
+          <div class="assignment-hint">
+            Profesor seleccionado: <strong>{{ selectedTeacherForAssignment.name }} {{ selectedTeacherForAssignment.surname }}</strong>. Haz clic en una materia para asignarla.
+            <button type="button" class="cancel-btn small" (click)="clearTeacherSelection()">Cancelar</button>
+          </div>
+        }
+        <div class="subjects-list">
+          <div class="materia-columna">
+            <div class="columna-header bachillerato">
+              <span class="icono">🎓</span>
+              <h4>Bachillerato</h4>
+            </div>
+            <div class="columna-body">
+              @for (subject of highSchoolSubjects; track subject.id) {
+                <div class="subject-item"
+                  [class.clickable]="selectedTeacherForAssignment && !(subject.teacherId || subject.teacher)"
+                  [class.assigned]="(subject.teacherId || subject.teacher) === selectedTeacherForAssignment?.id"
+                  [class.disabled]="(subject.teacherId || subject.teacher) && (subject.teacherId || subject.teacher) !== selectedTeacherForAssignment?.id"
+                  (click)="selectedTeacherForAssignment && !(subject.teacherId || subject.teacher) && assignSubjectToSelectedTeacher(subject)">
+                  <div class="subject-main">
+                    <span class="subject-name">{{ subject.name }}</span>
+                    <span class="subject-code-pill" [ngClass]="getSubjectLevelClass(subject)">{{ getSubjectAcronym(subject) }}</span>
+                  </div>
+                  <div class="subject-meta">
+                    <span class="subject-badge bachillerato">Bachillerato</span>
+                    @if (subject.gradeMin != null && subject.gradeMax != null) {
+                      <span class="subject-range">Grados {{ subject.gradeMin }}-{{ subject.gradeMax }}</span>
+                    }
+                  </div>
+                </div>
+              }
+              @if (highSchoolSubjects.length === 0) {
+                <p class="empty-text">Sin materias de bachillerato</p>
+              }
+            </div>
+          </div>
+          <div class="materia-columna">
+            <div class="columna-header primaria">
+              <span class="icono">🎒</span>
+              <h4>Primaria</h4>
+            </div>
+            <div class="columna-body">
+              @for (subject of primarySubjects; track subject.id) {
+                <div class="subject-item"
+                  [class.clickable]="selectedTeacherForAssignment && !(subject.teacherId || subject.teacher)"
+                  [class.assigned]="(subject.teacherId || subject.teacher) === selectedTeacherForAssignment?.id"
+                  [class.disabled]="(subject.teacherId || subject.teacher) && (subject.teacherId || subject.teacher) !== selectedTeacherForAssignment?.id"
+                  (click)="selectedTeacherForAssignment && !(subject.teacherId || subject.teacher) && assignSubjectToSelectedTeacher(subject)">
+                  <div class="subject-main">
+                    <span class="subject-name">{{ subject.name }}</span>
+                    <span class="subject-code-pill" [ngClass]="getSubjectLevelClass(subject)">{{ getSubjectAcronym(subject) }}</span>
+                  </div>
+                  <div class="subject-meta">
+                    <span class="subject-badge primaria">Primaria</span>
+                    @if (subject.gradeMin != null && subject.gradeMax != null) {
+                      <span class="subject-range">Grados {{ subject.gradeMin }}-{{ subject.gradeMax }}</span>
+                    }
+                  </div>
+                </div>
+              }
+              @if (primarySubjects.length === 0) {
+                <p class="empty-text">Sin materias de primaria</p>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>
+
+@if (showAddModal) {
+  <div class="modal-overlay">
+    <div class="modal-content large-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-header-text">
+          <h3>Agregar Nuevo Profesor</h3>
+          <p class="modal-subtitle">Completa los datos del docente y asigna las materias con estilo profesional.</p>
+        </div>
+        <button class="close-button" (click)="closeAddModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        @if (formModalError) {
+          <div class="modal-form-error">{{ formModalError }}</div>
+        }
+        <form autocomplete="off" #teacherForm="ngForm" (ngSubmit)="createTeacher()">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="teacherName">Nombre *</label>
+              <input type="text" id="teacherName" name="name" [(ngModel)]="formName" required placeholder="Ingrese el nombre" autocomplete="off" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label for="teacherSurname">Apellido *</label>
+              <input type="text" id="teacherSurname" name="surname" [(ngModel)]="formSurname" required placeholder="Ingrese el apellido" autocomplete="off" class="form-input" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="teacherEmail">Correo *</label>
+              <input type="email" id="teacherEmail" name="email" [(ngModel)]="formEmail" required placeholder="correo@colegiotrinitario.edu.co" autocomplete="off" class="form-input" [ngClass]="{ 'input-error': formEmailError }" />
+              @if (formEmailError) {
+                <div class="field-error">{{ formEmailError }}</div>
+              }
+            </div>
+            <div class="form-group">
+              <label for="teacherUsername">Usuario</label>
+              <input type="text" id="teacherUsername" name="username" [(ngModel)]="formUsername" placeholder="usuario.profesor" autocomplete="off" class="form-input" [ngClass]="{ 'input-error': formUsernameError }" />
+              @if (formUsernameError) {
+                <div class="field-error">{{ formUsernameError }}</div>
+              }
+              <small>Si se deja vacío, se usará el correo antes del @</small>
+            </div>
+          </div>
+
+          <div class="password-section">
+            <h4>Credenciales de acceso</h4>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="teacherPassword">Contraseña *</label>
+                <div class="input-group">
+                  <span class="material-icons input-icon">lock</span>
+                  <input [type]="showPassword ? 'text' : 'password'" id="teacherPassword" name="password" [(ngModel)]="formPassword" required minlength="6" placeholder="Ingrese su contraseña" autocomplete="new-password" class="form-input" />
+                  <button type="button" class="password-toggle" (click)="showPassword = !showPassword" [attr.title]="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'" [attr.aria-label]="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'">
+                    <span class="material-icons">{{ showPassword ? 'visibility_off' : 'visibility' }}</span>
+                  </button>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="teacherConfirmPassword">Confirmar Contraseña *</label>
+                <div class="input-group">
+                  <span class="material-icons input-icon">lock</span>
+                  <input [type]="showConfirmPassword ? 'text' : 'password'" id="teacherConfirmPassword" name="confirmPassword" [(ngModel)]="formConfirmPassword" required placeholder="Confirma tu contraseña" autocomplete="new-password" class="form-input" />
+                  <button type="button" class="password-toggle" (click)="showConfirmPassword = !showConfirmPassword" [attr.title]="showConfirmPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'" [attr.aria-label]="showConfirmPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'">
+                    <span class="material-icons">{{ showConfirmPassword ? 'visibility_off' : 'visibility' }}</span>
+                  </button>
+                </div>
+                @if (formPasswordError) {
+                  <div class="field-error animated-error">{{ formPasswordError }}</div>
+                }
+              </div>
+            </div>
+            <small class="security-note">La contraseña será cifrada antes de guardarse.</small>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="cancel-btn" (click)="closeAddModal()">Cancelar</button>
+            <button type="submit" class="confirm-btn" [disabled]="saving">
+              @if (saving) { Guardando... } @else { Guardar Profesor }
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}
+
+@if (showEditModal && teacherToEdit) {
+  <div class="modal-overlay">
+    <div class="modal-content large-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-header-text">
+          <h3>Editar Profesor</h3>
+          <p class="modal-subtitle">Actualiza usuario, correo y contraseña del docente.</p>
+        </div>
+        <button class="close-button" (click)="closeEditModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <form autocomplete="off" #editTeacherForm="ngForm" (ngSubmit)="saveTeacherEdit()">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="editTeacherName">Nombre *</label>
+              <input type="text" id="editTeacherName" name="editName" [(ngModel)]="editTeacherForm.name" required class="form-input" />
+            </div>
+            <div class="form-group">
+              <label for="editTeacherSurname">Apellido *</label>
+              <input type="text" id="editTeacherSurname" name="editSurname" [(ngModel)]="editTeacherForm.surname" required class="form-input" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="editTeacherUsername">Usuario *</label>
+              <input type="text" id="editTeacherUsername" name="editUsername" [(ngModel)]="editTeacherForm.username" required class="form-input" />
+            </div>
+            <div class="form-group">
+              <label for="editTeacherEmail">Correo *</label>
+              <input type="email" id="editTeacherEmail" name="editEmail" [(ngModel)]="editTeacherForm.email" required class="form-input" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group full-width">
+              <label for="editTeacherPassword">Nueva contraseña</label>
+              <input type="password" id="editTeacherPassword" name="editPassword" [(ngModel)]="editTeacherForm.newPassword" placeholder="Dejar vacío para mantener la contraseña actual" autocomplete="new-password" class="form-input" />
+              <small>La contraseña debe tener al menos 6 caracteres si decides cambiarla.</small>
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="cancel-btn" (click)="closeEditModal()" [disabled]="savingEditTeacher">Cancelar</button>
+            <button type="submit" class="confirm-btn" [disabled]="savingEditTeacher">
+              @if (savingEditTeacher) { Guardando... } @else { Guardar Cambios }
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}
+
+@if (showConfirmDelete && teacherToDelete) {
+  <div class="modal-overlay" (click)="cancelDeleteTeacher()">
+    <div class="modal-content large-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-header-text">
+          <h3>Confirmar eliminación</h3>
+          <p class="modal-subtitle">¿Seguro que deseas eliminar al profesor {{ teacherToDelete.name }} {{ teacherToDelete.surname }}?</p>
+        </div>
+        <button class="close-button" (click)="cancelDeleteTeacher()">✕</button>
+      </div>
+      <div class="modal-body confirm-modal-body">
+        <p class="confirm-message">Esta acción no se puede deshacer.</p>
+        <div class="modal-actions confirm-actions">
+          <button type="button" class="cancel-btn secondary" (click)="cancelDeleteTeacher()">Cancelar</button>
+          <button type="button" class="confirm-btn danger" (click)="confirmDeleteTeacher()">Eliminar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+@if (showNotification) {
+  <div class="notification-overlay" (click)="showNotification = false">
+    <div class="notification-content" [class.notification-success]="notificationType === 'success'" [class.notification-error]="notificationType === 'error'" (click)="$event.stopPropagation()">
+      <div class="notification-icon">
+        @if (notificationType === 'success') {
+          <svg class="checkmark" viewBox="0 0 52 52"><path class="checkmark__check" fill="none" d="m14.1 27.2l7.1 7.2 16.7-16.8"/></svg>
+        }
+        @if (notificationType === 'error') {
+          <svg class="error-mark" viewBox="0 0 52 52"><path class="error-mark__x" fill="none" d="M16 16l20 20M36 16L16 36"/></svg>
+        }
+      </div>
+      <div class="notification-body">
+        <div class="notification-title">{{ notificationType === 'success' ? '¡Éxito!' : '¡Error!' }}</div>
+        <div class="notification-message">{{ notificationMessage }}</div>
+      </div>
+      <button class="notification-close" (click)="showNotification = false">✕</button>
+    </div>
+  </div>
+}

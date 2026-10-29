@@ -1,0 +1,49 @@
+HELP.md
+target/
+.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### VS Code ###
+.vscode/
+
+target/
+
+### Credenciales sensibles — NUNCA subir a un repositorio ###
+src/main/resources/firebase-service-account.json
+firebase-service-account.json
+application-secrets.properties
+*.pem
+*.p12
+.venv
+__pycache__
+venv/
+*.pyc
+.env
+*.env
+application-local.properties

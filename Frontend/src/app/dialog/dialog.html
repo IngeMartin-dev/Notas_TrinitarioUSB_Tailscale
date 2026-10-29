@@ -1,0 +1,22 @@
+@if (dialogService.visible()) {
+  <div class="app-dialog-overlay" (click)="dialogService.mode() === 'alert' || dialogService.mode() === 'input' ? respond(dialogService.mode() === 'input' ? dialogService.inputValue() : true) : null">
+    <div class="app-dialog-box" [class.danger]="dialogService.danger()" (click)="$event.stopPropagation()">
+      <div class="app-dialog-icon">
+        <span class="material-icons">{{ dialogService.danger() ? 'warning' : (dialogService.mode() === 'confirm' ? 'help_outline' : (dialogService.mode() === 'input' ? 'edit' : 'info')) }}</span>
+      </div>
+      <h3 class="app-dialog-title">{{ dialogService.title() }}</h3>
+      <p class="app-dialog-message">{{ dialogService.message() }}</p>
+      @if (dialogService.mode() === 'input') {
+        <input class="app-dialog-input" [placeholder]="dialogService.inputPlaceholder()" [value]="dialogService.inputValue()" (input)="onInput($any($event.target).value)" />
+      }
+      <div class="app-dialog-actions">
+        @if (dialogService.mode() === 'confirm' || dialogService.mode() === 'input') {
+          <button class="app-dialog-btn cancel" (click)="respond(dialogService.mode() === 'input' ? null : false)">{{ dialogService.cancelText() }}</button>
+          <button class="app-dialog-btn confirm" [class.danger]="dialogService.danger()" (click)="respond(dialogService.mode() === 'input' ? dialogService.inputValue() : true)">{{ dialogService.confirmText() }}</button>
+        } @else {
+          <button class="app-dialog-btn confirm" (click)="respond(true)">{{ dialogService.confirmText() }}</button>
+        }
+      </div>
+    </div>
+  </div>
+}

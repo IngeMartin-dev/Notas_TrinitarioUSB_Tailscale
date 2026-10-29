@@ -1,0 +1,96 @@
+<div class="bg-container">
+  <div class="page-header">
+    <h2><span class="material-icons">folder_special</span> Boletines Generados</h2>
+    <p class="page-subtitle">Consulta y descarga los boletines ya generados, organizados por período y salón.</p>
+  </div>
+
+  <div class="bg-layout">
+    <div class="bg-sidebar">
+      <div class="grades-row">
+        @for (grade of grades; track grade) {
+          <div class="grade-section">
+            <h3>{{ grade }}</h3>
+            <div class="classrooms">
+              @for (classroom of classrooms; track classroom) {
+                <button
+                  class="classroom-btn"
+                  [class.selected]="selectedGrade === grade && selectedClassroom === classroom"
+                  (click)="selectGrade(grade, classroom)"
+                >
+                  {{ classroom }}
+                </button>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="bg-content">
+      @if (!selectedGrade || !selectedClassroom) {
+        <div class="empty-state">
+          <span class="material-icons">folder_open</span>
+          <h3>Selecciona un grado y salón</h3>
+          <p>Elige una opción del panel izquierdo para ver los boletines generados</p>
+        </div>
+      }
+
+      @if (selectedGrade && selectedClassroom) {
+        <div class="content-header">
+          <h3>{{ selectedGrade }} — {{ selectedClassroom }}</h3>
+          <div class="period-filter">
+            <label>Período:</label>
+            <select [(ngModel)]="selectedPeriod" (ngModelChange)="onPeriodFilterChange()">
+              <option [ngValue]="null">Todos</option>
+              @for (p of periodos; track p) {
+                <option [ngValue]="p">Período {{ p }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        @if (isLoading) {
+          <div class="loading-container">
+            <div class="loading-spinner"></div>
+            <p>Cargando boletines...</p>
+          </div>
+        }
+
+        @if (!isLoading && errorMessage) {
+          <div class="error-banner">
+            <span class="material-icons">error_outline</span>
+            <p>{{ errorMessage }}</p>
+          </div>
+        }
+
+        @if (!isLoading && !errorMessage && boletines.length === 0) {
+          <div class="empty-state">
+            <span class="material-icons">description</span>
+            <h3>Todavía no hay boletines generados</h3>
+            <p>Cuando generes boletines para este grado y salón, aparecerán aquí automáticamente.</p>
+          </div>
+        }
+
+        @if (!isLoading && !errorMessage && boletines.length > 0) {
+          <div class="boletines-grid">
+            @for (b of boletines; track trackByFileName($index, b)) {
+              <div class="boletin-card a11y-clickable" role="button" tabindex="0" aria-label="Descargar boletín" (click)="descargar(b)" (keydown.enter)="descargar(b)" (keydown.space)="descargar(b); $event.preventDefault()">
+                <div class="boletin-icon">
+                  <span class="material-icons">picture_as_pdf</span>
+                </div>
+                <div class="boletin-info">
+                  <h4>{{ b.displayName }}</h4>
+                  <span class="boletin-period-badge">Período {{ b.period }}</span>
+                  <p class="boletin-meta">{{ formatearFecha(b.generatedAt) }} · {{ formatearTamano(b.sizeBytes) }}</p>
+                </div>
+                <button class="download-btn" title="Descargar" aria-label="Descargar boletín">
+                  <span class="material-icons">download</span>
+                </button>
+              </div>
+            }
+          </div>
+        }
+      }
+    </div>
+  </div>
+</div>

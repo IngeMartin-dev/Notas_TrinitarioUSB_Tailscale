@@ -1,0 +1,300 @@
+<div class="parents-container">
+  <div class="parents-header">
+    <h2>Padres de Familia</h2>
+  </div>
+
+  <div class="grades-sidebar-like">
+    <div class="grades-row">
+      @for (grade of allGrades; track grade) {
+        <div class="grade-section">
+          <h3>{{ grade }}</h3>
+          <div class="classrooms">
+            @for (classroom of classrooms; track classroom) {
+              <button
+                class="classroom-btn"
+                [class.selected]="selectedGrade === grade && selectedClassroom === classroom"
+                (click)="selectGradeAndClassroom(grade, classroom)"
+              >
+                {{ classroom }}
+              </button>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+
+  <div class="right-content">
+    @if (!selectedGrade || !selectedClassroom) {
+      <div class="parents-placeholder">
+        <div class="placeholder-content">
+          <span class="placeholder-icon">👨‍👩‍👧‍👦</span>
+          <h3>Selecciona un grado y salón</h3>
+          <p>Elige un grado y salón de la lista superior para ver los estudiantes y padres de familia.</p>
+        </div>
+      </div>
+    }
+
+    @if (selectedGrade && selectedClassroom && isLoading) {
+      <div class="loading-indicator">
+        <div class="spinner"></div>
+        <p>Cargando datos...</p>
+      </div>
+    }
+
+    @if (selectedGrade && selectedClassroom && !isLoading) {
+      <div class="selection-hint" [class.hidden]="selectedStudent === null && selectedParent === null">
+        <span class="hint-icon">ℹ️</span>
+        <strong>Instrucciones:</strong> Selecciona un estudiante de la lista izquierda y luego un padre de la lista derecha para vincularlos.
+        @if (selectedStudent !== null) {
+          <span class="hint-selected">Estudiante: <strong>{{ selectedStudent?.surname }} {{ selectedStudent?.name }}</strong></span>
+        }
+      </div>
+
+      <div class="assign-section">
+        <button class="link-btn add-parent-btn" (click)="openCreateParentModal()">+ Añadir Padre de Familia</button>
+        @if (selectedStudent !== null) {
+          <button class="link-btn cancel-btn" (click)="clearSelection()">Cancelar selección</button>
+        }
+      </div>
+
+      @if (allParents.length === 0) {
+        <div class="no-assignments-banner">
+          <span class="no-assignments-icon">ℹ️</span>
+          <div>
+            <strong>No hay padres de familia en este salón</strong>
+            <p>Aún no se han creado padres de familia para este grado y salón. Puedes crearlos con el botón "+ Añadir Padre de Familia".</p>
+          </div>
+        </div>
+      }
+
+      <div class="parents-grid">
+        <div class="parents-column students-column">
+          <div class="column-header">
+            <h3 class="column-title">Estudiantes</h3>
+            <div class="column-badges">
+              <span class="column-badge has-parents">🎓 {{ totalStudentsCount }}</span>
+              <span class="column-badge">Disponibles {{ availableStudentsCount }}</span>
+            </div>
+          </div>
+          @if (allStudents.length === 0) {
+            <div class="empty-column">
+              <span class="empty-icon">📭</span>
+              <p>No hay estudiantes en este salón</p>
+            </div>
+          }
+          <div class="people-list">
+            @for (student of allStudents; track student.id) {
+              <div class="person-card student-card"
+                   [class.person-selected]="selectedStudent?.id === student.id"
+                   [class.assigned]="student.hasParent"
+                   (click)="selectStudent(student)">
+                <div class="person-avatar student-avatar">
+                  {{ student.surname.charAt(0) }}{{ student.name.charAt(0) }}
+                </div>
+                <div class="status-indicator" [class.status-green]="student.hasParent" [class.status-red]="!student.hasParent"></div>
+                <div class="person-info">
+                  <div class="person-name">{{ student.surname }} {{ student.name }}</div>
+                  <div class="person-detail">{{ student.documentNumber || 'Sin documento' }}</div>
+                </div>
+                @if (student.hasParent) {
+                  <div class="corner-actions">
+                    <button class="icon-btn delete-btn" (click)="unassignParent(student); $event.stopPropagation()" title="Quitar padre de familia">✕</button>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="parents-column parents-column-content">
+          <div class="column-header">
+            <h3 class="column-title">Padres de Familia</h3>
+            <div class="column-badges">
+              <span class="column-badge has-parents">👥 {{ allParents.length }}</span>
+              <span class="column-badge">Disponibles {{ availableParentsCount }}</span>
+            </div>
+          </div>
+          @if (allParents.length === 0) {
+            <div class="empty-column">
+              <span class="empty-icon">👥</span>
+              <p>No hay padres de familia en este salón</p>
+            </div>
+          }
+
+          <div class="people-list">
+            @for (parent of allParents; track parent.id) {
+              <div class="person-card parent-card"
+                   [class.is-linked]="parent.hasStudent"
+                   [class.unlinked-card]="!parent.hasStudent"
+                   [class.linked-card]="parent.hasStudent"
+                   [class.not-selectable]="parent.hasStudent || selectedStudent === null"
+                   [class.person-selected]="selectedParent?.id === parent.id"
+                   (click)="selectParent(parent)">
+                <div class="parent-card-top">
+                  <div class="person-avatar parent-avatar"
+                       [class.unlinked-avatar]="!parent.hasStudent"
+                       [class.linked-avatar]="parent.hasStudent">
+                    {{ parent.surname.charAt(0) }}{{ parent.name.charAt(0) }}
+                  </div>
+
+                  <div class="status-indicator" [class.status-green]="parent.hasStudent" [class.status-amber]="!parent.hasStudent"></div>
+
+                  <div class="parent-card-main">
+                    <div class="parent-name-block">
+                      <div class="person-name">{{ parent.surname }} {{ parent.name }}</div>
+                      <div class="person-detail parent-email">{{ parent.email || 'Sin correo' }}</div>
+                    </div>
+
+                    <div class="corner-actions parent-card-actions">
+                      <button class="icon-btn edit-btn" (click)="startEditParent(parent); $event.stopPropagation()" title="Editar padre de familia">✎</button>
+                      <button class="icon-btn delete-btn" (click)="deleteParent(parent); $event.stopPropagation()" title="Eliminar padre de familia">✕</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (showEditParentModal) {
+      <div class="modal-overlay" (click)="closeEditModal(); $event.stopPropagation()">
+        <div class="edit-modal" (click)="$event.stopPropagation()">
+          <div class="edit-modal-header">
+            <div class="edit-modal-header-text">
+              <h3>Editar padre de familia</h3>
+              <p>Actualiza la información de <strong>{{ editingParent?.surname }} {{ editingParent?.name }}</strong></p>
+            </div>
+            <button class="edit-modal-close" (click)="closeEditModal()">✕</button>
+          </div>
+
+          <div class="edit-modal-body">
+            <div class="form-group">
+              <label for="edit-parent-name">Nombre</label>
+              <input id="edit-parent-name" type="text" [(ngModel)]="editParentForm.name" placeholder="Nombre" />
+            </div>
+            <div class="form-group">
+              <label for="edit-parent-surname">Apellido</label>
+              <input id="edit-parent-surname" type="text" [(ngModel)]="editParentForm.surname" placeholder="Apellido" />
+            </div>
+            <div class="form-group">
+              <label for="edit-parent-email">Correo electrónico</label>
+              <input id="edit-parent-email" type="email" [(ngModel)]="editParentForm.email" placeholder="correo@ejemplo.com" />
+            </div>
+            <div class="form-group">
+              <label for="edit-parent-password">Nueva Contraseña (opcional)</label>
+              <input id="edit-parent-password" type="password" [(ngModel)]="editParentForm.newPassword" placeholder="Dejar vacío para mantener la actual" autocomplete="new-password" />
+            </div>
+          </div>
+
+          <div class="edit-modal-footer">
+            <button class="edit-modal-btn secondary" (click)="closeEditModal()">Cancelar</button>
+            <button class="edit-modal-btn primary" [disabled]="parentSaving" (click)="saveParentEdit(editingParent!)">
+              <span *ngIf="!parentSaving">Guardar cambios</span>
+              <span *ngIf="parentSaving">Guardando...</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (showDeleteConfirm && parentToDelete) {
+      <div class="modal-overlay" (click)="closeDeleteConfirm()">
+        <div class="modal-content confirm-modal" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h3>Confirmar eliminación</h3>
+            <button class="close-button" (click)="closeDeleteConfirm()">✕</button>
+          </div>
+          <div class="modal-body">
+            <p class="confirm-message">
+              ¿Estás seguro de eliminar al padre de familia <strong>{{ parentToDelete.surname }} {{ parentToDelete.name }}</strong>?
+            </p>
+            <div class="modal-actions">
+              <button class="cancel-button" (click)="closeDeleteConfirm()">Cancelar</button>
+              <button class="delete-confirm-button" (click)="confirmDelete()">Eliminar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (showCreateParentModal) {
+      <div class="modal-overlay" (click)="closeCreateParentModal()">
+        <div class="edit-modal" (click)="$event.stopPropagation()">
+          <div class="edit-modal-header">
+            <div class="edit-modal-header-text">
+              <h3>Nuevo Padre de Familia</h3>
+              <p>Crear un nuevo usuario como padre de familia</p>
+            </div>
+            <button class="edit-modal-close" (click)="closeCreateParentModal()">✕</button>
+          </div>
+          <div class="edit-modal-body">
+            <div class="form-group">
+              <label for="new-parent-name">Nombre</label>
+              <input id="new-parent-name" type="text" [(ngModel)]="newParentForm.name" placeholder="Nombre" />
+            </div>
+            <div class="form-group">
+              <label for="new-parent-surname">Apellido</label>
+              <input id="new-parent-surname" type="text" [(ngModel)]="newParentForm.surname" placeholder="Apellido" />
+            </div>
+            <div class="form-group">
+              <label for="new-parent-email">Correo electrónico</label>
+              <input id="new-parent-email" type="email" [(ngModel)]="newParentForm.email" placeholder="correo@ejemplo.com" />
+            </div>
+            <div class="form-group">
+              <label for="new-parent-password">Contraseña</label>
+              <input id="new-parent-password" type="password" [(ngModel)]="newParentForm.password" placeholder="Mínimo 6 caracteres" autocomplete="new-password" />
+            </div>
+            <div class="form-group">
+              <label for="new-parent-grade">Grado</label>
+              <select id="new-parent-grade" [(ngModel)]="newParentForm.grade">
+                <option value="">Selecciona un grado</option>
+                @for (grade of allGrades; track grade) {
+                  <option [value]="grade">{{ grade }}</option>
+                }
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="new-parent-classroom">Salón</label>
+              <select id="new-parent-classroom" [(ngModel)]="newParentForm.classGroup">
+                <option value="">Selecciona un salón</option>
+                @for (classroom of classrooms; track classroom) {
+                  <option [value]="classroom">{{ classroom }}</option>
+                }
+              </select>
+            </div>
+          </div>
+          <div class="edit-modal-footer">
+            <button class="edit-modal-btn secondary" (click)="closeCreateParentModal()">Cancelar</button>
+            <button class="edit-modal-btn primary" [disabled]="creatingParent" (click)="createParent()">
+              <span *ngIf="!creatingParent">Crear padre</span>
+              <span *ngIf="creatingParent">Creando...</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (showNotification) {
+      <div class="notification-overlay" (click)="hideNotification()">
+        <div class="notification-content" [class.notification-success]="notificationType === 'success'" [class.notification-error]="notificationType === 'error'" (click)="$event.stopPropagation()">
+          <div class="notification-icon">
+            @if (notificationType === 'success') {
+              <svg class="checkmark" viewBox="0 0 52 52"><path class="checkmark__check" fill="none" d="m14.1 27.2l7.1 7.2 16.7-16.8"/></svg>
+            }
+            @if (notificationType === 'error') {
+              <svg class="error-mark" viewBox="0 0 52 52"><path class="error-mark__x" fill="none" d="M16 16l20 20M36 16L16 36"/></svg>
+            }
+          </div>
+          <div class="notification-body">
+            <div class="notification-title">{{ notificationType === 'success' ? '¡Exito!' : '¡Error!' }}</div>
+            <div class="notification-message">{{ notificationMessage }}</div>
+          </div>
+          <button class="notification-close" (click)="hideNotification()">✕</button>
+        </div>
+      </div>
+    }
+  </div>
+</div>

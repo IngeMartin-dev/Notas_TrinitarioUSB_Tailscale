@@ -1,0 +1,119 @@
+<div class="directors-container">
+  <div class="directors-header">
+    <h2>Directores de Grupo</h2>
+  </div>
+
+  <div class="search-bar">
+    <span class="material-icons search-icon">search</span>
+    <input type="text" id="director-search" name="directorSearch" (input)="onSearch($event)" placeholder="Buscar profesor..." autocomplete="off" />
+  </div>
+
+  <div class="two-columns">
+    <div class="column">
+      <h3>Profesores</h3>
+      <div class="teachers-list">
+        @for (teacher of getFilteredTeachers(); track teacher.id) {
+          <div class="teacher-item a11y-clickable" [class.teacher-selected]="selectedTeacher?.id === teacher.id" role="button" tabindex="0" [attr.aria-label]="'Seleccionar docente ' + teacher.name" (click)="selectTeacher(teacher)" (keydown.enter)="selectTeacher(teacher)" (keydown.space)="selectTeacher(teacher); $event.preventDefault()">
+            <div class="teacher-info">
+              <div class="teacher-avatar">{{ teacher.name.charAt(0) }}{{ teacher.surname.charAt(0) }}</div>
+              <div class="teacher-details">
+                <div class="teacher-name-row">
+                  <strong class="teacher-name">{{ teacher.name }} {{ teacher.surname }}</strong>
+                  @if (getDirectorAssignment(teacher); as assignment) {
+                    <button type="button" class="director-badge removable" (click)="removeAssignment(assignment.grade, assignment.classroom); $event.stopPropagation()" title="Quitar director de grupo">
+                      <span class="material-icons director-icon">groups</span>
+                      Director {{ assignment.grade }} {{ getClassroomLetter(assignment.classroom || '') }}
+                    </button>
+                  }
+                </div>
+                <div class="teacher-subject-chips">
+                  @for (subject of getTeacherSubjectObjects(teacher); track subject.id) {
+                    <span class="subject-chip">
+                      {{ getSubjectAcronym(subject) }}
+                    </span>
+                  }
+                </div>
+                <span class="teacher-email">{{ teacher.email }}</span>
+              </div>
+            </div>
+          </div>
+        }
+        @if (getFilteredTeachers().length === 0) {
+          <div class="empty-state">
+            <span class="empty-icon">📭</span>
+            <p class="empty-text">No hay profesores registrados</p>
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="column">
+      <h3>Salones</h3>
+      @if (selectedTeacher) {
+        <div class="assignment-hint">
+          Profesor seleccionado: <strong>{{ selectedTeacher.name }} {{ selectedTeacher.surname }}</strong>.
+          Selecciona un salón para asignar como director.
+          <button type="button" class="cancel-btn small" (click)="clearSelection()">Cancelar</button>
+        </div>
+      } @else {
+        <div class="assignment-hint">
+          Selecciona un profesor de la lista para empezar a asignar.
+        </div>
+      }
+
+      <div class="tabs">
+        <button class="tab-btn" [class.active]="activeTab === 'bachillerato'" (click)="activeTab = 'bachillerato'">
+          Bachillerato
+        </button>
+        <button class="tab-btn" [class.active]="activeTab === 'primaria'" (click)="activeTab = 'primaria'">
+          Primaria
+        </button>
+      </div>
+
+      <div class="classrooms-page-grid">
+        @for (grade of getClassroomsForTab(); track grade) {
+          <div class="grade-section-page">
+            <h3 class="grade-title">{{ grade }}</h3>
+            <div class="classrooms-page">
+              @for (classroom of getClassroomsForGrade(grade); track classroom) {
+                <button class="classroom-btn grade-page-style"
+                  [class.assigned]="isAssigned(grade, classroom)"
+                  [class.assigned-to-me]="isAssignedToSelectedTeacher(grade, classroom)"
+                  [class.disabled]="isAssigned(grade, classroom) && !isAssignedToSelectedTeacher(grade, classroom)"
+                  [class.selected]="selectedGrade === grade && selectedClassroom === classroom"
+                  (click)="selectGradeAndClassroom(grade, classroom)"
+                  [disabled]="isAssigned(grade, classroom) && !isAssignedToSelectedTeacher(grade, classroom)">
+                  {{ classroom }}
+                  @if (isAssigned(grade, classroom)) {
+                    <span class="assigned-icon">🔒</span>
+                  }
+                </button>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+    </div>
+  </div>
+
+  @if (showNotification) {
+    <div class="notification-overlay" (click)="showNotification = false">
+      <div class="notification-content" [class.notification-success]="notificationType === 'success'" [class.notification-error]="notificationType === 'error'" (click)="$event.stopPropagation()">
+        <div class="notification-icon">
+          @if (notificationType === 'success') {
+            <svg class="checkmark" viewBox="0 0 52 52"><path class="checkmark__check" fill="none" d="m14.1 27.2l7.1 7.2 16.7-16.8"/></svg>
+          }
+          @if (notificationType === 'error') {
+            <svg class="error-mark" viewBox="0 0 52 52"><path class="error-mark__x" fill="none" d="M16 16l20 20M36 16L16 36"/></svg>
+          }
+        </div>
+        <div class="notification-body">
+          <div class="notification-title">{{ notificationType === 'success' ? '¡Éxito!' : '¡Error!' }}</div>
+          <div class="notification-message">{{ notificationMessage }}</div>
+        </div>
+        <button class="notification-close" (click)="showNotification = false">✕</button>
+      </div>
+    </div>
+  }
+</div>

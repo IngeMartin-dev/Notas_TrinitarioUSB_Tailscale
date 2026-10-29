@@ -1,0 +1,20 @@
+@if (visibleJobs.length > 0) {
+  <div class="gen-notifications-stack">
+    @for (job of visibleJobs; track trackByJobId($index, job)) {
+      <div
+        class="gen-notification"
+        [class.done]="job.status === 'DONE'"
+        [class.error]="job.status === 'ERROR'"
+        (click)="onClick(job)">
+        <div class="gen-notif-header">
+          <span class="gen-notif-icon">{{ statusIcon(job) }}</span>
+          <span class="gen-notif-title">Generación {{ job.grade }} {{ job.classroom }}</span>
+        </div>
+        <div class="gen-notif-progress-wrapper">
+          <div class="gen-notif-progress-bar" [style.width.%]="progressPct(job)"></div>
+        </div>
+        <div class="gen-notif-text">{{ statusText(job) }} · {{ elapsedText(job) }}</div>
+      </div>
+    }
+  </div>
+}

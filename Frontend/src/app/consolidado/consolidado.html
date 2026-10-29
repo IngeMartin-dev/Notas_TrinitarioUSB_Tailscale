@@ -1,0 +1,88 @@
+<div class="reports-container">
+  <div class="page-header">
+    <h2><span class="material-icons">assessment</span> Consolidado</h2>
+    <p class="page-subtitle">Selecciona un grado y salón para generar el consolidado de calificaciones en PDF (horizontal).</p>
+    <button class="ver-generados-btn" (click)="verConsolidadosGenerados()">
+      <span class="material-icons">folder_special</span> Ver consolidados generados
+    </button>
+  </div>
+
+  <div class="reports-layout">
+    <div class="reports-sidebar">
+      <div class="grades-row">
+        @for (grade of grades; track grade) {
+          <div class="grade-section">
+            <h3>{{ grade }}</h3>
+            <div class="classrooms">
+              @for (classroom of classrooms; track classroom) {
+                <button
+                  class="classroom-btn"
+                  [class.selected]="selectedGrade === grade && selectedClassroom === classroom"
+                  (click)="selectGrade(grade, classroom)"
+                >
+                  {{ classroom }}
+                </button>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="reports-content">
+      @if (!selectedGrade || !selectedClassroom) {
+        <div class="empty-state">
+          <span class="material-icons">bar_chart</span>
+          <h3>Selecciona un grado y salón</h3>
+          <p>Elige una opción del panel izquierdo para configurar el consolidado</p>
+        </div>
+      }
+
+      @if (selectedGrade && selectedClassroom) {
+        <div class="content-header">
+          <h3>{{ selectedGrade }} — {{ selectedClassroom }}</h3>
+          <div class="period-filter">
+            <label>Período:</label>
+            <select [(ngModel)]="selectedPeriod">
+              @for (p of periodos; track p) {
+                <option [ngValue]="p">Período {{ p }}</option>
+              }
+            </select>
+            <button class="generate-btn" [disabled]="isGenerating" (click)="generarConsolidado()">
+              @if (isGenerating) {
+                <span class="material-icons spin">autorenew</span> Generando...
+              } @else {
+                <span class="material-icons">picture_as_pdf</span> Generar consolidado
+              }
+            </button>
+          </div>
+        </div>
+
+        @if (errorMessage) {
+          <div class="error-banner">
+            <span class="material-icons">error_outline</span>
+            <p>{{ errorMessage }}</p>
+          </div>
+        }
+
+        @if (pdfPreviewUrl) {
+          <div class="pdf-preview-toolbar">
+            <span>Vista previa del consolidado</span>
+            <button class="download-btn" (click)="descargarPdf()">
+              <span class="material-icons">download</span> Descargar
+            </button>
+          </div>
+          <iframe class="pdf-preview" [src]="pdfPreviewUrl" title="Vista previa del consolidado"></iframe>
+        }
+
+        @if (!pdfPreviewUrl && !errorMessage && !isGenerating) {
+          <div class="empty-state">
+            <span class="material-icons">picture_as_pdf</span>
+            <h3>Listo para generar</h3>
+            <p>Elige el período y presiona "Generar consolidado" para ver la vista previa aquí mismo.</p>
+          </div>
+        }
+      }
+    </div>
+  </div>
+</div>

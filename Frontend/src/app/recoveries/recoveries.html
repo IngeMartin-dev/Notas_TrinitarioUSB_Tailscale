@@ -1,0 +1,184 @@
+<div class="recoveries-container">
+  <div class="page-header">
+    <h2>Recuperaciones</h2>
+  </div>
+
+  @if (isTeacher() && hasTeacherGradeRange === false) {
+    <div class="fullscreen-warning">
+      <span class="material-icons">warning</span>
+      <span>No tienes materias asignadas. Por favor espere o llame al administrador.</span>
+    </div>
+  } @else if (isTeacher() && hasTeacherGradeRange === null) {
+    <div class="fullscreen-loading">
+      <div class="spinner"></div>
+      <span style="color: #2c3e50; font-size: 1.1rem; font-weight: 600;">Verificando materias asignadas...</span>
+    </div>
+  } @else {
+    <div class="grades-sidebar">
+      @if (teacherGradeRange) {
+        <div class="grade-range-indicator">
+          Grados {{ teacherGradeRange.min }}° - {{ teacherGradeRange.max }}°
+        </div>
+      }
+      @if (teacherSubjects && teacherSubjects.length > 1) {
+        <div class="subject-selector">
+          @for (subject of teacherSubjects; track subject.id) {
+            <button
+              class="subject-btn"
+              [class.selected]="selectedSubject === subject.name"
+              (click)="onSubjectChange(subject.name)"
+            >
+              {{ subject.name }}
+            </button>
+          }
+        </div>
+      }
+      <div class="grades-row" [class.fade-out]="isFadingOut" [class.fade-in]="isFadingIn">
+        @for (grade of grades; track grade) {
+          <div class="grade-section">
+            <h3>{{ grade }}</h3>
+            <div class="classrooms">
+              @for (classroom of classrooms; track classroom) {
+                <button
+                  class="classroom-btn"
+                  [class.selected]="selectedGrade === grade && selectedClassroom === classroom"
+                  (click)="selectGrade(grade, classroom)"
+                >
+                  {{ classroom }}
+                </button>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="right-content">
+      @if (selectedGrade && selectedClassroom) {
+        <div class="period-selector">
+          <label for="period-select">Período:</label>
+          <select
+            id="period-select"
+            name="period"
+            [ngModel]="selectedPeriod"
+            (ngModelChange)="onPeriodManualChange($event)"
+          >
+            @for (period of availablePeriods; track period) {
+              <option [value]="period">Período {{ period }}</option>
+            }
+          </select>
+        </div>
+      }
+
+      @if (isLoading) {
+        <div class="loading-indicator">
+          <div class="spinner"></div>
+          <p>Cargando...</p>
+        </div>
+      }
+
+      @if (selectedGrade && selectedClassroom && !isLoading) {
+        <div class="recoveries-list">
+          @if (getDisplayItems().length > 0) {
+            <div class="recovery-cards">
+              @for (item of getDisplayItems(); track $index) {
+                <div class="recovery-card" [class.has-plan]="item.recoveryPlan">
+                  <div class="card-header">
+                    <div class="student-avatar">
+                      {{ getInitials(item.student.surname + ' ' + item.student.name) }}
+                    </div>
+                    <div class="student-info">
+                      <h4>{{ item.student.surname }} {{ item.student.name }}</h4>
+                      <p>{{ item.student.grade }} - {{ item.student.classGroup }}</p>
+                    </div>
+                    <div class="period-badge">
+                      P{{ item.period }}
+                    </div>
+                  </div>
+
+                  <div class="card-body">
+                    @if (item.finalGrade > 0) {
+                      <div class="grade-info">
+                        <span class="label">Nota:</span>
+                        <span class="grade-value" [class]="getGradeColor(item.finalGrade)">
+                          {{ item.finalGrade.toFixed(1).replace('.', ',') }}
+                        </span>
+                      </div>
+                    }
+
+                    @if (item.recoveryPlan) {
+                      <div class="plan-preview">
+                        <div class="plan-days">
+                          <div class="day-badge day1">Día 1</div>
+                          <div class="day-badge day2">Día 2</div>
+                        </div>
+                        <p class="plan-topics">{{ item.recoveryPlan.topics }}</p>
+                      </div>
+                    } @else {
+                      <div class="no-plan">
+                        <p>Sin plan de recuperación</p>
+                      </div>
+                    }
+                  </div>
+
+                  <div class="card-footer">
+                    @if (item.recoveryPlan) {
+                      <button class="view-plan-btn" (click)="viewPlan(item.recoveryPlan)">
+                        Ver Plan
+                      </button>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="no-students-message">
+              <div class="no-students-content">
+                <h3>No hay estudiantes reprobados</h3>
+                <p>
+                  El grado {{ selectedGrade }} - {{ selectedClassroom }} no tiene estudiantes con baja nota en este período.
+                </p>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>
+
+@if (showPlanModal && selectedPlan) {
+  <div class="fullscreen-modal-overlay" (click)="closePlanModal()">
+    <div class="fullscreen-modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>📚 Plan de Estudio</h2>
+        <button class="close-btn" (click)="closePlanModal()">✕</button>
+      </div>
+
+      <div class="modal-body-fullscreen">
+        <div class="plan-meta-top">
+          <p>
+            <strong>Estudiante:</strong> {{ selectedPlan.studentName }}
+          </p>
+          <p>
+            <strong>Grado:</strong> {{ selectedPlan.grade }} | <strong>Grupo:</strong>
+            {{ selectedPlan.classGroup }} | <strong>Período:</strong>
+            {{ selectedPlan.period }}
+          </p>
+        </div>
+
+        <div class="plan-content-fullscreen plan-text" id="recovery-plan-content" [innerHTML]="safePlanContent">
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="print-btn" (click)="printPlan()">
+          🖨️ Imprimir
+        </button>
+        <button class="close-modal-btn" (click)="closePlanModal()">
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+}

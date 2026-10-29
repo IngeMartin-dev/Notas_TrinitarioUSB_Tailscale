@@ -1,0 +1,771 @@
+<!-- Success Notification -->
+<div class="success-notification" [class.show]="showSuccessNotification()">
+  <div class="notification-content">
+    <div class="checkmark-circle">
+      <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+        <path class="checkmark__check" fill="none" d="M14 27l8 8 16-16"/>
+      </svg>
+    </div>
+    <h3>¡Perfil actualizado!</h3>
+    <p>Tu información ha sido cambiada con éxito</p>
+  </div>
+</div>
+
+<!-- Logout Confirmation Dialog -->
+<div class="logout-modal-overlay" [class.show]="showLogoutConfirmation()" (click)="cancelLogout()">
+  <div class="logout-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Confirmar Cierre de Sesión</h3>
+    </div>
+    <div class="modal-body">
+      <p>¿Estás seguro de que quieres cerrar sesión?</p>
+    </div>
+    <div class="modal-actions">
+      <button class="cancel-btn" (click)="cancelLogout()">
+        <span class="material-icons">close</span>
+        Cancelar
+      </button>
+      <button class="confirm-btn" (click)="confirmLogout()">
+        <span class="material-icons">check</span>
+        Confirmar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Change Password Modal -->
+<div class="logout-modal-overlay" [class.show]="showChangePasswordModal()" (click)="closeChangePasswordModal()">
+  <div class="logout-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Cambiar Contraseña</h3>
+    </div>
+    <div class="modal-body">
+        @if (passwordChangeSuccess()) {
+          <div class="password-success">
+            <span class="material-icons success-icon">check_circle</span>
+            <p>¡Contraseña actualizada correctamente!</p>
+          </div>
+        } @else {
+          <div class="form-group">
+            <label for="current-password">Contraseña Actual</label>
+            <input type="password" id="current-password" name="currentPassword" [(ngModel)]="currentPassword" placeholder="Ingresa tu contraseña actual" autocomplete="current-password">
+          </div>
+          <div class="form-group">
+            <label for="new-password">Nueva Contraseña</label>
+            <input type="password" id="new-password" name="newPassword" [(ngModel)]="newPassword" placeholder="Ingresa la nueva contraseña" autocomplete="new-password">
+          </div>
+          <div class="form-group">
+            <label for="confirm-password">Confirmar Contraseña</label>
+            <input type="password" id="confirm-password" name="confirmPassword" [(ngModel)]="confirmPassword" placeholder="Confirma la nueva contraseña" autocomplete="new-password">
+          </div>
+          @if (passwordChangeError()) {
+            <p class="error-message">{{ passwordChangeError() }}</p>
+          }
+        }
+    </div>
+    @if (!passwordChangeSuccess()) {
+      <div class="modal-actions">
+        <button class="cancel-btn" (click)="closeChangePasswordModal()">
+          <span class="material-icons">close</span>
+          Cancelar
+        </button>
+        <button class="confirm-btn" (click)="changePassword()" [disabled]="isChangingPassword()">
+          @if (isChangingPassword()) {
+            <span class="material-icons">hourglass_empty</span>
+            Cambiando...
+          } @else {
+            <span class="material-icons">check</span>
+            Cambiar
+          }
+        </button>
+      </div>
+    }
+  </div>
+</div>
+
+<!-- FAQ Modal -->
+<div class="logout-modal-overlay" [class.show]="showFaqModal()" (click)="closeFaqModal()">
+  <div class="logout-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Preguntas Frecuentes</h3>
+    </div>
+    <div class="modal-body">
+      <ul class="faq-list">
+        @for (item of faqItems; track $index) {
+          <li class="faq-item" [class.faq-open]="expandedFaqIndex() === $index">
+            <button class="faq-question" (click)="toggleFaq($index)">
+              <span>{{ item.question }}</span>
+              <span class="material-icons faq-chevron">expand_more</span>
+            </button>
+            @if (expandedFaqIndex() === $index) {
+              <p class="faq-answer">{{ item.answer }}</p>
+            }
+          </li>
+        }
+      </ul>
+      <p class="faq-footer">¿No encontraste lo que buscabas? Usa "Contactar Soporte" para escribirnos directamente.</p>
+    </div>
+    <div class="modal-actions">
+      <button class="cancel-btn" (click)="closeFaqModal()">
+        <span class="material-icons">close</span>
+        Cerrar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Support Modal -->
+<div class="logout-modal-overlay" [class.show]="showSupportModal()" (click)="closeSupportModal()">
+  <div class="logout-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Contactar Soporte</h3>
+    </div>
+    <div class="modal-body">
+      <p>Nuestro equipo de soporte técnico está disponible para ayudarte con cualquier problema en la plataforma.</p>
+      <ul class="support-info-list">
+        <li>
+          <span class="material-icons">email</span>
+          <div>
+            <strong>Correo</strong>
+            <p>soporte&#64;colegiotrinitario.edu.co</p>
+          </div>
+        </li>
+        <li>
+          <span class="material-icons">call</span>
+          <div>
+            <strong>Teléfono</strong>
+            <p>(605) 653 9572</p>
+          </div>
+        </li>
+        <li>
+          <span class="material-icons">location_on</span>
+          <div>
+            <strong>Dirección</strong>
+            <p>Cra 81C #22-124, San Fernando, Cartagena de Indias, Bolívar</p>
+          </div>
+        </li>
+        <li>
+          <span class="material-icons">schedule</span>
+          <div>
+            <strong>Horario de atención</strong>
+            <p>Lunes a viernes, 7:00 a.m. – 3:00 p.m.</p>
+          </div>
+        </li>
+      </ul>
+    </div>
+    <div class="modal-actions">
+      <button class="cancel-btn" (click)="closeSupportModal()">
+        <span class="material-icons">close</span>
+        Cerrar
+      </button>
+      <button class="confirm-btn" (click)="contactSupport()">
+        <span class="material-icons">mail</span>
+        Escribir Correo
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- 2FA Enable Modal -->
+<div class="logout-modal-overlay" [class.show]="showTwoFactorEnableModal()" (click)="cancelEnableTwoFactor()">
+  <div class="logout-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Activar Autenticación de Dos Factores</h3>
+    </div>
+    <div class="modal-body">
+      <p>Enviamos un código de 6 dígitos a <strong>{{ twoFactorEmailHint() }}</strong>. Ingrésalo para activar esta protección extra en tu cuenta.</p>
+      <p class="spam-hint">
+        <span class="material-icons">info</span>
+        Si no lo ves en unos minutos, revisa tu carpeta de spam o correo no deseado.
+      </p>
+      <div class="form-group">
+        <label for="enable-2fa-code">Código de verificación</label>
+        <input type="text" id="enable-2fa-code" inputmode="numeric" maxlength="6"
+               [ngModel]="twoFactorCodeInput()" (ngModelChange)="twoFactorCodeInput.set($event)"
+               name="enable2faCode" placeholder="123456" autocomplete="one-time-code">
+      </div>
+      @if (twoFactorError()) {
+        <p class="error-message">
+          <span class="material-icons">error_outline</span>
+          {{ twoFactorError() }}
+        </p>
+      }
+    </div>
+    <div class="modal-actions">
+      <button class="cancel-btn" (click)="cancelEnableTwoFactor()">
+        <span class="material-icons">close</span>
+        Cancelar
+      </button>
+      <button class="confirm-btn" [disabled]="twoFactorBusy()" (click)="confirmEnableTwoFactor()">
+        @if (twoFactorBusy()) {
+          <span class="material-icons spin">autorenew</span>
+        } @else {
+          <span class="material-icons">check</span>
+        }
+        Activar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- 2FA Disable Modal -->
+<div class="logout-modal-overlay" [class.show]="showTwoFactorDisableModal()" (click)="cancelDisableTwoFactor()">
+  <div class="logout-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Desactivar Autenticación de Dos Factores</h3>
+    </div>
+    <div class="modal-body">
+      <p>Por seguridad, confirma tu contraseña actual para desactivar esta protección.</p>
+      <div class="form-group">
+        <label for="disable-2fa-password">Contraseña actual</label>
+        <input type="password" id="disable-2fa-password"
+               [ngModel]="twoFactorPasswordInput()" (ngModelChange)="twoFactorPasswordInput.set($event)"
+               name="disable2faPassword" placeholder="Tu contraseña" autocomplete="current-password">
+      </div>
+      @if (twoFactorError()) {
+        <p class="error-message">
+          <span class="material-icons">error_outline</span>
+          {{ twoFactorError() }}
+        </p>
+      }
+    </div>
+    <div class="modal-actions">
+      <button class="cancel-btn" (click)="cancelDisableTwoFactor()">
+        <span class="material-icons">close</span>
+        Cancelar
+      </button>
+      <button class="confirm-btn" [disabled]="twoFactorBusy()" (click)="confirmDisableTwoFactor()">
+        @if (twoFactorBusy()) {
+          <span class="material-icons spin">autorenew</span>
+        } @else {
+          <span class="material-icons">check</span>
+        }
+        Desactivar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Active Sessions Modal -->
+<div class="logout-modal-overlay" [class.show]="showSessionsModal()" (click)="closeActiveSessionsModal()">
+  <div class="logout-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Sesiones Activas</h3>
+    </div>
+    <div class="modal-body">
+      @if (loadingSessions()) {
+        <div class="sessions-loading">
+          <span class="material-icons spin">autorenew</span>
+          <p>Cargando tus sesiones...</p>
+        </div>
+      } @else if (sessionsError()) {
+        <p class="error-message">{{ sessionsError() }}</p>
+      } @else if (activeSessions().length === 0) {
+        <p>No se encontraron sesiones activas.</p>
+      } @else {
+        <ul class="sessions-list">
+          @for (session of activeSessions(); track session.id) {
+            <li class="session-item" [class.session-current]="session.current">
+              <span class="material-icons session-icon">devices</span>
+              <div class="session-info">
+                <strong>{{ session.device }}</strong>
+                @if (session.current) {
+                  <span class="session-badge">Este dispositivo</span>
+                }
+                <p class="session-meta">
+                  {{ session.ipAddress || 'IP no disponible' }} · última actividad: {{ session.lastUsedAt | date:'short' }}
+                </p>
+              </div>
+              <button
+                class="session-revoke-btn"
+                [disabled]="revokingSessionId() === session.id"
+                (click)="revokeSession(session.id, session.current)"
+                title="Cerrar esta sesión">
+                @if (revokingSessionId() === session.id) {
+                  <span class="material-icons spin">autorenew</span>
+                } @else {
+                  <span class="material-icons">logout</span>
+                }
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+    <div class="modal-actions">
+      <button class="cancel-btn" (click)="closeActiveSessionsModal()">
+        <span class="material-icons">close</span>
+        Cerrar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Terms and Conditions Modal -->
+<div class="logout-modal-overlay" [class.show]="showTermsModal()" (click)="closeTermsModal()">
+  <div class="logout-modal legal-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Términos y Condiciones</h3>
+    </div>
+    <div class="modal-body legal-content">
+      <app-terms-content></app-terms-content>
+      <p class="last-update">Última actualización: Febrero {{ currentYear }}</p>
+    </div>
+    <div class="modal-actions">
+      <button class="confirm-btn" (click)="acceptTerms()">
+        <span class="material-icons">check</span>
+        Aceptar y Cerrar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Privacy Policy Modal -->
+<div class="logout-modal-overlay" [class.show]="showPrivacyModal()" (click)="closePrivacyModal()">
+  <div class="logout-modal legal-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Política de Privacidad</h3>
+    </div>
+    <div class="modal-body legal-content">
+      <app-privacy-content></app-privacy-content>
+      <p class="last-update">Última actualización: Febrero {{ currentYear }}</p>
+    </div>
+    <div class="modal-actions">
+      <button class="confirm-btn" (click)="acceptPrivacy()">
+        <span class="material-icons">check</span>
+        Entendido y Cerrar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Cookies / Local Storage Policy Modal (informativa) -->
+<div class="logout-modal-overlay" [class.show]="showCookiesModal()" (click)="closeCookiesModal()">
+  <div class="logout-modal legal-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Política de Cookies</h3>
+    </div>
+    <div class="modal-body legal-content">
+      <app-cookies-content></app-cookies-content>
+      <p class="last-update">Última actualización: {{ currentYear }}</p>
+    </div>
+    <div class="modal-actions">
+      <button class="confirm-btn" (click)="closeCookiesModal()">
+        <span class="material-icons">check</span>
+        Cerrar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Refund Policy Modal (informativa) -->
+<div class="logout-modal-overlay" [class.show]="showRefundModal()" (click)="closeRefundModal()">
+  <div class="logout-modal legal-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Política de Reembolsos</h3>
+    </div>
+    <div class="modal-body legal-content">
+      <app-refund-content></app-refund-content>
+      <p class="last-update">Última actualización: {{ currentYear }}</p>
+    </div>
+    <div class="modal-actions">
+      <button class="confirm-btn" (click)="closeRefundModal()">
+        <span class="material-icons">check</span>
+        Cerrar
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="settings-container">
+  <h1>Configuración</h1>
+
+  <div class="settings-section">
+    <h2>Perfil de Usuario</h2>
+
+    <div class="profile-section">
+      <div class="current-avatar">
+        @if (previewUrl()) {
+          <img [src]="previewUrl()" alt="Vista previa" class="avatar-preview" (error)="onImageError($event)">
+        }
+        @if (!previewUrl() && currentUser()?.profilePicture) {
+          <img [src]="getCorrectImageUrl(currentUser()?.profilePicture)" alt="Avatar" (error)="onImageError($event)">
+        }
+        @if (!previewUrl() && !currentUser()?.profilePicture) {
+          <div class="user-initials">
+            {{ getUserInitials() }}
+          </div>
+        }
+        @if (previewUrl()) {
+          <div class="preview-badge">
+            <span class="material-icons">check_circle</span>
+          </div>
+        }
+        @if (!previewUrl() && currentUser()?.profilePicture) {
+          <div class="profile-badge">
+            <span class="material-icons">photo_camera</span>
+          </div>
+        }
+      </div>
+
+      <div class="profile-info-container">
+        <!-- Profile Info - always visible -->
+        <div class="profile-info">
+          <h3>{{ currentUser()?.name && currentUser()?.surname ? (currentUser()?.name + ' ' + currentUser()?.surname) : (currentUser()?.name || currentUser()?.username || 'Usuario sin nombre') }}</h3>
+          <p>{{ currentUser()?.email || 'Sin email' }}</p>
+        </div>
+        
+        <!-- Inline Edit Form (appears in white space beside profile info) -->
+        @if (isEditingProfile()) {
+          <div class="inline-edit-form" [class.hiding]="isFormHiding()">
+            <div class="edit-fields-inline">
+               <input 
+                 type="text" 
+                 id="edit-name" 
+                 name="editName"
+                 [(ngModel)]="editName" 
+                 placeholder="Nombre"
+                 class="input-inline">
+               
+               <input 
+                 type="text" 
+                 id="edit-surname" 
+                 name="editSurname"
+                 [(ngModel)]="editSurname" 
+                 placeholder="Apellido"
+                 class="input-inline">
+               
+               <input 
+                 type="email" 
+                 id="edit-email" 
+                 name="editEmail"
+                 [(ngModel)]="editEmail" 
+                 placeholder="Correo"
+                 class="input-inline">
+              
+              <div class="btn-row">
+                <button class="btn-inline save" (click)="saveProfile()" [disabled]="isUpdatingProfile()" title="Guardar" aria-label="Guardar perfil">
+                  <span class="material-icons">check</span>
+                </button>
+                <button class="btn-inline cancel" (click)="cancelEditProfile()" [disabled]="isUpdatingProfile()" title="Cancelar" aria-label="Cancelar edición de perfil">
+                  <span class="material-icons">close</span>
+                </button>
+              </div>
+            </div>
+            @if (profileUpdateError()) {
+              <p class="error-message">
+                <span class="material-icons">error_outline</span>
+                {{ profileUpdateError() }}
+              </p>
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="upload-section">
+      <div class="action-buttons-row">
+        <label for="profile-picture" class="action-button upload-button">
+          <span class="material-icons">cloud_upload</span>
+          <span class="button-text">Subir Foto de Perfil</span>
+        </label>
+        <input
+          type="file"
+          id="profile-picture"
+          name="profilePicture"
+          accept="image/*"
+          (change)="onFileSelected($event)"
+          class="file-input">
+
+        <button class="action-button edit-button" (click)="startEditProfile()">
+          <span class="material-icons">edit</span>
+          <span class="button-text">Cambiar Nombre</span>
+        </button>
+      </div>
+
+      @if (selectedFile) {
+        <div class="upload-preview">
+          <img [src]="previewUrl()" alt="Vista previa" class="preview-thumbnail">
+          <div class="upload-info">
+            <span class="material-icons">image</span>
+            <span>{{ selectedFile.name }}</span>
+          </div>
+          <div class="upload-actions">
+            <button (click)="uploadProfilePicture()" class="confirm-btn">
+              <span class="material-icons">check</span>
+              <span>Confirmar</span>
+            </button>
+            <button (click)="clearPreview()" class="cancel-btn">
+              <span class="material-icons">close</span>
+              <span>Cancelar</span>
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+
+    <div class="settings-section">
+      <h2>Apariencia</h2>
+      <div class="settings-options">
+        <div class="setting-item">
+          <div class="setting-info">
+            <span class="material-icons setting-icon">dark_mode</span>
+            <div class="setting-text">
+              <h3>Modo Oscuro</h3>
+              <p>Activa el estilo Tech / Cyberpunk de la plataforma</p>
+            </div>
+          </div>
+          <label class="switch">
+            <input
+              type="checkbox"
+              id="dark-mode"
+              name="darkMode"
+              [checked]="isDarkTheme()"
+              (change)="onThemeChange($any($event.target).checked)"
+              title="Modo oscuro">
+            <span class="slider round"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <h2>Notificaciones</h2>
+      <div class="settings-options">
+        <div class="setting-item">
+          <div class="setting-info">
+            <span class="material-icons setting-icon">notifications</span>
+            <div class="setting-text">
+              <h3>Notificaciones Push</h3>
+              <p>Recibe notificaciones en tiempo real</p>
+            </div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="push-notifications" name="pushNotifications" [checked]="pushNotificationsEnabled()" (change)="onPushNotificationChange($any($event.target).checked)" title="Notificaciones push">
+            <span class="slider round"></span>
+          </label>
+        </div>
+        
+        <div class="setting-item">
+          <div class="setting-info">
+            <span class="material-icons setting-icon">email</span>
+            <div class="setting-text">
+              <h3>Notificaciones por Email</h3>
+              <p>Recibe actualizaciones por correo electrónico</p>
+            </div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="email-notifications" name="emailNotifications" [checked]="emailNotificationsEnabled()" (change)="onEmailNotificationChange($any($event.target).checked)" title="Notificaciones por email">
+            <span class="slider round"></span>
+          </label>
+        </div>
+        
+        <div class="setting-item">
+          <div class="setting-info">
+            <span class="material-icons setting-icon">message</span>
+            <div class="setting-text">
+              <h3>Mensajes</h3>
+              <p>Notificaciones de nuevos mensajes</p>
+            </div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="message-notifications" name="messageNotifications" [checked]="messageNotificationsEnabled()" (change)="onMessageNotificationChange($any($event.target).checked)" title="Notificaciones de mensajes">
+            <span class="slider round"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <h2>Seguridad</h2>
+      <div class="settings-options">
+        <div class="setting-item clickable" role="button" tabindex="0" aria-label="Cambiar contraseña" (click)="openChangePasswordModal()" (keydown.enter)="openChangePasswordModal()" (keydown.space)="openChangePasswordModal(); $event.preventDefault()">
+          <div class="setting-info">
+            <span class="material-icons setting-icon">lock</span>
+            <div class="setting-text">
+              <h3>Cambiar Contraseña</h3>
+              <p>Actualiza tu contraseña de acceso</p>
+            </div>
+          </div>
+          <span class="material-icons chevron">chevron_right</span>
+        </div>
+        
+        <div class="setting-item">
+          <div class="setting-info">
+            <span class="material-icons setting-icon">security</span>
+            <div class="setting-text">
+              <h3>Autenticación de Dos Factores</h3>
+              <p>Añade una capa extra de seguridad</p>
+            </div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="two-factor-auth" name="twoFactorAuth" title="Autenticación de dos factores"
+                   [checked]="twoFactorEnabled()" [disabled]="twoFactorBusy()" (change)="onToggleTwoFactor()">
+            <span class="slider round"></span>
+          </label>
+        </div>
+        
+        <div class="setting-item clickable" role="button" tabindex="0" aria-label="Ver sesiones activas" (click)="openActiveSessionsModal()" (keydown.enter)="openActiveSessionsModal()" (keydown.space)="openActiveSessionsModal(); $event.preventDefault()">
+          <div class="setting-info">
+            <span class="material-icons setting-icon">devices</span>
+            <div class="setting-text">
+              <h3>Sesiones Activas</h3>
+              <p>Gestiona tus dispositivos conectados</p>
+            </div>
+          </div>
+          <span class="material-icons chevron">chevron_right</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <h2>Privacidad</h2>
+      <div class="settings-options">
+        <div class="setting-item">
+          <div class="setting-info">
+            <span class="material-icons setting-icon">visibility</span>
+            <div class="setting-text">
+              <h3>Perfil Público</h3>
+              <p>Permite que otros usuarios te encuentren</p>
+            </div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="public-profile" name="publicProfile" checked title="Perfil público">
+            <span class="slider round"></span>
+          </label>
+        </div>
+        
+        <div class="setting-item clickable" [class.disabled]="downloadingData()" role="button" tabindex="0" aria-label="Descargar mis datos" (click)="!downloadingData() && downloadMyData()" (keydown.enter)="!downloadingData() && downloadMyData()" (keydown.space)="!downloadingData() && downloadMyData(); $event.preventDefault()">
+          <div class="setting-info">
+            <span class="material-icons setting-icon">{{ downloadingData() ? 'hourglass_empty' : 'download' }}</span>
+            <div class="setting-text">
+              <h3>Descargar mis Datos</h3>
+              <p>{{ downloadingData() ? 'Preparando tu exportación completa...' : 'Exporta una copia completa de tu información' }}</p>
+            </div>
+          </div>
+          <span class="material-icons chevron">chevron_right</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <h2>Ayuda</h2>
+      <div class="settings-options">
+        <div class="setting-item clickable" role="button" tabindex="0" aria-label="Ver preguntas frecuentes" (click)="openFaqModal()" (keydown.enter)="openFaqModal()" (keydown.space)="openFaqModal(); $event.preventDefault()">
+          <div class="setting-info">
+            <span class="material-icons setting-icon">help</span>
+            <div class="setting-text">
+              <h3>Preguntas Frecuentes</h3>
+              <p>Respuestas a dudas comunes</p>
+            </div>
+          </div>
+          <span class="material-icons chevron">chevron_right</span>
+        </div>
+        
+        <div class="setting-item clickable" role="button" tabindex="0" aria-label="Contactar soporte" (click)="openSupportModal()" (keydown.enter)="openSupportModal()" (keydown.space)="openSupportModal(); $event.preventDefault()">
+          <div class="setting-info">
+            <span class="material-icons setting-icon">support_agent</span>
+            <div class="setting-text">
+              <h3>Contactar Soporte</h3>
+              <p>Obtén ayuda del equipo técnico</p>
+            </div>
+          </div>
+          <span class="material-icons chevron">chevron_right</span>
+        </div>
+        
+        <div class="setting-item clickable" role="button" tabindex="0" aria-label="Enviar comentarios" (click)="sendFeedback()" (keydown.enter)="sendFeedback()" (keydown.space)="sendFeedback(); $event.preventDefault()">
+          <div class="setting-info">
+            <span class="material-icons setting-icon">feedback</span>
+            <div class="setting-text">
+              <h3>Enviar Comentarios</h3>
+              <p>Ayúdanos a mejorar la aplicación</p>
+            </div>
+          </div>
+          <span class="material-icons chevron">chevron_right</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <h2>Acerca de</h2>
+      <div class="about-card">
+        <div class="about-card-header">
+          <img src="/Logo Colegio.png" alt="Logo del Colegio Trinitario" class="about-logo">
+          <div class="about-header-text">
+            <h3>Notas Trinitario</h3>
+            <span class="about-version-badge">Versión 1.0.0</span>
+          </div>
+        </div>
+
+        <p class="about-description">
+          Plataforma de gestión académica del Colegio Trinitario: calificaciones, boletines,
+          reportes y comunicación entre estudiantes, docentes y familias.
+        </p>
+
+        <div class="about-contact">
+          <span class="material-icons about-contact-icon">mail</span>
+          <div class="about-contact-text">
+            <span class="about-contact-label">Contacto de soporte</span>
+            <a href="mailto:secretaria.trinitario@gmail.com">secretaria.trinitario&#64;gmail.com</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-options">
+        <div class="setting-item clickable" role="button" tabindex="0" aria-label="Ver Términos y Condiciones" (click)="openTerms()" (keydown.enter)="openTerms()" (keydown.space)="openTerms(); $event.preventDefault()">
+          <div class="setting-info">
+            <span class="material-icons setting-icon">description</span>
+            <div class="setting-text">
+              <h3>Términos y Condiciones</h3>
+              <p>Lee nuestros términos de uso</p>
+            </div>
+          </div>
+          <span class="material-icons chevron">chevron_right</span>
+        </div>
+        
+        <div class="setting-item clickable" role="button" tabindex="0" aria-label="Ver Política de Privacidad" (click)="openPrivacyPolicy()" (keydown.enter)="openPrivacyPolicy()" (keydown.space)="openPrivacyPolicy(); $event.preventDefault()">
+          <div class="setting-info">
+            <span class="material-icons setting-icon">privacy_tip</span>
+            <div class="setting-text">
+              <h3>Política de Privacidad</h3>
+              <p>Cómo protegemos tus datos</p>
+            </div>
+          </div>
+          <span class="material-icons chevron">chevron_right</span>
+        </div>
+
+        <div class="setting-item clickable" role="button" tabindex="0" aria-label="Ver Política de Cookies" (click)="openCookiesPolicy()" (keydown.enter)="openCookiesPolicy()" (keydown.space)="openCookiesPolicy(); $event.preventDefault()">
+          <div class="setting-info">
+            <span class="material-icons setting-icon">cookie</span>
+            <div class="setting-text">
+              <h3>Política de Cookies</h3>
+              <p>Qué guardamos en tu navegador</p>
+            </div>
+          </div>
+          <span class="material-icons chevron">chevron_right</span>
+        </div>
+
+        <div class="setting-item clickable" role="button" tabindex="0" aria-label="Ver Política de Reembolsos" (click)="openRefundPolicy()" (keydown.enter)="openRefundPolicy()" (keydown.space)="openRefundPolicy(); $event.preventDefault()">
+          <div class="setting-info">
+            <span class="material-icons setting-icon">receipt_long</span>
+            <div class="setting-text">
+              <h3>Política de Reembolsos</h3>
+              <p>Condiciones sobre pagos y reembolsos</p>
+            </div>
+          </div>
+          <span class="material-icons chevron">chevron_right</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <h2>Acciones de Cuenta</h2>
+
+      <div class="account-actions">
+        <button class="logout-btn" (click)="logout()">
+          <span class="material-icons">logout</span>
+          <span>Cerrar Sesión</span>
+        </button>
+      </div>
+    </div>
+  </div>

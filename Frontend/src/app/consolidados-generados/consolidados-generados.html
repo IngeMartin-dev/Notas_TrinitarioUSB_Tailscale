@@ -1,0 +1,79 @@
+<div class="cg-container">
+  <div class="page-header">
+    <button class="back-btn" (click)="volver()">
+      <span class="material-icons">arrow_back</span> Volver a Consolidado
+    </button>
+    <h2><span class="material-icons">folder_special</span> Consolidados Generados</h2>
+    <p class="page-subtitle">Consulta y descarga los consolidados de grado/salón ya generados, organizados por período y salón.</p>
+  </div>
+
+  <div class="cg-content">
+    <div class="content-header">
+      <div class="period-filter">
+        <label>Período:</label>
+        <select [(ngModel)]="selectedPeriod" (ngModelChange)="onPeriodFilterChange()">
+          <option [ngValue]="null">Todos</option>
+          @for (p of periodos; track p) {
+            <option [ngValue]="p">Período {{ p }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    @if (isLoading) {
+      <div class="loading-container">
+        <div class="loading-spinner"></div>
+        <p>Cargando consolidados...</p>
+      </div>
+    }
+
+    @if (!isLoading && errorMessage) {
+      <div class="error-banner">
+        <span class="material-icons">error_outline</span>
+        <p>{{ errorMessage }}</p>
+      </div>
+    }
+
+    @if (!isLoading && !errorMessage && consolidados.length === 0) {
+      <div class="empty-state">
+        <span class="material-icons">description</span>
+        <h3>Todavía no hay consolidados generados</h3>
+        <p>Cuando generes un consolidado de un grado y salón, quedará guardado y aparecerá aquí automáticamente.</p>
+      </div>
+    }
+
+    @if (!isLoading && !errorMessage && consolidados.length > 0) {
+      <div class="salon-groups">
+        @for (grupo of gruposPorSalon; track trackBySalon($index, grupo)) {
+          <div class="salon-group">
+            <h3 class="salon-group-title">
+              <span class="material-icons">groups</span>
+              {{ grupo.gradoLabel }} — {{ grupo.salonLabel }}
+            </h3>
+            <div class="consolidados-grid">
+              @for (c of grupo.items; track trackByFileName($index, c)) {
+                <div class="consolidado-card a11y-clickable" role="button" tabindex="0" aria-label="Descargar consolidado" (click)="descargar(c)" (keydown.enter)="descargar(c)" (keydown.space)="descargar(c); $event.preventDefault()">
+                  <div class="consolidado-icon">
+                    <span class="material-icons">picture_as_pdf</span>
+                  </div>
+                  <div class="consolidado-info">
+                    <h4>{{ c.displayName }}</h4>
+                    <span class="consolidado-period-badge">Período {{ c.period }}</span>
+                    <p class="consolidado-meta">{{ formatearFecha(c.generatedAt) }} · {{ formatearTamano(c.sizeBytes) }}</p>
+                  </div>
+                  <button class="download-btn" title="Descargar" [disabled]="descargando[c.fileName + c.period]">
+                    @if (descargando[c.fileName + c.period]) {
+                      <span class="material-icons spin">autorenew</span>
+                    } @else {
+                      <span class="material-icons">download</span>
+                    }
+                  </button>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>

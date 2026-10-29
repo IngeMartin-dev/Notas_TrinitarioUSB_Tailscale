@@ -1,0 +1,60 @@
+<div class="nf-root" [class.nf-connection]="isConnection">
+  <div class="nf-card">
+    <div class="nf-accent"></div>
+
+    <div class="nf-illustration" aria-hidden="true">
+      @if (isConnection) {
+        <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="100" cy="100" r="84" fill="var(--brand-50)"></circle>
+          <path d="M50 124 a50 50 0 0 1 100 0" stroke="var(--brand)" stroke-width="7" stroke-linecap="round"></path>
+          <path d="M68 124 a32 32 0 0 1 64 0" stroke="var(--brand)" stroke-width="7" stroke-linecap="round"></path>
+          <path d="M84 124 a16 16 0 0 1 32 0" stroke="var(--brand)" stroke-width="7" stroke-linecap="round"></path>
+          <circle cx="100" cy="140" r="6.5" fill="var(--brand)"></circle>
+          <line x1="54" y1="72" x2="146" y2="128" stroke="var(--danger)" stroke-width="7" stroke-linecap="round"></line>
+        </svg>
+      } @else {
+        <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="100" cy="100" r="84" fill="var(--brand-50)"></circle>
+          <path d="M72 70 h56 a8 8 0 0 1 8 8 v44 a8 8 0 0 1 -8 8 h-56 a8 8 0 0 1 -8 -8 v-44 a8 8 0 0 1 8 -8 z"
+                stroke="var(--brand)" stroke-width="7" stroke-linejoin="round"></path>
+          <line x1="78" y1="118" x2="122" y2="118" stroke="var(--brand)" stroke-width="7" stroke-linecap="round"></line>
+          <line x1="100" y1="86" x2="100" y2="104" stroke="var(--danger)" stroke-width="7" stroke-linecap="round"></line>
+          <circle cx="100" cy="112" r="3" fill="var(--danger)"></circle>
+        </svg>
+      }
+    </div>
+
+    @if (isConnection) {
+      <span class="nf-eyebrow">Error de conexión</span>
+      <h1 class="nf-title">Sin conexión con el servidor</h1>
+      <p class="nf-text">
+        No pudimos comunicarnos con el servidor de <strong>Notas Trinitario</strong>.
+        Verifica tu conexión a internet o que el servidor esté disponible e inténtalo de nuevo.
+      </p>
+      <div class="nf-status">
+        <span class="nf-dot"></span>
+        <span>Reconectando automáticamente…</span>
+      </div>
+    } @else {
+      <span class="nf-eyebrow">Error 404</span>
+      <h1 class="nf-title">Página no encontrada</h1>
+      <p class="nf-text">
+        La página que buscas no existe o fue movida.
+        Regresa al inicio para continuar usando la plataforma.
+      </p>
+    }
+
+    <div class="nf-actions">
+      <button class="btn btn-primary" (click)="retry()">
+        <span class="material-icons">refresh</span>
+        Reintentar
+      </button>
+      <button class="btn btn-outline" (click)="goHome()">
+        <span class="material-icons">home</span>
+        Ir al inicio
+      </button>
+    </div>
+  </div>
+
+  <p class="nf-footer">Notas Trinitario · Institución Educativa Trinitario</p>
+</div>

@@ -1,0 +1,615 @@
+.syc-container {
+  padding: 24px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.page-header { display: block; margin-bottom: 24px; }
+
+.page-header h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-1);
+  margin: 0 0 6px;
+}
+
+.page-header .material-icons { color: var(--brand); }
+
+.page-subtitle { color: var(--text-3); font-size: 0.9rem; margin: 0; }
+
+.syc-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg, 16px);
+  padding: 22px;
+  margin-bottom: 18px;
+  box-shadow: var(--shadow-xs);
+}
+
+.syc-card h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.05rem;
+  color: var(--text-1);
+  margin: 0 0 10px;
+}
+
+.syc-card h3 .material-icons { color: var(--brand); font-size: 20px; }
+
+.syc-danger-card h3 .material-icons { color: var(--danger); }
+
+.syc-hint {
+  font-size: 0.83rem;
+  color: var(--text-3);
+  line-height: 1.6;
+  margin: 0 0 14px;
+}
+
+.syc-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.syc-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.syc-field label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-3);
+}
+
+.syc-field input {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 12px;
+  color: var(--text-1);
+  font-size: 0.9rem;
+  min-width: 160px;
+}
+
+.syc-save-btn {
+  background: var(--brand);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.syc-save-btn:hover:not(:disabled) { background: var(--brand-600); }
+.syc-save-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.syc-message {
+  margin-top: 12px;
+  font-size: 0.83rem;
+  color: var(--brand);
+  font-weight: 600;
+}
+
+.syc-current-year {
+  margin-top: 10px;
+  font-size: 0.8rem;
+  color: var(--text-3);
+}
+
+.syc-danger-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--danger-bg);
+  color: var(--danger);
+  border: 1px solid rgba(217, 48, 37, 0.35);
+  border-radius: 10px;
+  padding: 10px 18px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.syc-danger-btn:hover:not(:disabled) { background: rgba(217, 48, 37, 0.2); }
+.syc-danger-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.syc-advance-btn, .syc-revert-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 10px;
+  padding: 10px 18px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  border: 1px solid var(--border);
+}
+
+.syc-advance-btn {
+  background: var(--success-bg);
+  color: var(--success);
+  border-color: rgba(30, 174, 92, 0.35);
+}
+
+.syc-revert-btn {
+  background: var(--warning-bg);
+  color: var(--warning);
+  border-color: rgba(245, 166, 35, 0.35);
+}
+
+.syc-advance-btn:disabled, .syc-revert-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.syc-organize-section {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.syc-organize-section h4 {
+  color: var(--text-1);
+  font-size: 0.95rem;
+  margin: 0 0 6px;
+}
+
+.syc-grade-group {
+  background: var(--surface-2);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+
+.syc-grade-group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  color: var(--text-1);
+  font-size: 0.88rem;
+}
+
+.syc-count-badge {
+  font-size: 0.75rem;
+  color: var(--text-3);
+  font-weight: 600;
+}
+
+.syc-student-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: 0.85rem;
+  color: var(--text-2);
+}
+
+.syc-salon-toggle {
+  display: flex;
+  gap: 6px;
+}
+
+.salon-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-3);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.salon-btn:disabled { opacity: .5; cursor: progress; }
+
+.salon-btn.active {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+}
+
+.syc-empty {
+  color: var(--text-3);
+  font-size: 0.85rem;
+  text-align: center;
+  padding: 10px 0;
+}
+
+.syc-users-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.syc-user-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--surface-2);
+  border-radius: 10px;
+  padding: 10px 14px;
+  flex-wrap: wrap;
+}
+
+.syc-user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.syc-user-info strong {
+  color: var(--text-1);
+  font-size: 0.88rem;
+}
+
+.syc-user-info span {
+  color: var(--text-3);
+  font-size: 0.75rem;
+}
+
+.syc-hijos-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.syc-hijo-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  font-size: 0.72rem;
+  padding: 3px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.syc-hijo-badge .material-icons {
+  font-size: 0.9rem;
+}
+
+.syc-hijo-badge--vacio {
+  color: var(--text-3);
+  font-style: italic;
+}
+
+.syc-hijo-badge--inactivo {
+  opacity: 0.6;
+}
+
+.syc-hijo-badge--inactivo em {
+  font-style: italic;
+}
+
+.syc-hijo-badge--rolorigen {
+  background: var(--brand-50, var(--surface));
+  color: var(--brand);
+  font-weight: 600;
+  border-color: transparent;
+}
+
+.syc-grado-salon-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 4px 0 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.syc-filtro-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.syc-filtro-chip .material-icons {
+  font-size: 0.95rem;
+}
+
+.syc-filtro-chip:hover {
+  border-color: var(--brand);
+  color: var(--brand);
+}
+
+.syc-filtro-chip.active {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+}
+
+.syc-user-row select {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 10px;
+  color: var(--text-1);
+  font-size: 0.8rem;
+}
+
+.syc-assign-btn {
+  background: var(--brand);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.syc-assign-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* Recuadro "Roles y permisos": pestañas Padres / Profesores / Administradores */
+.syc-role-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.syc-role-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-3);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.syc-role-tab:hover { color: var(--text-1); }
+
+.syc-role-tab.active {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+}
+
+.syc-role-tab .syc-count-badge {
+  background: rgba(255, 255, 255, 0.25);
+  color: #fff;
+}
+
+.syc-role-tab:not(.active) .syc-count-badge {
+  background: var(--surface);
+}
+
+.syc-role-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.syc-role-toggle-btn .material-icons { font-size: 1rem; }
+
+.syc-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.syc-modal {
+  background: var(--surface);
+  border-radius: 16px;
+  padding: 24px;
+  max-width: 440px;
+  width: 100%;
+  box-shadow: var(--shadow-lg);
+}
+
+.syc-modal h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--danger);
+  margin: 0 0 12px;
+}
+
+.syc-modal p {
+  color: var(--text-2);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  margin: 0 0 10px;
+}
+
+.syc-modal input {
+  width: 100%;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: var(--text-1);
+  font-size: 0.9rem;
+  margin-bottom: 16px;
+}
+
+.syc-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.syc-cancel-btn {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  border-radius: 8px;
+  padding: 9px 16px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+/* ── Pantalla completa: organizar salones tras adelantar año ── */
+.syc-fullscreen-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  z-index: 1200;
+  display: flex;
+  justify-content: center;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.syc-fullscreen {
+  background: var(--surface);
+  border-radius: 16px;
+  max-width: 900px;
+  width: 100%;
+  height: fit-content;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+}
+
+.syc-fullscreen-header {
+  padding: 24px 28px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.syc-fullscreen-header h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-1);
+  font-size: 1.3rem;
+  margin: 0 0 8px;
+}
+
+.syc-fullscreen-header h2 .material-icons {
+  color: var(--brand);
+}
+
+.syc-fullscreen-body {
+  padding: 20px 28px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.syc-fullscreen-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 28px;
+  border-top: 1px solid var(--border);
+}
+
+.syc-wizard-nav {
+  display: flex;
+  gap: 10px;
+}
+
+/* Indicador de progreso Grado 1 -> Grado 11 */
+.syc-wizard-progress {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0;
+}
+
+.syc-wizard-dot {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-3);
+}
+
+.syc-wizard-dot.done {
+  background: var(--success, #2e7d32);
+  border-color: var(--success, #2e7d32);
+  color: #fff;
+}
+
+.syc-wizard-dot.active {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+  transform: scale(1.15);
+}
+
+/* Formulario de alta de estudiantes nuevos (paso Grado 1) */
+.syc-new-student-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.syc-new-student-form input {
+  flex: 1 1 160px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+/* Crear administrador */
+.syc-new-admin-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 10px;
+  align-items: center;
+}
+.syc-new-admin-form input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid var(--syc-border, #cfd8dc);
+  border-radius: 8px;
+  font: inherit;
+  background: transparent;
+  color: inherit;
+}
+.syc-admin-pass { position: relative; }
+.syc-admin-pass input { padding-right: 42px; }
+.syc-admin-eye {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  color: inherit;
+  display: flex;
+  padding: 4px;
+}

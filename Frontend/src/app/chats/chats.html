@@ -1,0 +1,211 @@
+<div class="chats-page" [class.chat-open]="selectedChat">
+  <!-- Panel izquierdo: lista de conversaciones -->
+  <div class="chats-sidebar">
+    <div class="sidebar-header">
+      <h2><span class="material-icons">chat</span> Chats</h2>
+    </div>
+
+    <div class="search-container">
+      <div class="search-bar">
+        <span class="material-icons">search</span>
+        <input
+          type="text"
+          placeholder="Buscar profesor, director o administrador..."
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="onSearchChange()"
+        />
+      </div>
+    </div>
+
+    @if (isLoading) {
+      <div class="loading-container">
+        <div class="loading-spinner"></div>
+        <p>Cargando chats...</p>
+      </div>
+    }
+
+    @if (!isLoading && filteredChats.length > 0) {
+      <div class="chats-list">
+        @for (chat of filteredChats; track trackByChatId($index, chat)) {
+          <div
+            class="chat-item"
+            [class.active]="selectedChat?.id === chat.id"
+            [class.unread]="chat.unreadCount > 0"
+            (click)="selectChat(chat)">
+            <div class="chat-avatar">
+              @if (chat.profilePicture) {
+                <img
+                  [src]="getCorrectImageUrl(chat.profilePicture)"
+                  [alt]="chat.name + ' ' + chat.surname"
+                  class="avatar-image"
+                />
+              } @else {
+                <div class="avatar-initials">{{ getInitials(chat.name, chat.surname) }}</div>
+              }
+            </div>
+            <div class="chat-info">
+              <div class="chat-header-row">
+                <h3 class="chat-name">{{ chat.name }} {{ chat.surname }}</h3>
+                <span class="chat-time">{{ chat.lastMessageTime }}</span>
+              </div>
+              <div class="chat-preview">
+                <p class="last-message">{{ chat.lastMessage || 'Sin mensajes todavía' }}</p>
+                @if (chat.unreadCount > 0) {
+                  <span class="unread-badge">{{ chat.unreadCount > 99 ? '99+' : chat.unreadCount }}</span>
+                }
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    @if (!isLoading && filteredChats.length === 0) {
+      <div class="no-chats">
+        <span class="material-icons">chat_bubble_outline</span>
+        <h4>No hay contactos</h4>
+        <p>Aquí aparecen profesores, directores de grupo y administradores</p>
+      </div>
+    }
+  </div>
+
+  <!-- Panel derecho: conversación -->
+  <div class="conversation-panel">
+    @if (!selectedChat) {
+      <div class="no-chat-selected">
+        <span class="material-icons">forum</span>
+        <h3>Notas Trinitario Chat</h3>
+        <p>Selecciona una conversación para ver los mensajes</p>
+      </div>
+    }
+
+    @if (selectedChat) {
+      <div class="conversation-header">
+        <button class="icon-btn back-btn" aria-label="Volver" (click)="closeChat()">
+          <span class="material-icons">arrow_back</span>
+        </button>
+        <div class="chat-avatar">
+          @if (selectedChat.profilePicture) {
+            <img [src]="getCorrectImageUrl(selectedChat.profilePicture)" [alt]="selectedChat.name" class="avatar-image" />
+          } @else {
+            <div class="avatar-initials">{{ getInitials(selectedChat.name, selectedChat.surname) }}</div>
+          }
+        </div>
+        <div class="conversation-user-info">
+          <h3>{{ selectedChat.name }} {{ selectedChat.surname }}</h3>
+        </div>
+      </div>
+
+      <div class="messages-area" #messagesContainer>
+        @for (message of selectedChatMessages; track trackByMessageId($index, message)) {
+          @if (shouldShowDateDivider($index)) {
+            <div class="message-date-divider"><span>{{ getMessageDate(message.createdAt) }}</span></div>
+          }
+          <div class="message-bubble" [class.sent]="message.isFromMe" [class.received]="!message.isFromMe">
+            @if (!message.isFromMe) {
+              <div class="message-sender">{{ message.senderName }}</div>
+            }
+
+            @if (message.type === 'TEXT') {
+              <p class="message-text">{{ message.content }}</p>
+            }
+            @if (message.type === 'STICKER') {
+              <div class="message-sticker">{{ message.content }}</div>
+            }
+            @if (message.type === 'GIF') {
+              <img class="message-gif" [src]="message.content" alt="GIF" loading="lazy" />
+            }
+            @if (message.type === 'IMAGE') {
+              <a [href]="getCorrectImageUrl(message.fileUrl)" target="_blank" rel="noopener">
+                <img class="message-image" [src]="getCorrectImageUrl(message.fileUrl)" alt="Imagen adjunta" loading="lazy" />
+              </a>
+            }
+            @if (message.type === 'FILE') {
+              <a class="message-file" [href]="getCorrectImageUrl(message.fileUrl)" target="_blank" rel="noopener">
+                <span class="material-icons">description</span>
+                <span class="message-file-name">{{ message.fileName }}</span>
+                <span class="material-icons">download</span>
+              </a>
+            }
+
+            <div class="message-time">
+              {{ formatMessageTime(message.createdAt) }}
+              @if (message.isFromMe) {
+                <span class="material-icons read-check" [class.read]="message.read">done_all</span>
+              }
+            </div>
+          </div>
+        }
+        @if (selectedChatMessages.length === 0) {
+          <div class="no-chats">
+            <span class="material-icons">chat</span>
+            <h4>Inicia la conversación</h4>
+            <p>Envía un mensaje para comenzar</p>
+          </div>
+        }
+      </div>
+
+      <!-- Selector de stickers -->
+      @if (showStickerPicker) {
+        <div class="picker-panel sticker-picker">
+          @for (emoji of stickerPack; track emoji) {
+            <button class="sticker-option" (click)="sendSticker(emoji)">{{ emoji }}</button>
+          }
+        </div>
+      }
+
+      <!-- Selector de GIFs -->
+      @if (showGifPicker) {
+        <div class="picker-panel gif-picker">
+          @if (!tenorConfigured) {
+            <p class="gif-picker-hint">
+              El buscador de GIFs necesita una API key de Tenor configurada en <code>chats.ts</code>.
+              Mientras tanto, puedes adjuntar un GIF ya descargado con el botón de clip 📎.
+            </p>
+          } @else {
+            <div class="gif-search-bar">
+              <input type="text" placeholder="Buscar GIF..." [(ngModel)]="gifSearchTerm" (keyup.enter)="searchGifs()" />
+              <button class="icon-btn" aria-label="Buscar GIF" (click)="searchGifs()"><span class="material-icons">search</span></button>
+            </div>
+            @if (gifLoading) {
+              <div class="loading-spinner small"></div>
+            }
+            <div class="gif-results">
+              @for (gif of gifResults; track gif.id) {
+                <img class="gif-thumb" [src]="gif.preview" (click)="sendGif(gif.url)" alt="GIF" />
+              }
+            </div>
+          }
+        </div>
+      }
+
+      <div class="message-input-area">
+        <input #fileInput type="file" hidden (change)="onFileSelected($event)" />
+        <button class="icon-btn" title="Adjuntar archivo o imagen" aria-label="Adjuntar archivo o imagen" (click)="openFilePicker()" [disabled]="uploadingAttachment">
+          <span class="material-icons">attach_file</span>
+        </button>
+        <button class="icon-btn" title="Sticker" aria-label="Elegir sticker" (click)="toggleStickerPicker()">
+          <span class="material-icons">mood</span>
+        </button>
+        <button class="icon-btn" title="GIF" aria-label="Elegir GIF" (click)="toggleGifPicker()">
+          <span class="material-icons">gif</span>
+        </button>
+        <input
+          type="text"
+          class="message-input"
+          placeholder="Escribe un mensaje..."
+          autocomplete="off"
+          [(ngModel)]="newMessage"
+          (keyup.enter)="sendMessage()"
+          aria-label="Escribir mensaje"
+        />
+        <button class="send-btn" [disabled]="!newMessage.trim()" (click)="sendMessage()" title="Enviar">
+          <span class="material-icons">send</span>
+        </button>
+      </div>
+      @if (uploadingAttachment) {
+        <div class="uploading-hint">Enviando adjunto...</div>
+      }
+    }
+  </div>
+</div>

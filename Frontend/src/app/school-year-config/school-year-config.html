@@ -1,0 +1,369 @@
+<div class="syc-container">
+  <div class="page-header">
+    <h2><span class="material-icons">event_repeat</span> Configuración de Año</h2>
+    <p class="page-subtitle">Fin de año escolar, adelantar/retroceder año, nota mínima y usuarios sin rol.</p>
+  </div>
+
+  <!-- Fecha de finalización del año escolar -->
+  <div class="syc-card">
+    <h3><span class="material-icons">event_busy</span> Fecha de finalización del año escolar</h3>
+    <p class="syc-hint">
+      El día que llegue esta fecha se borrará toda la información del año (notas, boletines,
+      recuperaciones, chats, períodos). <strong>Los estudiantes, su documento de identidad y sus
+      padres de familia enlazados se conservan siempre.</strong>
+    </p>
+    <div class="syc-row">
+      <div class="syc-field">
+        <label>Fecha de fin de año</label>
+        <input type="date" [(ngModel)]="editYearEndDate">
+      </div>
+      <div class="syc-field">
+        <label>Nota mínima para aprobar (0 - 5)</label>
+        <input type="number" step="0.1" min="0" max="5" [(ngModel)]="editMinPassingGrade">
+      </div>
+      <button class="syc-save-btn" [disabled]="savingConfig" (click)="saveConfig()">
+        @if (savingConfig) { Guardando... } @else { Guardar }
+      </button>
+    </div>
+    @if (configMessage) {
+      <p class="syc-message">{{ configMessage }}</p>
+    }
+    @if (config?.currentAcademicYear) {
+      <p class="syc-current-year">Año académico actual: <strong>{{ config?.currentAcademicYear }}</strong></p>
+    }
+  </div>
+
+  <!-- Borrado manual inmediato -->
+  <div class="syc-card syc-danger-card">
+    <h3><span class="material-icons">delete_forever</span> Cerrar año ahora</h3>
+    <p class="syc-hint">
+      Borra de inmediato toda la información del año escolar actual (no espera a la fecha configurada
+      arriba). Esta acción <strong>no se puede deshacer</strong>.
+    </p>
+    <button class="syc-danger-btn" (click)="openWipeConfirm()">
+      <span class="material-icons">warning</span> Cerrar año y borrar información
+    </button>
+    @if (wipeMessage) {
+      <p class="syc-message">{{ wipeMessage }}</p>
+    }
+  </div>
+
+  <!-- Adelantar / retroceder año -->
+  <div class="syc-card">
+    <h3><span class="material-icons">swap_vert</span> Adelantar / retroceder año</h3>
+    <p class="syc-hint">
+      Adelantar sube un grado a todos los estudiantes activos (Grado 11º pasa a Promociones, donde sus boletines se guardan 5 años) y borra todas las notas, los boletines y consolidados generados y los porcentajes de calificaciones (Promociones se conserva).
+      Retroceder deshace el último adelanto.
+    </p>
+    <div class="syc-row">
+      <button class="syc-advance-btn" [disabled]="advancing" (click)="advanceYear()">
+        <span class="material-icons">arrow_upward</span>
+        @if (advancing) { Adelantando... } @else { Adelantar año }
+      </button>
+      <button class="syc-revert-btn" [disabled]="reverting" (click)="revertYear()">
+        <span class="material-icons">arrow_downward</span>
+        @if (reverting) { Retrocediendo... } @else { Retroceder año }
+      </button>
+    </div>
+    @if (advanceMessage) {
+      <p class="syc-message">{{ advanceMessage }}</p>
+    }
+  </div>
+
+  <!-- Crear administrador -->
+  <div class="syc-card">
+    <h3><span class="material-icons">verified_user</span> Crear administrador</h3>
+    <p class="syc-hint">
+      Crea una cuenta nueva con rol de Administrador. Podrá entrar de inmediato con el usuario y la
+      contraseña que escribas aquí (mínimo 8 caracteres).
+    </p>
+    <div class="syc-new-admin-form">
+      <input type="text" placeholder="Nombre" [(ngModel)]="newAdminForm.name" autocomplete="off">
+      <input type="text" placeholder="Apellido" [(ngModel)]="newAdminForm.surname" autocomplete="off">
+      <input type="text" placeholder="Usuario" [(ngModel)]="newAdminForm.username" autocomplete="off">
+      <input type="email" placeholder="Correo" [(ngModel)]="newAdminForm.email" autocomplete="off">
+      <div class="syc-admin-pass">
+        <input [type]="showAdminPassword ? 'text' : 'password'" placeholder="Contraseña (mín. 8)"
+               [(ngModel)]="newAdminForm.password" autocomplete="new-password">
+        <button type="button" class="syc-admin-eye" (click)="showAdminPassword = !showAdminPassword"
+                [attr.aria-label]="showAdminPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'">
+          <span class="material-icons">{{ showAdminPassword ? 'visibility_off' : 'visibility' }}</span>
+        </button>
+      </div>
+      <button class="syc-save-btn" [disabled]="creatingAdmin" (click)="crearAdministrador()">
+        <span class="material-icons">person_add</span>
+        @if (creatingAdmin) { Creando... } @else { Crear administrador }
+      </button>
+    </div>
+    @if (adminMessage) {
+      <p class="syc-message" [style.color]="adminMessageError ? '#c62828' : null">{{ adminMessage }}</p>
+    }
+  </div>
+
+  <!-- Roles y permisos: todos los usuarios, por pestaña, sumar rol Admin -->
+  <div class="syc-card">
+    <h3><span class="material-icons">admin_panel_settings</span> Roles y permisos</h3>
+    <p class="syc-hint">
+      Todos los usuarios, agrupados por su rol. Desde Padres o Profesores puedes sumarle el rol de
+      Administrador a alguien sin quitarle el que ya tiene. La pestaña Administradores reúne a
+      TODOS los que hoy tienen privilegios de Admin (los que ya lo tienen de por sí, más los que se
+      les sumó desde Padres o Profesores), con la opción de quitárselo.
+    </p>
+
+    <div class="syc-role-tabs">
+      <button type="button" class="syc-role-tab" [class.active]="activeRoleTab === 'PARENT'" (click)="setRoleTab('PARENT')">
+        Padres <span class="syc-count-badge">{{ countPorRol('PARENT') }}</span>
+      </button>
+      <button type="button" class="syc-role-tab" [class.active]="activeRoleTab === 'TEACHER'" (click)="setRoleTab('TEACHER')">
+        Profesores <span class="syc-count-badge">{{ countPorRol('TEACHER') }}</span>
+      </button>
+      <button type="button" class="syc-role-tab" [class.active]="activeRoleTab === 'ADMIN'" (click)="setRoleTab('ADMIN')">
+        Administradores <span class="syc-count-badge">{{ countPorRol('ADMIN') }}</span>
+      </button>
+    </div>
+
+    @if (activeRoleTab === 'PARENT' && gradosSalonesConPadres.length > 0) {
+      <div class="syc-grado-salon-filtros">
+        <button type="button" class="syc-filtro-chip" [class.active]="selectedParentGradoSalon === null"
+                (click)="selectGradoSalonFiltro(null)">
+          Todos
+        </button>
+        @for (gs of gradosSalonesConPadres; track gs) {
+          <button type="button" class="syc-filtro-chip" [class.active]="selectedParentGradoSalon === gs"
+                  (click)="selectGradoSalonFiltro(gs)">
+            <span class="material-icons">meeting_room</span> {{ gs }}
+          </button>
+        }
+      </div>
+    }
+
+    @if (loadingGestion) {
+      <p class="syc-hint">Cargando...</p>
+    }
+
+    @if (!loadingGestion && usuariosDeLaPestanaActiva.length === 0) {
+      <p class="syc-empty">
+        @if (activeRoleTab === 'PARENT' && selectedParentGradoSalon) {
+          Ningún padre tiene un estudiante en {{ selectedParentGradoSalon }}.
+        } @else {
+          No hay usuarios en esta pestaña.
+        }
+      </p>
+    }
+
+    @if (!loadingGestion && usuariosDeLaPestanaActiva.length > 0) {
+      <div class="syc-users-list">
+        @for (user of usuariosDeLaPestanaActiva; track user.id) {
+          <div class="syc-user-row">
+            <div class="syc-user-info">
+              <strong>{{ user.name }} {{ user.surname }}</strong>
+              <span>{{ user.username }} · {{ user.email }}</span>
+              @if (activeRoleTab === 'ADMIN' && user.roleName !== 'ADMIN') {
+                <span class="syc-hijo-badge syc-hijo-badge--rolorigen">
+                  Rol principal: {{ user.roleName === 'TEACHER' ? 'Profesor' : 'Padre de familia' }}
+                </span>
+              }
+              @if (user.roleName === 'PARENT') {
+                <div class="syc-hijos-badges">
+                  @if (user.hijos.length === 0) {
+                    <span class="syc-hijo-badge syc-hijo-badge--vacio">Sin estudiantes vinculados</span>
+                  }
+                  @for (hijo of user.hijos; track hijo.studentId) {
+                    <span class="syc-hijo-badge" [class.syc-hijo-badge--inactivo]="!hijo.active">
+                      <span class="material-icons">school</span>
+                      {{ hijo.name }} {{ hijo.surname }} · {{ hijo.grade }}{{ hijo.classroom ? ' - ' + hijo.classroom : '' }}
+                      @if (!hijo.active) { <em>(inactivo)</em> }
+                    </span>
+                  }
+                </div>
+              }
+            </div>
+            @if (user.roleName === 'ADMIN') {
+              <span class="syc-count-badge">Administrador</span>
+            } @else if (user.additionalAdmin) {
+              <button class="syc-danger-btn syc-role-toggle-btn" [disabled]="togglingAdminExtra[user.id]"
+                      (click)="toggleAdminExtra(user)">
+                <span class="material-icons">remove_moderator</span>
+                @if (togglingAdminExtra[user.id]) { ... } @else { Quitar rol de Admin }
+              </button>
+            } @else {
+              <button class="syc-assign-btn syc-role-toggle-btn" [disabled]="togglingAdminExtra[user.id]"
+                      (click)="toggleAdminExtra(user)">
+                <span class="material-icons">add_moderator</span>
+                @if (togglingAdminExtra[user.id]) { ... } @else { Dar rol de Admin }
+              </button>
+            }
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Usuarios sin rol -->
+  <div class="syc-card">
+    <h3><span class="material-icons">person_add</span> Usuarios sin rol</h3>
+    <p class="syc-hint">Cuentas creadas que todavía no tienen un rol asignado.</p>
+
+    @if (loadingUsuarios) {
+      <p class="syc-hint">Cargando...</p>
+    }
+
+    @if (!loadingUsuarios && usuariosSinRol.length === 0) {
+      <p class="syc-empty">No hay usuarios sin rol.</p>
+    }
+
+    @if (!loadingUsuarios && usuariosSinRol.length > 0) {
+      <div class="syc-users-list">
+        @for (user of usuariosSinRol; track user.id) {
+          <div class="syc-user-row">
+            <div class="syc-user-info">
+              <strong>{{ user.name }} {{ user.surname }}</strong>
+              <span>{{ user.username }} · {{ user.email }}</span>
+            </div>
+            <select [(ngModel)]="selectedRoleByUser[user.id]">
+              <option [ngValue]="null">Selecciona un rol...</option>
+              @for (role of roles; track role.id) {
+                <option [ngValue]="role.id">{{ role.name }}</option>
+              }
+            </select>
+            <button class="syc-assign-btn" [disabled]="!selectedRoleByUser[user.id] || assigningUser[user.id]"
+                    (click)="asignarRol(user)">
+              @if (assigningUser[user.id]) { ... } @else { Asignar }
+            </button>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>
+
+<!-- Modal de confirmación de borrado -->
+@if (showWipeConfirm) {
+  <div class="syc-modal-overlay" (click)="closeWipeConfirm()">
+    <div class="syc-modal" (click)="$event.stopPropagation()">
+      <h3><span class="material-icons">warning</span> Confirmar borrado del año escolar</h3>
+      <p>
+        Esta acción borrará permanentemente notas, boletines, recuperaciones, chats, porcentajes de calificaciones, objetivos de boletines y períodos del año
+        actual. Los estudiantes, su documento de identidad, sus padres de familia y la sección Promociones se conservarán.
+        Esta acción <strong>no se puede deshacer</strong>.
+      </p>
+      <p>Escribe <strong>BORRAR</strong> para confirmar:</p>
+      <input type="text" [(ngModel)]="wipeConfirmText" placeholder="BORRAR">
+      <div class="syc-modal-actions">
+        <button class="syc-cancel-btn" (click)="closeWipeConfirm()">Cancelar</button>
+        <button class="syc-danger-btn" [disabled]="wipeConfirmText.trim().toUpperCase() !== 'BORRAR' || wiping"
+                (click)="confirmWipe()">
+          @if (wiping) { Borrando... } @else { Borrar definitivamente }
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Asistente paso a paso: organizar salones de Grado 1º a Grado 11º -->
+@if (pendientes.length > 0 || newStudentsGrade1.length > 0) {
+  <div class="syc-fullscreen-overlay">
+    <div class="syc-fullscreen">
+      <div class="syc-fullscreen-header">
+        <h2><span class="material-icons">groups</span> Organizar Grado {{ currentWizardGradeNumber }}º</h2>
+        <div class="syc-wizard-progress">
+          @for (g of wizardGradeNumbers; track g) {
+            <span class="syc-wizard-dot" [class.active]="g === currentWizardGradeNumber" [class.done]="g < currentWizardGradeNumber">{{ g }}</span>
+          }
+        </div>
+        @if (currentWizardGradeNumber === 1) {
+          <p class="syc-hint">Grado 1º no recibe estudiantes promovidos: registra aquí a los estudiantes NUEVOS que ingresan este año y asígnalos a su salón.</p>
+        } @else {
+          <p class="syc-hint">
+            Pulsa A o B junto a cada estudiante: pasa al instante a ese salón.
+            Los que no marques quedarán pendientes y volverán a aparecer aquí.
+          </p>
+        }
+      </div>
+
+      <div class="syc-fullscreen-body">
+        @if (currentWizardGradeNumber === 1) {
+          <!-- Paso especial: alta de estudiantes nuevos de Grado 1. La lista
+               va PRIMERO y crece hacia abajo; el formulario + botón "Agregar"
+               quedan siempre al final, debajo del último estudiante añadido. -->
+          @if (newStudentsGrade1.length === 0) {
+            <p class="syc-empty">Todavía no has agregado estudiantes nuevos a Grado 1º.</p>
+          } @else {
+            <div class="syc-grade-group">
+              <div class="syc-grade-group-header">
+                <strong>Grado 1º — nuevos ingresos</strong>
+                <span class="syc-count-badge">
+                  A: {{ countNuevosPorSalon('A') }} · B: {{ countNuevosPorSalon('B') }}
+                </span>
+              </div>
+              @for (est of newStudentsGrade1; track est.documentNumber) {
+                <div class="syc-student-row">
+                  <span class="syc-student-name">{{ est.surname }} {{ est.name }}</span>
+                  <span class="syc-count-badge">Salón {{ est.classGroup }}</span>
+                </div>
+              }
+            </div>
+          }
+
+          <div class="syc-new-student-form">
+            <input type="text" placeholder="Nombre" [(ngModel)]="newStudentForm.name">
+            <input type="text" placeholder="Apellido" [(ngModel)]="newStudentForm.surname">
+            <input type="text" placeholder="Documento de identidad" [(ngModel)]="newStudentForm.documentNumber">
+            <div class="syc-salon-toggle">
+              <button type="button" class="salon-btn" [class.active]="newStudentForm.classGroup === 'A'" (click)="newStudentForm.classGroup = 'A'">A</button>
+              <button type="button" class="salon-btn" [class.active]="newStudentForm.classGroup === 'B'" (click)="newStudentForm.classGroup = 'B'">B</button>
+            </div>
+            <button class="syc-save-btn" [disabled]="addingStudent" (click)="agregarEstudianteNuevo()">
+              <span class="material-icons">person_add</span>
+              @if (addingStudent) { Agregando... } @else { Agregar }
+            </button>
+          </div>
+          @if (addStudentError) {
+            <p class="syc-message">{{ addStudentError }}</p>
+          }
+        } @else {
+          <!-- Pasos Grado 2 a 11: organizar promovidos -->
+          @if (pendientesDelPasoActual.length === 0) {
+            <p class="syc-empty">No hay estudiantes pendientes de organizar en Grado {{ currentWizardGradeNumber }}º.</p>
+          } @else {
+            <div class="syc-grade-group">
+              <div class="syc-grade-group-header">
+                <strong>Grado {{ currentWizardGradeNumber }}º</strong>
+                <span class="syc-count-badge">A: {{ countAsignadosPaso('A') }} · B: {{ countAsignadosPaso('B') }}</span>
+              </div>
+              @for (est of pendientesDelPasoActual; track est.studentId) {
+                <div class="syc-student-row">
+                  <span class="syc-student-name">{{ est.surname }} {{ est.name }}</span>
+                  <div class="syc-salon-toggle">
+                    <button type="button" class="salon-btn" [class.active]="asignaciones[est.studentId] === 'A'"
+                            (click)="toggleAsignacion(est.studentId, 'A')">A</button>
+                    <button type="button" class="salon-btn" [class.active]="asignaciones[est.studentId] === 'B'"
+                            (click)="toggleAsignacion(est.studentId, 'B')">B</button>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        }
+      </div>
+
+      <div class="syc-fullscreen-footer">
+        <button class="syc-cancel-btn" (click)="cerrarOrganizacionPorAhora()">Continuar después</button>
+        <div class="syc-wizard-nav">
+          <button class="syc-cancel-btn" [disabled]="isFirstWizardStep" (click)="pasoAnteriorWizard()">
+            <span class="material-icons">arrow_back</span> Anterior
+          </button>
+          <button class="syc-save-btn" (click)="siguientePasoWizard()">
+            @if (savingClassrooms) {
+              Guardando...
+            } @else if (isLastWizardStep) {
+              <span class="material-icons">check</span> Finalizar
+            } @else {
+              Siguiente <span class="material-icons">arrow_forward</span>
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

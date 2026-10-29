@@ -1,0 +1,62 @@
+<div class="mb-container">
+  <div class="page-header">
+    <h2><span class="material-icons">description</span> Mis Boletines</h2>
+    <p class="page-subtitle">Boletines generados de tu(s) hijo(a)(s). Se actualiza automáticamente.</p>
+  </div>
+
+  @if (isLoading) {
+    <div class="loading-container">
+      <div class="loading-spinner"></div>
+      <p>Cargando boletines...</p>
+    </div>
+  }
+
+  @if (!isLoading && errorMessage) {
+    <div class="error-banner">
+      <span class="material-icons">error_outline</span>
+      <p>{{ errorMessage }}</p>
+    </div>
+  }
+
+  @if (!isLoading && !errorMessage && grupos.length === 0) {
+    <div class="empty-state">
+      <span class="material-icons">folder_open</span>
+      <h3>Todavía no hay boletines disponibles</h3>
+      <p>
+        Cuando el colegio genere el boletín de tu hijo(a), aparecerá aquí automáticamente.
+        Si tu hijo(a) está marcado como inactivo, sus boletines no se mostrarán hasta que sea reactivado.
+      </p>
+    </div>
+  }
+
+  @if (!isLoading && grupos.length > 0) {
+    @for (grupo of grupos; track trackByStudent($index, grupo)) {
+      <div class="student-group">
+        <div class="student-group-header">
+          <span class="material-icons">person</span>
+          <div>
+            <h3>{{ grupo.studentName }}</h3>
+            <span class="student-meta">{{ grupo.grade }} · {{ grupo.classroom }}</span>
+          </div>
+        </div>
+
+        <div class="boletines-grid">
+          @for (b of grupo.boletines; track trackByPeriod($index, b)) {
+            <div class="boletin-card a11y-clickable" role="button" tabindex="0" aria-label="Descargar boletín" (click)="descargar(b)" (keydown.enter)="descargar(b)" (keydown.space)="descargar(b); $event.preventDefault()">
+              <div class="boletin-icon">
+                <span class="material-icons">picture_as_pdf</span>
+              </div>
+              <div class="boletin-info">
+                <h4>Período {{ b.period }}</h4>
+                <p class="boletin-meta">{{ formatearFecha(b.generatedAt) }}</p>
+              </div>
+              <button class="download-btn" title="Descargar" aria-label="Descargar boletín" [disabled]="descargando[grupo.studentId + '-' + b.period]">
+                <span class="material-icons">{{ descargando[grupo.studentId + '-' + b.period] ? 'hourglass_empty' : 'download' }}</span>
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  }
+</div>

@@ -1,0 +1,161 @@
+<div class="periods-container">
+  <div class="header">
+    <button class="back-btn" aria-label="Volver" (click)="goBack()">
+      <span class="material-icons">arrow_back</span>
+    </button>
+    <h1>Gestión de Períodos</h1>
+  </div>
+
+  @if (loading()) {
+    <div class="loading">
+      <span class="material-icons">hourglass_empty</span>
+      <p>Cargando períodos...</p>
+    </div>
+  } @else {
+    <div class="info-box">
+      <span class="material-icons">info</span>
+      <p>Aquí puedes bloquear o desbloquear los períodos académicos. También puedes programar fechas automáticas para el bloqueo y desbloqueo de cada período.</p>
+    </div>
+
+    @if (successMessage()) {
+      <div class="success-message">
+        <span class="material-icons">check_circle</span>
+        {{ successMessage() }}
+      </div>
+    }
+
+    @if (errorMessage()) {
+      <div class="error-message">
+        <span class="material-icons">error</span>
+        {{ errorMessage() }}
+      </div>
+    }
+
+    <div class="periods-grid">
+      @for (period of periods(); track period.id) {
+        <div class="period-card" [class.locked]="!period.isUnlocked" [class.unlocked]="period.isUnlocked">
+          <div class="period-header">
+            <span class="period-number">Período {{ period.periodNumber }}</span>
+            <span class="status-icon">
+              <span class="material-icons">{{ period.isUnlocked ? 'lock_open' : 'lock' }}</span>
+            </span>
+          </div>
+          
+          <div class="period-status">
+            <span class="status-badge" [class.active]="period.isUnlocked">
+              {{ getStatusText(period.isUnlocked) }}
+            </span>
+            @if (period.isAutomatic) {
+              <span class="status-badge automatic">Automático</span>
+            }
+          </div>
+
+          <div class="period-info">
+            <div class="info-row">
+              <span class="label">
+                <span class="material-icons">lock_open</span>
+                Desbloqueo
+              </span>
+              <span class="value">{{ formatDisplayDate(period.unlockDate) }}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">
+                <span class="material-icons">lock</span>
+                Bloqueo
+              </span>
+              <span class="value">{{ formatDisplayDate(period.lockDate) }}</span>
+            </div>
+          </div>
+
+          <div class="period-actions">
+            <button class="btn-toggle" (click)="togglePeriod(period.periodNumber, period.isUnlocked)" [disabled]="saving()">
+              <span class="material-icons">{{ period.isUnlocked ? 'lock' : 'lock_open' }}</span>
+              {{ period.isUnlocked ? 'Bloquear' : 'Desbloquear' }}
+            </button>
+            <button class="btn-schedule" (click)="openScheduleModal(period)">
+              <span class="material-icons">schedule</span>
+              Programar
+            </button>
+          </div>
+
+          <div class="period-description">
+            <p>{{ period.description || 'Período académico ' + period.periodNumber }}</p>
+          </div>
+        </div>
+      }
+    </div>
+
+    @if (!isAdmin()) {
+      <div class="admin-notice">
+        <span class="material-icons">warning</span>
+        <p>Solo los administradores pueden modificar los períodos.</p>
+      </div>
+    }
+  }
+
+  @if (editingPeriod()) {
+    <div class="modal-overlay" (click)="closeScheduleModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>Programar Período {{ editingPeriod()?.periodNumber }}</h2>
+          <button class="close-btn" aria-label="Cerrar" (click)="closeScheduleModal()">
+            <span class="material-icons">close</span>
+          </button>
+        </div>
+        
+        <div class="modal-body">
+          <div class="form-group">
+            <label>
+              <span class="material-icons">lock_open</span>
+              Fecha y hora de desbloqueo
+            </label>
+            <input 
+              type="datetime-local" 
+              id="unlockDate" 
+              name="unlockDate"
+              autocomplete="off"
+              title="Seleccionar fecha y hora de desbloqueo" 
+              [ngModel]="unlockDateTemp()" 
+              (ngModelChange)="unlockDateTemp.set($event)"
+              class="form-input" 
+              placeholder="Seleccionar fecha y hora"
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="lockDate">
+              <span class="material-icons">lock</span>
+              Fecha y hora de bloqueo
+            </label>
+            <input 
+              type="datetime-local" 
+              id="lockDate" 
+              name="lockDate"
+              autocomplete="off"
+              title="Seleccionar fecha y hora de bloqueo" 
+              [ngModel]="lockDateTemp()" 
+              (ngModelChange)="lockDateTemp.set($event)"
+              class="form-input" 
+              placeholder="Seleccionar fecha y hora"
+            >
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-cancel" (click)="closeScheduleModal()">
+            <span class="material-icons">close</span>
+            Cancelar
+          </button>
+          <button class="btn-save" (click)="saveSchedule()" [disabled]="saving()">
+            @if (saving()) {
+              <span class="material-icons">hourglass_empty</span>
+            } @else {
+              <span class="material-icons">save</span>
+            }
+            Guardar
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

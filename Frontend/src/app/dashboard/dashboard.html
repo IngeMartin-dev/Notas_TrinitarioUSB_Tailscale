@@ -1,0 +1,597 @@
+<div class="dashboard-content">
+  <!-- Custom Notification System -->
+  @if (showNotification) {
+    <div class="notification-overlay" (click)="hideNotification()">
+      <div class="notification-content" [class.notification-success]="notificationType === 'success'" [class.notification-error]="notificationType === 'error'" (click)="$event.stopPropagation()">
+        <div class="notification-icon">
+          @if (notificationType === 'success') {
+            <svg class="checkmark" viewBox="0 0 52 52">
+              <path class="checkmark__check" fill="none" d="m14.1 27.2l7.1 7.2 16.7-16.8"/>
+            </svg>
+          }
+          @if (notificationType === 'error') {
+            <svg class="error-mark" viewBox="0 0 52 52">
+              <path class="error-mark__x" fill="none" d="M16 16l20 20M36 16L16 36"/>
+            </svg>
+          }
+        </div>
+        <div class="notification-body">
+          <div class="notification-title">{{ notificationType === 'success' ? '¡Cambio efectivo!' : '¡Error!' }}</div>
+          <div class="notification-message">
+            {{ notificationMessage }}
+          </div>
+        </div>
+        <button class="notification-close" (click)="hideNotification()">✕</button>
+      </div>
+    </div>
+  }
+
+  <!-- User Profile Section -->
+  <div class="user-profile-section">
+    <!-- Greeting - outside the profile card -->
+    <div class="profile-greeting">
+      <h1 class="greeting-text">
+        @for (letter of greetingLetters; track $index) {
+          <span class="greeting-letter">{{ letter }}</span>
+        }
+      </h1>
+    </div>
+    <div class="profile-card">
+      <!-- Profile avatar and info side by side -->
+      <div class="profile-main-content">
+        <div class="profile-avatar">
+        @if (currentUser()?.profilePicture) {
+          <img
+            [src]="getCorrectImageUrl(currentUser()?.profilePicture)"
+            [alt]="getUserInitials()"
+            [title]="getUserInitials()"
+            class="profile-image"
+            (error)="onImageError($event)"
+          />
+        }
+        @if (!currentUser()?.profilePicture) {
+          <div class="profile-initials">
+            {{ getUserInitials() }}
+          </div>
+        }
+      </div>
+      <div class="profile-info">
+        <h2>{{ getDisplayName() }}</h2>
+        @if (getDisplayUsername()) {
+          <p class="profile-name">@{{ getDisplayUsername() }}</p>
+        }
+        <p class="profile-role">{{ getDisplayRole() }}</p>
+        @if ((isTeacherUser || homeroomAssignment) && (teacherSubjects.length > 0 || homeroomAssignment)) {
+          <p class="profile-subjects">
+            @for (subject of teacherSubjects; track $index) {
+              <span class="subject-badge-small">{{ subject }}</span>
+            }
+            @if (getHomeroomAssignmentLabel()) {
+              <span class="subject-badge-small director-badge-dashboard">{{ getHomeroomAssignmentLabel() }}</span>
+            }
+          </p>
+        }
+      </div>
+      
+      <!-- Countdown Timer inside Profile Main Content, aligned with name and photo -->
+      @if (showCountdownTimer) {
+        <div class="countdown-timer-card">
+          <div class="countdown-header">
+            <h3>{{ countdownName }}</h3>
+            @if (isAdmin()) {
+              <button class="countdown-config-btn" aria-label="Configurar cuenta regresiva" (click)="openCountdownConfig()">
+                <span class="material-icons">edit</span>
+              </button>
+            }
+          </div>
+          <div class="countdown-display">
+            <div class="countdown-unit">
+              <span class="countdown-value">{{ countdownDays }}</span>
+              <span class="countdown-label">Días</span>
+            </div>
+            <div class="countdown-separator">:</div>
+            <div class="countdown-unit">
+              <span class="countdown-value">{{ countdownHours }}</span>
+              <span class="countdown-label">Horas</span>
+            </div>
+            <div class="countdown-separator">:</div>
+            <div class="countdown-unit">
+              <span class="countdown-value">{{ countdownMinutes }}</span>
+              <span class="countdown-label">Min</span>
+            </div>
+            <div class="countdown-separator">:</div>
+            <div class="countdown-unit">
+              <span class="countdown-value">{{ countdownSeconds }}</span>
+              <span class="countdown-label">Seg</span>
+            </div>
+          </div>
+          @if (countdownEndDate) {
+            <div class="countdown-end-date">
+              <span class="material-icons">event</span>
+              {{ countdownEndDate }}
+            </div>
+          }
+        </div>
+      }
+      </div>
+    </div>
+  </div>
+
+  <!-- Mensaje de bienvenida según rol -->
+  <div class="role-banner">
+    <div class="role-banner-icon"><span class="material-icons">{{ getRoleTip().icon }}</span></div>
+    <div class="role-banner-text">
+      <h3>{{ getRoleTip().title }}</h3>
+      <p>{{ getRoleTip().text }}</p>
+    </div>
+  </div>
+
+  @if (!isParent()) {
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon">
+        <span class="material-icons">school</span>
+      </div>
+      <div class="stat-info">
+        <h3>
+          @if (!studentsLoaded) {
+            <span class="mini-spinner"></span>
+            <span class="stat-number loading">---</span>
+          }
+          @if (studentsLoaded) {
+            <span class="stat-number">{{ totalStudents }}</span>
+          }
+        </h3>
+        <p>Estudiantes</p>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">
+        <span class="material-icons">assignment</span>
+      </div>
+      <div class="stat-info">
+        <h3>
+          @if (!reportCardsLoaded) {
+            <span class="mini-spinner"></span>
+            <span class="stat-number loading">---</span>
+          }
+          @if (reportCardsLoaded) {
+            <span class="stat-number">{{ totalGrades }}</span>
+          }
+        </h3>
+        <p>Calificaciones</p>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">
+        <span class="material-icons">menu_book</span>
+      </div>
+      <div class="stat-info">
+        <h3>{{ totalSubjects }}</h3>
+        <p>Materias</p>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">
+        <span class="material-icons">assessment</span>
+      </div>
+      <div class="stat-info">
+        <h3>{{ totalReports }}</h3>
+        <p>Consolidado</p>
+      </div>
+    </div>
+  </div>
+
+  }
+
+  <!-- Accesos rápidos (según el rol) -->
+  <div class="quick-actions">
+    <h2>{{ isParent() ? 'Tus accesos' : 'Accesos rápidos' }}</h2>
+    <div class="quick-grid">
+      @for (link of getQuickLinks(); track link.label) {
+        <button class="quick-card" [style.--qc]="link.color" (click)="onQuickLink(link)">
+          <span class="quick-icon"><span class="material-icons">{{ link.icon }}</span></span>
+          <span class="quick-text">
+            <strong>{{ link.label }}</strong>
+            <small>{{ link.desc }}</small>
+          </span>
+          <span class="material-icons quick-arrow">arrow_forward</span>
+        </button>
+      }
+    </div>
+  </div>
+
+  @if (isParent()) {
+    <!-- Escala valorativa: ayuda a los padres a leer los boletines -->
+    <div class="scale-card">
+      <h2>Escala valorativa</h2>
+      <p class="scale-sub">Así se leen las notas y los boletines de tus hijos.</p>
+      <div class="scale-row">
+        @for (e of escalaValorativa; track e.letra) {
+          <div class="scale-item" [style.--sc]="e.color">
+            <span class="scale-letter">{{ e.letra }}</span>
+            <strong>{{ e.nombre }}</strong>
+            <small>{{ e.rango }}</small>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Recent Activity -->
+  <div class="recent-activity">
+    <h2>Actividad Reciente</h2>
+    <div class="activity-list">
+      @if (recentActivities.length > 0) {
+        @for (activity of recentActivities; track activity.timestamp) {
+          <div class="activity-item">
+            <div class="activity-icon">
+              <span class="material-icons">{{ activity.icon }}</span>
+            </div>
+            <div class="activity-content">
+              <p>{{ activity.description }}</p>
+              <small>{{ formatActivityTime(activity.timestamp) }}</small>
+            </div>
+          </div>
+        }
+      } @else {
+        <div class="empty-activity">
+          <span class="material-icons">history</span>
+          <p>Aún no hay actividad reciente</p>
+          <small>Las acciones que realices aparecerán aquí</small>
+        </div>
+      }
+    </div>
+  </div>
+  <!-- ========== MODAL FORMS ========== -->
+
+  <!-- Add Student Modal -->
+  @if (showAddStudentModal) {
+    <div class="modal-overlay" (click)="closeAddStudentModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>Agregar Nuevo Estudiante</h3>
+          <button class="close-button" (click)="closeAddStudentModal()">✕</button>
+        </div>
+        <div class="modal-body">
+          <form #studentForm="ngForm" (ngSubmit)="addStudent()">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="studentName">Nombres: *</label>
+                 <input
+                   type="text"
+                   id="studentName"
+                   name="name"
+                   [(ngModel)]="newStudent.name"
+                   autocomplete="given-name"
+                   required
+                   placeholder="Ingrese los nombres"
+                 />
+              </div>
+              <div class="form-group">
+                <label for="studentSurname">Apellidos: *</label>
+                 <input
+                   type="text"
+                   id="studentSurname"
+                   name="surname"
+                   [(ngModel)]="newStudent.surname"
+                   autocomplete="family-name"
+                   required
+                   placeholder="Ingrese los apellidos"
+                 />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="studentGrade">Grado:</label>
+                <select id="studentGrade" name="grade" [(ngModel)]="newStudent.grade" autocomplete="off">
+                  <option value="Grado 1º">Grado 1º</option>
+                  <option value="Grado 2º">Grado 2º</option>
+                  <option value="Grado 3º">Grado 3º</option>
+                  <option value="Grado 4º">Grado 4º</option>
+                  <option value="Grado 5º">Grado 5º</option>
+                  <option value="Grado 6º">Grado 6º</option>
+                  <option value="Grado 7º">Grado 7º</option>
+                  <option value="Grado 8º">Grado 8º</option>
+                  <option value="Grado 9º">Grado 9º</option>
+                  <option value="Grado 10º">Grado 10º</option>
+                  <option value="Grado 11º">Grado 11º</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="studentClassroom">Salón:</label>
+                <select id="studentClassroom" name="classGroup" [(ngModel)]="newStudent.classGroup" autocomplete="off">
+                  <option value="Salon A">Salon A</option>
+                  <option value="Salon B">Salon B</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="studentDocument">Documento de Identidad:</label>
+              <input
+                type="text"
+                id="studentDocument"
+                name="documentNumber"
+                [(ngModel)]="newStudent.documentNumber"
+                autocomplete="off"
+                placeholder="Ingrese el documento de identidad"
+              />
+            </div>
+            <div class="modal-actions">
+              <button type="button" class="cancel-button" (click)="closeAddStudentModal()">
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                class="save-button"
+                [disabled]="!studentForm.valid || isSavingStudent"
+              >
+                @if (!isSavingStudent) {
+                  <span>💾 Guardar Estudiante</span>
+                }
+                @if (isSavingStudent) {
+                  <span>Guardando...</span>
+                }
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Send Notification Modal -->
+  @if (showSendNotificationModal) {
+    <div class="modal-overlay" (click)="closeSendNotificationModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>Enviar Notificación</h3>
+          <button class="close-button" (click)="closeSendNotificationModal()">✕</button>
+        </div>
+        <div class="modal-body">
+          <form #notificationForm="ngForm" (ngSubmit)="sendNotification()">
+            <div class="form-group">
+              <label for="notificationTitle">Título: *</label>
+              <input
+                type="text"
+                id="notificationTitle"
+                name="title"
+                [(ngModel)]="newNotification.title"
+                autocomplete="off"
+                required
+                placeholder="Ingrese el título de la notificación"
+              />
+            </div>
+            <div class="form-group">
+              <label for="notificationMessage">Mensaje: *</label>
+              <textarea
+                id="notificationMessage"
+                name="message"
+                [(ngModel)]="newNotification.message"
+                autocomplete="off"
+                required
+                rows="4"
+                placeholder="Escriba el mensaje de la notificación"
+              ></textarea>
+            </div>
+            <div class="form-group">
+              <label for="recipientType">Dirigido a:</label>
+                <select
+                  id="recipientType"
+                  name="recipientType"
+                  [(ngModel)]="newNotification.recipientType"
+                  autocomplete="off"
+                >
+                <option value="PARENTS">Padres de Familia</option>
+                <option value="TEACHERS">Profesores</option>
+                <option value="ADMINISTRATORS">Administradores</option>
+                <option value="ALL">Todos</option>
+              </select>
+            </div>
+            <div class="notification-preview">
+              <h4>Vista previa <small>(así la verá quien la reciba)</small></h4>
+              <div class="np-modal">
+                <div class="np-header">
+                  <div class="np-icon"><span class="material-icons">admin_panel_settings</span></div>
+                  <div class="np-header-text">
+                    <h2>{{ newNotification.title || 'Título de la notificación' }}</h2>
+                    <div class="np-meta">
+                      <span class="np-sender">
+                        @if (currentUser()?.profilePicture) {
+                          <img class="np-avatar" [src]="getCorrectImageUrl(currentUser()?.profilePicture)" [alt]="getUserInitials()" />
+                        } @else {
+                          <span class="np-initials">{{ getUserInitials() }}</span>
+                        }
+                        {{ getDisplayName() }}
+                      </span>
+                      <span class="np-date">Ahora</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="np-body">
+                  <div class="np-message">{{ newNotification.message || 'Aquí aparecerá el mensaje de la notificación.' }}</div>
+                  <div class="np-status"><span class="material-icons">circle</span> No leído</div>
+                  <div class="np-recipient">
+                    <span class="material-icons">send</span> Para: <strong>{{ getPreviewRecipientLabel() }}</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="modal-actions">
+              <button type="button" class="cancel-button" (click)="closeSendNotificationModal()">
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                class="save-button"
+                [disabled]="!notificationForm.valid || isSendingNotification"
+              >
+                @if (!isSendingNotification) {
+                  <span>📧 Enviar Notificación</span>
+                }
+                @if (isSendingNotification) {
+                  <span>Enviando...</span>
+                }
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Add Grade Modal -->
+  @if (showAddGradeModal) {
+    <div class="modal-overlay" (click)="closeAddGradeModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>Gestionar Grados</h3>
+          <button class="close-button" (click)="closeAddGradeModal()">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="modal-description">
+            <p>
+              Aquí puede administrar los grados del sistema. Por el momento, esta funcionalidad está
+              en desarrollo.
+            </p>
+          </div>
+          <div class="current-grades">
+            <h4>Grados Actuales:</h4>
+            <div class="grades-list">
+              <div class="grade-item">Grado 1º</div>
+              <div class="grade-item">Grado 2º</div>
+              <div class="grade-item">Grado 3º</div>
+              <div class="grade-item">Grado 4º</div>
+              <div class="grade-item">Grado 5º</div>
+              <div class="grade-item">Grado 6º</div>
+              <div class="grade-item">Grado 7º</div>
+              <div class="grade-item">Grado 8º</div>
+              <div class="grade-item">Grado 9º</div>
+              <div class="grade-item">Grado 10º</div>
+              <div class="grade-item">Grado 11º</div>
+            </div>
+          </div>
+          <div class="modal-actions">
+            <button class="primary-button" (click)="closeAddGradeModal()">Cerrar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Add Subject Modal -->
+  @if (showAddSubjectModal) {
+    <div class="modal-overlay" (click)="closeAddSubjectModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>Administrar Materias</h3>
+          <button class="close-button" (click)="closeAddSubjectModal()">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="modal-description">
+            <p>Funcionalidad para administrar materias. En desarrollo...</p>
+          </div>
+          <div class="current-subjects">
+            <h4>Materias Actuales:</h4>
+            <div class="subjects-list">
+              <div class="subject-item">Matemáticas</div>
+              <div class="subject-item">Español</div>
+              <div class="subject-item">Ciencias Naturales</div>
+              <div class="subject-item">Historia</div>
+              <div class="subject-item">Educación Física</div>
+              <div class="subject-item">Artes</div>
+              <div class="subject-item">Inglés</div>
+              <div class="subject-item">Educación Religiosa</div>
+            </div>
+          </div>
+          <div class="modal-actions">
+            <button class="primary-button" (click)="closeAddSubjectModal()">Cerrar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- View Reports Modal -->
+  @if (showViewReportsModal) {
+    <div class="modal-overlay" (click)="closeViewReportsModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>Reportes del Sistema</h3>
+          <button class="close-button" (click)="closeViewReportsModal()">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="reports-section">
+            <h4>📊 Reportes Disponibles</h4>
+            <div class="reports-grid">
+              <div class="report-card a11y-clickable" role="button" tabindex="0" aria-label="Generar boletines de calificaciones" (click)="generateReport()" (keydown.enter)="generateReport()" (keydown.space)="generateReport(); $event.preventDefault()">
+                <div class="report-icon">📋</div>
+                <div class="report-info">
+                  <h5>Boletines de Calificaciones</h5>
+                  <p>Generar boletines individuales por estudiante</p>
+                </div>
+              </div>
+              <div class="report-card a11y-clickable" role="button" tabindex="0" aria-label="Generar listas de estudiantes" (click)="generateReport()" (keydown.enter)="generateReport()" (keydown.space)="generateReport(); $event.preventDefault()">
+                <div class="report-icon">👥</div>
+                <div class="report-info">
+                  <h5>Listas de Estudiantes</h5>
+                  <p>Listar estudiantes por grado y salón</p>
+                </div>
+              </div>
+              <div class="report-card a11y-clickable" role="button" tabindex="0" aria-label="Generar estadísticas generales" (click)="generateReport()" (keydown.enter)="generateReport()" (keydown.space)="generateReport(); $event.preventDefault()">
+                <div class="report-icon">📈</div>
+                <div class="report-info">
+                  <h5>Estadísticas Generales</h5>
+                  <p>Resumen general del sistema</p>
+                </div>
+              </div>
+              <div class="report-card a11y-clickable" role="button" tabindex="0" aria-label="Generar reporte de rendimiento académico" (click)="generateReport()" (keydown.enter)="generateReport()" (keydown.space)="generateReport(); $event.preventDefault()">
+                <div class="report-icon">🏆</div>
+                <div class="report-info">
+                  <h5>Rendimiento Académico</h5>
+                  <p>Análisis de calificaciones por materia</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-actions">
+            <button class="cancel-button" (click)="closeViewReportsModal()">Cerrar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Countdown Config Modal -->
+  @if (showCountdownConfigModal) {
+    <div class="modal-overlay" (click)="closeCountdownConfig()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>Configurar Cronómetro</h3>
+          <button class="close-button" (click)="closeCountdownConfig()">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="countdownName">Título del Cronómetro</label>
+            <input type="text" id="countdownName" name="countdownName" [(ngModel)]="countdownName" placeholder="Ej: Examen Final" autocomplete="off" />
+          </div>
+            <div class="form-group">
+              <label for="countdownTargetDate">Fecha de Finalización</label>
+              <input type="datetime-local" id="countdownTargetDate" name="countdownTargetDate" [(ngModel)]="countdownTargetDate" placeholder="Seleccionar fecha" autocomplete="off" />
+            </div>
+          <div class="form-group">
+            <label for="countdownDaysInput">O días restantes (opcional)</label>
+            <input type="number" id="countdownDaysInput" name="countdownDaysInput" [(ngModel)]="countdownDaysInput" placeholder="Ej: 30" min="1" autocomplete="off" />
+          </div>
+          <div class="modal-actions">
+            <button class="cancel-button" (click)="closeCountdownConfig()">Cancelar</button>
+            <button class="primary-button" (click)="saveCountdownConfig()">Guardar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

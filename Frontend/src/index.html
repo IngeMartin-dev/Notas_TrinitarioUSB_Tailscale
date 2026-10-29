@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+  <meta charset="utf-8">
+  <title>Notas Trinitario</title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Sistema de Gestión de Calificaciones - Notas Trinitario">
+   <link rel="preconnect" href="https://fonts.googleapis.com">
+   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+   <!-- KaTeX CSS -->
+   <link href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" rel="stylesheet">
+   <!-- KaTeX Core (required for auto-render) -->
+   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+   <!-- KaTeX Auto-render extension -->
+   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+</head>
+
+<body>
+  <app-root></app-root>
+
+  <!-- Loading animation -->
+  <div id="loading" class="loading-overlay">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Add this style for the loading animation -->
+  <style>
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background:
+        radial-gradient(600px 400px at 20% 10%, rgba(27, 106, 235, 0.16), transparent 60%),
+        radial-gradient(520px 380px at 85% 90%, rgba(63, 81, 181, 0.16), transparent 60%),
+        rgba(255, 255, 255, 0.96);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      transition: opacity 0.3s ease-out;
+    }
+
+    .spinner {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: conic-gradient(from 0deg, rgba(27, 106, 235, 0) 0%, #1b6aeb 60%, #3f51b5 85%, #ff4081 100%);
+      -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 6px), #000 calc(100% - 5px));
+      mask: radial-gradient(farthest-side, transparent calc(100% - 6px), #000 calc(100% - 5px));
+      animation: spin 0.9s linear infinite;
+      filter: drop-shadow(0 6px 14px rgba(27, 106, 235, 0.45));
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    .loading-overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+  </style>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const loadingElement = document.getElementById('loading');
+      window.addEventListener('appReady', () => {
+        loadingElement.classList.add('hidden');
+        setTimeout(() => {
+          loadingElement.style.display = 'none';
+        }, 300);
+      });
+    });
+  </script>
+</body>
+</html>

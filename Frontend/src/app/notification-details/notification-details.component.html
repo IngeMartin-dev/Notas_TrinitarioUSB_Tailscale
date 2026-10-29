@@ -1,0 +1,135 @@
+<!-- Success Notification -->
+<div class="success-notification" [class.show]="showSuccessNotification()">
+  <div class="notification-content">
+    <div class="checkmark-circle">
+      <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+        <path class="checkmark__check" fill="none" d="M14 27l8 8 16-16"/>
+      </svg>
+    </div>
+    <h3>¡Respuesta enviada!</h3>
+    <p>Tu mensaje ha sido enviado con éxito</p>
+  </div>
+</div>
+
+@if (isOpen) {
+  <div class="notification-details-overlay" (click)="closeModal()">
+    <div class="notification-details-modal" (click)="$event.stopPropagation()">
+      <!-- Header -->
+      <div class="modal-header">
+        <div class="header-info">
+          <div
+            class="notification-icon"
+            [style.background-color]="getNotificationTypeColor(notification?.notificationType || '')"
+            >
+            <span class="material-icons">{{
+              getNotificationTypeIcon(notification?.notificationType || '')
+            }}</span>
+          </div>
+          <div class="header-text">
+            <h2>{{ notification?.title || 'Notificación' }}</h2>
+            <div class="meta-info">
+              @if (notification?.user) {
+                <span class="sender">
+                  @if (notification?.user?.profilePicture) {
+                    <img
+                      [src]="notification?.user?.profilePicture"
+                      [alt]="(notification?.user?.name || '') + ' ' + (notification?.user?.surname || '')"
+                      [title]="(notification?.user?.name || '') + ' ' + (notification?.user?.surname || '')"
+                      class="sender-profile-picture"
+                      />
+                  } @else {
+                    <div class="sender-initials">
+                      {{ getInitials(notification?.user?.name, notification?.user?.surname) }}
+                    </div>
+                  }
+                  {{ notification?.user?.name || '' }} {{ notification?.user?.surname || '' }}
+                </span>
+              }
+              <span class="date">{{ formatDateTime(notification?.createdAt || '') }}</span>
+            </div>
+          </div>
+        </div>
+        <button class="close-button" aria-label="Cerrar" (click)="closeModal()">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+      <!-- Content -->
+      @if (notification) {
+        <div class="modal-content">
+          <div class="message-container">
+            <div class="message-text">
+              {{ notification.message }}
+            </div>
+            @if (!notification.isRead) {
+              <div class="notification-status">
+                <span class="status-indicator">
+                  <span class="material-icons">circle</span>
+                  No leído
+                </span>
+              </div>
+            }
+          </div>
+          <!-- Reply Section -->
+          @if (!isOwnNotification() && !readOnly) {
+            <div class="reply-section">
+              <div class="reply-header">
+                <h3>Responder</h3>
+              </div>
+               <div class="reply-form">
+                  <textarea
+                    id="reply-textarea"
+                    name="replyMessage"
+                    [(ngModel)]="replyMessage"
+                    placeholder="Escriba su respuesta..."
+                    rows="3"
+                    class="reply-textarea"
+                    autocomplete="off"
+                    aria-label="Escriba su respuesta"
+                    >
+                 </textarea>
+                <div class="reply-actions">
+                  <button class="cancel-reply-btn" (click)="resetForm()" [disabled]="isReplying">
+                    Cancelar
+                  </button>
+                  <button
+                    class="send-reply-btn"
+                    (click)="sendReply()"
+                    [disabled]="!replyMessage.trim() || isReplying"
+                    >
+                    @if (!isReplying) {
+                      <span>Enviar Respuesta</span>
+                    }
+                    @if (isReplying) {
+                      <span>Enviando...</span>
+                    }
+                  </button>
+                </div>
+              </div>
+            </div>
+          }
+          <!-- Own notification info -->
+          @if (isOwnNotification() && !readOnly) {
+            <div class="own-notification-info">
+              <div class="info-message">
+                <span class="material-icons">info</span>
+                Esta es una notificación que usted envió
+              </div>
+            </div>
+          }
+        </div>
+      }
+      <!-- Footer -->
+      <div class="modal-footer">
+        @if (notification && !notification.isRead && !readOnly) {
+          <button
+            class="mark-read-btn"
+            (click)="markAsRead()"
+            >
+            <span class="material-icons">done_all</span>
+            Marcar como leída
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+}

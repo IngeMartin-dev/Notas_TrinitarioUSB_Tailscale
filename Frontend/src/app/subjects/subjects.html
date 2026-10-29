@@ -1,0 +1,315 @@
+<div class="subjects-container">
+  <h2>Gestión de Materias y Asignaturas</h2>
+
+  <!-- Subject Statistics -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon">📚</div>
+      <div class="stat-content">
+        <h3>{{ totalSubjects }}</h3>
+        <p>Materias Totales</p>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🎯</div>
+      <div class="stat-content">
+        <h3>{{ coreSubjects.length }}</h3>
+        <p>Materias Básicas</p>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🎨</div>
+      <div class="stat-content">
+        <h3>{{ electiveSubjects.length }}</h3>
+        <p>Materias Electivas</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Subject Button -->
+  <div class="subjects-header">
+    <button class="add-subject-button" (click)="openAddModal()">
+      ➕ Agregar Materia
+    </button>
+  </div>
+
+  <!-- Tab Selector -->
+  <div class="tab-selector">
+    <button class="tab-btn" [class.active]="selectedTab === 'primaria'" (click)="selectTab('primaria')">
+      📚 Primaria (1° - 5°)
+    </button>
+    <button class="tab-btn" [class.active]="selectedTab === 'bachillerato'" (click)="selectTab('bachillerato')">
+      🎓 Bachillerato (6° - 11°)
+    </button>
+    <button class="tab-btn" [class.active]="selectedTab === 'media'" (click)="selectTab('media')">
+      📖 Media (10° - 11°)
+    </button>
+  </div>
+
+  <!-- All Subjects by Tab -->
+  <div class="subjects-content">
+    <h3>
+      @if (selectedTab === 'primaria') { Materias de Primaria }
+      @if (selectedTab === 'bachillerato') { Materias de Bachillerato }
+      @if (selectedTab === 'media') { Materias de Media }
+      <span class="subject-count-badge">{{ tabSubjects.length }} materias</span>
+    </h3>
+    <div class="subjects-grid">
+      @for (subject of tabSubjects; track subject) {
+        <div class="subject-card">
+          <div class="subject-header">
+            <h5>{{ subject.name }}</h5>
+            <span class="subject-code">{{ subject.code }}</span>
+          </div>
+          <div class="subject-details">
+            <p class="grades-range">
+              📏 Grados
+              <strong>{{ subject.gradeMin ?? '?' }}°</strong>
+              —
+              <strong>{{ subject.gradeMax ?? '?' }}°</strong>
+            </p>
+            <p class="subject-level">
+              @if ((subject.level || '').toLowerCase() === 'primaria') { 🏫 Primaria }
+              @if ((subject.level || '').toLowerCase() === 'bachillerato') { 🏛️ Bachillerato }
+              @if ((subject.level || '').toLowerCase() === 'media') { 📖 Media }
+            </p>
+            <p class="subject-type-badge">
+              @if ((subject.type || 'core').toLowerCase() === 'elective') {
+                <span class="badge badge-elective">⚡ Electiva</span>
+              } @else {
+                <span class="badge badge-core">📘 Básica</span>
+              }
+            </p>
+          </div>
+          <div class="subject-actions">
+            @if ((subject.type || 'core').toLowerCase() === 'elective') {
+              <button class="action-btn core-btn" (click)="changeToCore(subject)">Quitar electiva</button>
+            } @else {
+              <button class="action-btn elective-btn" (click)="changeToElective(subject)">Cambiar a electiva</button>
+            }
+            <button class="action-btn edit-btn" (click)="openModifyGrades(subject)">Modificar grados</button>
+            <button class="action-btn delete-btn" (click)="confirmDeleteSubject(subject)">🗑️ Eliminar</button>
+          </div>
+        </div>
+      }
+      @empty {
+        <div class="empty-message">
+          No hay materias registradas para 
+          @if (selectedTab === 'primaria') { primaria }
+          @if (selectedTab === 'bachillerato') { bachillerato }
+          @if (selectedTab === 'media') { Media }
+          .
+          <br><br>
+          <button class="add-subject-button" (click)="openAddModal()" style="margin:0 auto;">
+            ➕ Agregar materia ahora
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Add Subject Modal -->
+  @if (showAddModal) {
+    <div class="modal-overlay" (click)="closeAddModal()">
+      <div class="modal-content add-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>➕ Agregar Nueva Materia</h3>
+          <button class="close-button" (click)="closeAddModal()">✕</button>
+        </div>
+        <div class="modal-body">
+          <form #subjectForm="ngForm" (ngSubmit)="addSubject()">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="subjectName">Nombre de la Materia *</label>
+                 <input
+                   type="text"
+                   id="subjectName"
+                   name="name"
+                   [(ngModel)]="newSubject.name"
+                   (input)="onSubjectNameInput($event)"
+                   placeholder="Ej: Matemáticas"
+                   autocomplete="off"
+                   required
+                   maxlength="100"
+                 />
+              </div>
+              <div class="form-group">
+                <label for="subjectCode">Código *</label>
+                <input
+                  type="text"
+                  id="subjectCode"
+                  name="code"
+                  [(ngModel)]="newSubject.code"
+                  (input)="newSubject.code = $any($event.target).value.toUpperCase()"
+                  placeholder="Ej: MAT"
+                  autocomplete="off"
+                  required
+                  maxlength="20"
+                />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="subjectLevel">Nivel *</label>
+                <select id="subjectLevel" name="level" [(ngModel)]="newSubject.level" (change)="onLevelChange()" autocomplete="off" required>
+                  <option value="primaria">Primaria</option>
+                  <option value="bachillerato">Bachillerato</option>
+                  <option value="media">Media (10°-11°)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="subjectType">Tipo *</label>
+                <select id="subjectType" name="type" [(ngModel)]="newSubject.type" autocomplete="off" required>
+                  <option value="core">Básica</option>
+                  <option value="elective">Electiva</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row form-row-2">
+              <div class="form-group">
+                <label for="gradeMin">Grado Mínimo *</label>
+                <input
+                  type="number"
+                  id="gradeMin"
+                  name="gradeMin"
+                  [(ngModel)]="newSubject.gradeMin"
+                  min="1"
+                  max="11"
+                  required
+                  autocomplete="off"
+                />
+              </div>
+              <div class="form-group">
+                <label for="gradeMax">Grado Máximo *</label>
+                <input
+                  type="number"
+                  id="gradeMax"
+                  name="gradeMax"
+                  [(ngModel)]="newSubject.gradeMax"
+                  min="1"
+                  max="11"
+                  required
+                  autocomplete="off"
+                />
+              </div>
+            </div>
+
+            <div class="modal-actions">
+              <button type="button" class="cancel-button" (click)="closeAddModal()" [disabled]="isSavingSubject">
+                Cancelar
+              </button>
+              <button type="submit" class="save-button" [disabled]="isSavingSubject">
+                <span *ngIf="!isSavingSubject">💾 Guardar Materia</span>
+                <span *ngIf="isSavingSubject">Guardando...</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Modify Grades Modal -->
+  @if (showGradeModal && subjectToModifyGrades) {
+    <div class="modal-overlay" (click)="closeGradeModal()">
+      <div class="modal-content add-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>📏 Modificar Grados - {{ subjectToModifyGrades.name }}</h3>
+          <button class="close-button" (click)="closeGradeModal()">✕</button>
+        </div>
+        <div class="modal-body">
+          <form #gradeForm="ngForm" (ngSubmit)="saveModifiedGrades()">
+            <div class="form-row form-row-2">
+              <div class="form-group">
+                <label for="modifyGradeMin">Grado Mínimo *</label>
+                <input
+                  type="number"
+                  id="modifyGradeMin"
+                  name="modifyGradeMin"
+                  [(ngModel)]="modifyGradesData.gradeMin"
+                  min="1"
+                  max="11"
+                  required
+                  autocomplete="off"
+                />
+              </div>
+              <div class="form-group">
+                <label for="modifyGradeMax">Grado Máximo *</label>
+                <input
+                  type="number"
+                  id="modifyGradeMax"
+                  name="modifyGradeMax"
+                  [(ngModel)]="modifyGradesData.gradeMax"
+                  min="1"
+                  max="11"
+                  required
+                  autocomplete="off"
+                />
+              </div>
+            </div>
+            <div class="modal-actions">
+              <button type="button" class="cancel-button" (click)="closeGradeModal()" [disabled]="isSavingGrades">
+                Cancelar
+              </button>
+              <button type="submit" class="save-button" [disabled]="isSavingGrades">
+                <span *ngIf="!isSavingGrades">💾 Guardar Cambios</span>
+                <span *ngIf="isSavingGrades">Guardando...</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Delete Confirmation Modal -->
+  @if (subjectToDelete) {
+    <div class="modal-overlay" (click)="closeDeleteModal()">
+      <div class="modal-content confirm-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>⚠️ Confirmar eliminación</h3>
+          <button class="close-button" (click)="closeDeleteModal()">✕</button>
+        </div>
+        <div class="modal-body">
+          <p class="confirm-message">
+            ¿Está seguro de eliminar la materia <strong>{{ subjectToDelete.name }}</strong>?
+            <br><small>Esta acción no se puede deshacer.</small>
+          </p>
+          <div class="modal-actions">
+            <button type="button" class="cancel-button" (click)="closeDeleteModal()">Cancelar</button>
+            <button type="button" class="delete-confirm-button" (click)="deleteSubject()">🗑️ Eliminar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Custom Notification System -->
+  @if (showNotification) {
+    <div class="notification-overlay">
+      <div class="notification-content"
+        [class.notification-success]="notificationType === 'success'"
+        [class.notification-error]="notificationType === 'error'"
+        (click)="$event.stopPropagation()">
+        <div class="notification-icon">
+          <span *ngIf="notificationType === 'success'">✓</span>
+          <span *ngIf="notificationType === 'error'">!</span>
+        </div>
+        <div class="notification-body">
+          <strong>{{ notificationType === 'success' ? '¡Operación exitosa!' : '¡Atención!' }}</strong>
+          <span>{{ notificationMessage }}</span>
+        </div>
+        <button class="notification-close" (click)="hideNotification()">✕</button>
+      </div>
+    </div>
+  }
+
+  @if (loading) {
+    <div class="loading">
+      <div class="spinner"></div>
+      <p>Cargando materias...</p>
+    </div>
+  }
+</div>

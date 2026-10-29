@@ -1,0 +1,97 @@
+<div class="mn-container">
+  <div class="page-header">
+    <h2><span class="material-icons">grade</span> Mis Notas</h2>
+    <p class="page-subtitle">Notas de tu(s) hijo(a)(s). Solo lectura, se actualiza automáticamente.</p>
+  </div>
+
+  @if (isLoading) {
+    <div class="loading-container">
+      <div class="loading-spinner"></div>
+      <p>Cargando notas...</p>
+    </div>
+  }
+
+  @if (!isLoading && errorMessage) {
+    <div class="error-banner">
+      <span class="material-icons">error_outline</span>
+      <p>{{ errorMessage }}</p>
+    </div>
+  }
+
+  @if (!isLoading && !errorMessage && hijos.length === 0) {
+    <div class="empty-state">
+      <span class="material-icons">assignment_late</span>
+      <h3>Todavía no hay notas registradas</h3>
+      <p>
+        Cuando el profesor registre notas de tu hijo(a), aparecerán aquí automáticamente.
+        Si tu hijo(a) está marcado como inactivo, sus notas no se mostrarán hasta que sea reactivado.
+      </p>
+    </div>
+  }
+
+  @if (!isLoading && hijos.length > 0) {
+    @for (hijo of hijos; track trackByStudent($index, hijo)) {
+      <div class="student-block">
+        <div class="student-header">
+          <span class="material-icons">person</span>
+          <div>
+            <h3>{{ hijo.studentName }}</h3>
+            <span class="student-meta">{{ hijo.grade }} · {{ hijo.classroom }}</span>
+          </div>
+        </div>
+
+        <div class="period-tabs">
+          @for (p of hijo.periods; track p.period) {
+            <button
+              class="period-tab"
+              [class.active]="selectedPeriodByStudent[hijo.studentId] === p.period"
+              (click)="seleccionarPeriodo(hijo.studentId, p.period)"
+            >
+              Período {{ p.period }}
+            </button>
+          }
+        </div>
+
+        @if (periodoActivo(hijo); as periodo) {
+          <div class="subjects-grid">
+            @for (materia of periodo.subjects; track trackBySubject($index, materia)) {
+              <div class="subject-card">
+                <div class="subject-card-header">
+                  <h4>{{ materia.subjectName }}</h4>
+                  @if (materia.finalGrade !== null && materia.finalGrade !== undefined) {
+                    <span
+                      class="final-grade-badge"
+                      [class.pass]="esAprobatoria(materia.finalGrade, hijo.minPassingGrade)"
+                      [class.fail]="!esAprobatoria(materia.finalGrade, hijo.minPassingGrade)"
+                    >
+                      {{ materia.finalGrade | number:'1.1-1' }}
+                    </span>
+                  }
+                </div>
+                @if (materia.items.length > 0) {
+                  <ul class="grade-items">
+                    @for (item of materia.items; track item.gradeName) {
+                      <li>
+                        <span class="grade-name">
+                          {{ item.gradeName }}
+                          @if (item.isEvaluation) {
+                            <span class="eval-tag">Evaluación</span>
+                          }
+                        </span>
+                        <span class="grade-value">
+                          {{ item.gradeValue !== null ? (item.gradeValue | number:'1.1-1') : '—' }}
+                        </span>
+                      </li>
+                    }
+                  </ul>
+                } @else {
+                  <p class="no-items">Sin notas individuales registradas todavía.</p>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+  }
+</div>

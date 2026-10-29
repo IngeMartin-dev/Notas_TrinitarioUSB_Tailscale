@@ -1,0 +1,64 @@
+@if (pending()) {
+  <div class="consent-overlay" role="alertdialog" aria-modal="true" aria-labelledby="consent-title">
+    <div class="consent-modal">
+      <div class="consent-header">
+        <h2 id="consent-title">Antes de continuar</h2>
+        <p>Necesitamos que leas y aceptes lo siguiente para seguir usando Notas Trinitario.</p>
+      </div>
+
+      <div class="consent-tabs" role="tablist">
+        @if (needsTerms()) {
+          <button type="button" role="tab" [attr.aria-selected]="activeTab() === 'terms'"
+                  class="consent-tab" [class.active]="activeTab() === 'terms'"
+                  (click)="activeTab.set('terms')">
+            Términos y Condiciones
+          </button>
+        }
+        @if (needsPrivacy()) {
+          <button type="button" role="tab" [attr.aria-selected]="activeTab() === 'privacy'"
+                  class="consent-tab" [class.active]="activeTab() === 'privacy'"
+                  (click)="activeTab.set('privacy')">
+            Política de Privacidad
+          </button>
+        }
+      </div>
+
+      <div class="consent-body" tabindex="0">
+        @if (activeTab() === 'terms' && needsTerms()) {
+          <app-terms-content></app-terms-content>
+        }
+        @if (activeTab() === 'privacy' && needsPrivacy()) {
+          <app-privacy-content></app-privacy-content>
+        }
+      </div>
+
+      <div class="consent-checks">
+        @if (needsTerms()) {
+          <label class="consent-check">
+            <input type="checkbox" [checked]="acceptedTerms()" (change)="acceptedTerms.set(!acceptedTerms())">
+            He leído y acepto los Términos y Condiciones
+          </label>
+        }
+        @if (needsPrivacy()) {
+          <label class="consent-check">
+            <input type="checkbox" [checked]="acceptedPrivacy()" (change)="acceptedPrivacy.set(!acceptedPrivacy())">
+            He leído y acepto la Política de Privacidad
+          </label>
+        }
+      </div>
+
+      @if (errorMessage()) {
+        <p class="consent-error">{{ errorMessage() }}</p>
+      }
+
+      <div class="consent-actions">
+        <button type="button" class="consent-logout" (click)="logout()">
+          Prefiero no aceptar (cerrar sesión)
+        </button>
+        <button type="button" class="consent-confirm" [disabled]="!canContinue() || submitting()" (click)="confirmAcceptance()">
+          {{ submitting() ? 'Guardando...' : 'Aceptar y continuar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

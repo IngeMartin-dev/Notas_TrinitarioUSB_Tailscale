@@ -1,0 +1,430 @@
+<div class="grades-container">
+  <div class="page-header">
+    <h2>Gestión de Notas</h2>
+  </div>
+
+  @if (isTeacher() && hasTeacherGradeRange === false) {
+    <div class="fullscreen-warning">
+      <span class="material-icons">warning</span>
+      <span>No tienes materias asignadas. Por favor espere o llame al administrador.</span>
+    </div>
+  } @else if (isTeacher() && hasTeacherGradeRange === null) {
+    <div class="fullscreen-loading">
+      <div class="spinner"></div>
+      <span style="color: #2c3e50; font-size: 1.1rem; font-weight: 600;">Verificando materias asignadas...</span>
+    </div>
+  } @else {
+    <div class="grades-sidebar">
+      @if (teacherGradeRange) {
+        <div class="grade-range-indicator">
+          Grados {{ teacherGradeRange.min }}° - {{ teacherGradeRange.max }}°
+        </div>
+      }
+      @if (teacherSubjects && teacherSubjects.length > 1) {
+      <div class="subject-selector">
+        @for (subject of teacherSubjects; track subject.id) {
+          <button
+            class="subject-btn"
+            [class.selected]="selectedSubjectId === subject.id"
+            (click)="onSubjectChange(subject)"
+          >
+            {{ subject.name }}{{ subject.level ? ' (' + subject.level + ')' : '' }}
+          </button>
+        }
+      </div>
+      }
+      <div class="grades-row" [class.fade-out]="isFadingOut" [class.fade-in]="isFadingIn">
+        @for (grade of grades; track grade) {
+          <div class="grade-section">
+            <h3>{{ grade }}</h3>
+            <div class="classrooms">
+              @for (classroom of classrooms; track classroom) {
+                <button
+                  class="classroom-btn"
+                  [class.selected]="selectedGrade === grade && selectedClassroom === classroom"
+                  (click)="selectGrade(grade, classroom)"
+                >
+                  {{ classroom }}
+                </button>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="right-content">
+      @if (selectedGrade && selectedClassroom) {
+        <div class="period-selector">
+          <label for="period-select">Período:</label>
+          <select
+            id="period-select"
+            name="period"
+            [ngModel]="selectedPeriod"
+            (ngModelChange)="onPeriodManualChange($event)"
+          >
+            @for (period of availablePeriods; track period) {
+              <option [value]="period">Período {{ period }}</option>
+            }
+          </select>
+        </div>
+      }
+
+      @if (isLoading) {
+        <div class="loading-indicator">
+          <div class="spinner"></div>
+          <p>Cargando notas...</p>
+        </div>
+      }
+
+      @if (selectedGrade && selectedClassroom && !isLoading) {
+        <div class="grades-list">
+          @if (students.length > 0) {
+            <div class="report-header">
+              <div class="header-title">CORPORACION COLEGIO TRINITARIO</div>
+              <div class="header-subtitle">LISTADO DE NOTAS</div>
+              <div class="report-info">
+                <div class="info-row">
+                  <span class="info-label">PERIODO:</span>
+                  <span class="info-value">{{ selectedPeriod }}</span>
+                  <span class="info-label">ÁREA/ASIGNATURA:</span>
+                  <span class="info-value">{{ selectedSubjectLabel }}</span>
+                </div>
+                <div class="info-row">
+                  <span class="info-label">GRADO:</span>
+                  <span class="info-value">{{ selectedGrade }}</span>
+                  <span class="info-label">GRUPO:</span>
+                  <span class="info-value">{{ selectedClassroom }}</span>
+                  <span class="info-label">AÑO:</span>
+                  <span class="info-value">{{ currentYear }}</span>
+                </div>
+              </div>
+            </div>
+
+            @if (isTeacher()) {
+              <div class="pct-wrap">
+                <button type="button" class="pct-open-btn" [class.active]="showPctPanel" (click)="togglePctPanel()">
+                  Porcentajes
+                  @if (weightedMode || pctOver) { <span class="pct-open-badge" [class.pct-open-badge-over]="pctOver">{{ totalPctSum }}%</span> }
+                </button>
+
+                @if (showPctPanel) {
+                  <div class="pct-panel">
+                    <div class="pct-panel-head">
+                      <span class="pct-panel-title">Porcentaje de cada nota en la nota final</span>
+                      <span class="pct-total" [class.pct-over]="totalPctSum > 100" [class.pct-ok]="totalPctSum === 100">Suma: {{ totalPctSum }}%</span>
+                    </div>
+
+                    <div class="pct-rows">
+                      <div class="pct-row-item">
+                        <input type="text" class="pct-name-input" name="act-name" [value]="actName" (input)="onActNameInput($event)" (blur)="onActNameBlur($event)" maxlength="12" autocomplete="off" aria-label="Nombre del grupo" />
+                        <input type="text" inputmode="numeric" class="pct-input" name="act-pct" [value]="actPct ?? ''" (input)="onActPctInput($event)" placeholder="%" maxlength="3" autocomplete="off" aria-label="Porcentaje del grupo" />
+                        <span class="pct-row-note">todas las {{ actName }} juntas (1 a 7)</span>
+                      </div>
+                      <div class="pct-row-item">
+                        <span class="pct-name-fixed">Eval.Period</span>
+                        <input type="text" inputmode="numeric" class="pct-input" name="eval-pct" [value]="evalPct" (input)="onEvalPctInput($event)" (blur)="onEvalPctBlur($event)" maxlength="3" autocomplete="off" aria-label="Porcentaje de Eval.Period" />
+                        <span class="pct-row-note">las actividades valen el {{ activitiesShare }}% restante</span>
+                      </div>
+                      @for (cat of categories; track cat.id) {
+                        <div class="pct-row-item">
+                          <input type="text" class="pct-name-input" [name]="'name-' + cat.id" [value]="cat.name" (input)="onCategoryNameInput(cat, $event)" (blur)="onCategoryNameBlur(cat, $event)" maxlength="20" autocomplete="off" [attr.aria-label]="'Nombre ' + cat.name" />
+                          <input type="text" inputmode="numeric" class="pct-input" [name]="'pct-' + cat.id" [value]="cat.pct ?? ''" (input)="onCategoryPctInput(cat, $event)" placeholder="%" maxlength="3" autocomplete="off" [attr.aria-label]="'Porcentaje ' + cat.name" />
+                          <button type="button" class="pct-remove" (click)="removeCategory(cat)" title="Quitar">×</button>
+                        </div>
+                      }
+                    </div>
+
+                    @if (pctOver) {
+                      <p class="pct-error" role="alert">
+                        ⚠ Los porcentajes suman {{ totalPctSum }}% y no pueden pasar de 100%.
+                        No se guardarán hasta que los corrijas.
+                      </p>
+                    }
+
+                    <p class="pct-hint">
+                      @if (!weightedMode) { Escribe un porcentaje (1-100) en cada nombre. Sin porcentajes se usa el promedio normal. }
+                      @else if (totalPctSum !== 100) { Los porcentajes deberían sumar 100%. }
+                      @else { Porcentajes completos. }
+                      Para poner una columna en la tabla usa el + del encabezado.
+                    </p>
+
+                    <button type="button" class="pct-plus" (click)="toggleAddCategoryForm()" title="Añadir nombre con porcentaje">+</button>
+
+                    @if (showAddCategoryForm) {
+                      <div class="pct-add-form">
+                        <input type="text" class="pct-add-name" name="addCategoryName" [(ngModel)]="addCategoryName" placeholder="Nombre (Quiz, Taller...)" maxlength="20" autocomplete="off" />
+                        <input type="number" class="pct-add-pct" name="addCategoryPct" [(ngModel)]="addCategoryPct" placeholder="%" min="1" max="100" autocomplete="off" />
+                        <button type="button" class="pct-add-ok" (click)="confirmAddCategory()">Guardar</button>
+                        <button type="button" class="pct-add-cancel" (click)="toggleAddCategoryForm()">Cancelar</button>
+                        @if (addCategoryError) { <span class="pct-add-error">{{ addCategoryError }}</span> }
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+
+            <div class="table-container">
+              <table class="grades-table">
+                <thead>
+                  <tr>
+                    <th class="no-col">No.</th>
+                    <th class="student-col">ESTUDIANTE</th>
+                    <th id="th-act1" class="percent-col">{{ actHeader(1) }}</th>
+                    <th id="th-act2" class="percent-col">{{ actHeader(2) }}</th>
+                    <th id="th-act3" class="percent-col">{{ actHeader(3) }}</th>
+                    <th id="th-act4" class="percent-col">{{ actHeader(4) }}</th>
+                    <th id="th-act5" class="percent-col">{{ actHeader(5) }}</th>
+                    <th id="th-act6" class="percent-col">{{ actHeader(6) }}</th>
+                    <th id="th-act7" class="percent-col">{{ actHeader(7) }}</th>
+                    @for (col of gradeColumns; track col.id) {
+                      <th class="percent-col extra-col">
+                        {{ colHeader(col) }}
+                        @if (isTeacher()) { <button type="button" class="col-x" (click)="removeColumn(col)" title="Quitar columna">×</button> }
+                      </th>
+                    }
+                    @if (isTeacher()) {
+                      <th class="plus-col">
+                        <button type="button" class="col-plus" (click)="toggleAddColumnMenu()" title="Añadir columna">+</button>
+                        @if (showAddColumnMenu) {
+                          <div class="col-menu">
+                            @if (categories.length === 0) {
+                              <span class="col-menu-empty">Primero crea un nombre en Porcentajes.</span>
+                            }
+                            @for (cat of categories; track cat.id) {
+                              <button type="button" class="col-menu-item" (click)="addColumnFromCategory(cat)">
+                                {{ cat.name }} <span class="col-menu-pct">{{ cat.pct ?? '-' }}{{ cat.pct ? '%' : '' }}</span>
+                              </button>
+                            }
+                          </div>
+                        }
+                      </th>
+                    }
+                    <th id="th-auto-eval" class="calc-col">Auto.Eval</th>
+                    <th id="th-prom-parc" class="calc-col">Prom.Parc</th>
+                    <th class="calc-col">{{ activitiesShare }}%</th>
+                    <th id="th-eval-period" class="calc-col">Eval.Period</th>
+<th class="calc-col">{{ evalPct }}%</th>
+                     <th class="def-col">N.FINAL</th>
+                    <th id="th-jinteg" class="recovery-col">J.INTEG</th>
+                    <th id="th-comp-social" class="recovery-col">COMP SOCIAL</th>
+                    <th id="th-val-acudiente" class="recovery-col">VAL. ACUDIENTE</th>
+                    <th id="th-recup-escrita" class="percent-col">Recup.Esc</th>
+                    <th id="th-recup-oral" class="percent-col">Recup.Oral</th>
+                    <th class="percent-col">Nota.Recup</th>
+                    <th class="action-col">ACCIÓN</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (student of students; track student; let i = $index) {
+                    <tr [class.alt]="i % 2 === 1" [class.failing]="needsRecovery(student.id)" [class.losing]="isLosing(student.id)" [class.excellent]="hasExcellentGrade(student.id)">
+                      <td class="no-cell">{{ i + 1 }}</td>
+                      <td class="student-cell">{{ student.surname }} {{ student.name }}</td>
+
+                      <td class="note-cell" [class]="getGradeColor(getGrade(student.id, 1))">
+                        <input type="text" class="grade-input" [id]="'grade-input-' + student.id + '-1'" [name]="'grade-' + student.id + '-1'" [value]="getGradeDisplay(student.id, 1)" (input)="onGradeChange(student.id, 1, $event)" (click)="onGradeClick(student.id, 1, $event)" (blur)="onGradeBlur(student.id, 1, $event)" (focus)="onCellFocus(student.id, 1)" (keydown)="handleKeydown($event)" placeholder="-" maxlength="4" autocomplete="off" aria-labelledby="th-act1" />
+                      </td>
+
+                      <td class="note-cell" [class]="getGradeColor(getGrade(student.id, 2))">
+                        <input type="text" class="grade-input" [id]="'grade-input-' + student.id + '-2'" [name]="'grade-' + student.id + '-2'" [value]="getGradeDisplay(student.id, 2)" (input)="onGradeChange(student.id, 2, $event)" (click)="onGradeClick(student.id, 2, $event)" (blur)="onGradeBlur(student.id, 2, $event)" (focus)="onCellFocus(student.id, 2)" (keydown)="handleKeydown($event)" placeholder="-" maxlength="4" autocomplete="off" aria-labelledby="th-act2" />
+                      </td>
+
+                      <td class="note-cell" [class]="getGradeColor(getGrade(student.id, 3))">
+                        <input type="text" class="grade-input" [id]="'grade-input-' + student.id + '-3'" [name]="'grade-' + student.id + '-3'" [value]="getGradeDisplay(student.id, 3)" (input)="onGradeChange(student.id, 3, $event)" (click)="onGradeClick(student.id, 3, $event)" (blur)="onGradeBlur(student.id, 3, $event)" (focus)="onCellFocus(student.id, 3)" (keydown)="handleKeydown($event)" placeholder="-" maxlength="4" autocomplete="off" aria-labelledby="th-act3" />
+                      </td>
+
+                      <td class="note-cell" [class]="getGradeColor(getGrade(student.id, 4))">
+                        <input type="text" class="grade-input" [id]="'grade-input-' + student.id + '-4'" [name]="'grade-' + student.id + '-4'" [value]="getGradeDisplay(student.id, 4)" (input)="onGradeChange(student.id, 4, $event)" (click)="onGradeClick(student.id, 4, $event)" (blur)="onGradeBlur(student.id, 4, $event)" (focus)="onCellFocus(student.id, 4)" (keydown)="handleKeydown($event)" placeholder="-" maxlength="4" autocomplete="off" aria-labelledby="th-act4" />
+                      </td>
+
+                      <td class="note-cell" [class]="getGradeColor(getGrade(student.id, 5))">
+                        <input type="text" class="grade-input" [id]="'grade-input-' + student.id + '-5'" [name]="'grade-' + student.id + '-5'" [value]="getGradeDisplay(student.id, 5)" (input)="onGradeChange(student.id, 5, $event)" (click)="onGradeClick(student.id, 5, $event)" (blur)="onGradeBlur(student.id, 5, $event)" (focus)="onCellFocus(student.id, 5)" (keydown)="handleKeydown($event)" placeholder="-" maxlength="4" autocomplete="off" aria-labelledby="th-act5" />
+                      </td>
+
+                      <td class="note-cell" [class]="getGradeColor(getGrade(student.id, 6))">
+                        <input type="text" class="grade-input" [id]="'grade-input-' + student.id + '-6'" [name]="'grade-' + student.id + '-6'" [value]="getGradeDisplay(student.id, 6)" (input)="onGradeChange(student.id, 6, $event)" (click)="onGradeClick(student.id, 6, $event)" (blur)="onGradeBlur(student.id, 6, $event)" (focus)="onCellFocus(student.id, 6)" (keydown)="handleKeydown($event)" placeholder="-" maxlength="4" autocomplete="off" aria-labelledby="th-act6" />
+                      </td>
+
+                      <td class="note-cell" [class]="getGradeColor(getGrade(student.id, 7))">
+                        <input type="text" class="grade-input" [id]="'grade-input-' + student.id + '-7'" [name]="'grade-' + student.id + '-7'" [value]="getGradeDisplay(student.id, 7)" (input)="onGradeChange(student.id, 7, $event)" (click)="onGradeClick(student.id, 7, $event)" (blur)="onGradeBlur(student.id, 7, $event)" (focus)="onCellFocus(student.id, 7)" (keydown)="handleKeydown($event)" placeholder="-" maxlength="4" autocomplete="off" aria-labelledby="th-act7" />
+                      </td>
+
+                      @for (col of gradeColumns; track col.id) {
+                        <td class="note-cell" [class]="getGradeColor(getDynamicGradeValue(student.id, col.id))">
+                          <input type="text" class="grade-input" [name]="'dyn-' + student.id + '-' + col.id" [value]="getDynamicGradeDisplay(student.id, col.id)" (input)="onDynamicGradeInput(student.id, col, $event)" placeholder="-" maxlength="4" autocomplete="off" [attr.aria-label]="colHeader(col)" />
+                        </td>
+                      }
+                      @if (isTeacher()) { <td class="plus-cell"></td> }
+
+                      <td class="note-cell" [class]="getGradeColor(getGrade(student.id, 9))">
+                        <input type="text" class="grade-input" [id]="'grade-input-' + student.id + '-9'" [name]="'grade-' + student.id + '-9'" [value]="getGradeDisplay(student.id, 9)" (input)="onGradeChange(student.id, 9, $event)" (click)="onGradeClick(student.id, 9, $event)" (blur)="onGradeBlur(student.id, 9, $event)" (focus)="onCellFocus(student.id, 9)" (keydown)="handleKeydown($event)" placeholder="-" maxlength="4" autocomplete="off" aria-labelledby="th-auto-eval" />
+                      </td>
+
+                      <td class="note-cell" [class]="getGradeColor(getGrade(student.id, 10))">
+                        <input type="text" class="grade-input" [id]="'grade-input-' + student.id + '-10'" [name]="'grade-' + student.id + '-10'" [value]="getGradeDisplay(student.id, 10)" (input)="onGradeChange(student.id, 10, $event)" (click)="onGradeClick(student.id, 10, $event)" (blur)="onGradeBlur(student.id, 10, $event)" (focus)="onCellFocus(student.id, 10)" (keydown)="handleKeydown($event)" placeholder="-" maxlength="4" autocomplete="off" aria-labelledby="th-prom-parc" />
+                      </td>
+
+                      <td class="calc-cell" [class]="get80Color(student.id)">{{ get80Percent(student.id) }}</td>
+
+                      <td class="note-cell" [class]="getGradeColor(getGrade(student.id, 8))">
+                        <input type="text" class="grade-input" [id]="'grade-input-' + student.id + '-8'" [name]="'grade-' + student.id + '-8'" [value]="getGradeDisplay(student.id, 8)" (input)="onGradeChange(student.id, 8, $event)" (click)="onGradeClick(student.id, 8, $event)" (blur)="onGradeBlur(student.id, 8, $event)" (focus)="onCellFocus(student.id, 8)" (keydown)="handleKeydown($event)" placeholder="-" maxlength="4" autocomplete="off" aria-labelledby="th-eval-period" />
+                      </td>
+
+                      <td class="calc-cell" [class]="get20Color(student.id)">{{ get20Percent(student.id) }}</td>
+
+                      <td class="def-cell" [class]="getFinalColor(student.id)">{{ getFinalWithRecovery(student.id) }}</td>
+
+                      <td class="recovery-cell">
+                        <input type="text" class="grade-input" [id]="'recovery-jinteg-' + student.id" [name]="'recovery-jinteg-' + student.id" [value]="getCurrentSubjectRecoveryData(student.id)?.jInteg || ''" (input)="onJIntegChange(student.id, $event)" (keydown)="handleKeydown($event)" (focus)="onCellFocus(student.id, 8)" placeholder="-" maxlength="50" autocomplete="off" aria-labelledby="th-jinteg" />
+                      </td>
+
+                      <td class="recovery-cell comp-social-cell" [class]="getCompSocialColor(student.id)">
+                        <input type="text" class="grade-input" [id]="'recovery-compsocial-' + student.id" [name]="'recovery-compsocial-' + student.id" [value]="getCompSocialDisplay(student.id)" (input)="onCompSocialChange(student.id, $event)" (keydown)="handleKeydown($event)" (focus)="onCellFocus(student.id, 8)" placeholder="-" maxlength="4" autocomplete="off" aria-labelledby="th-compsocial" />
+                        <span class="comp-social-label">{{ getCompSocialScaleLabel(student.id) }}</span>
+                      </td>
+
+                      <td class="recovery-cell comp-social-cell" [class]="getValoracionAcudienteColor(student.id)">
+                        <input type="text" class="grade-input" [id]="'recovery-acudiente-' + student.id" [name]="'recovery-acudiente-' + student.id" [value]="getValoracionAcudienteDisplay(student.id)" (input)="onValoracionAcudienteChange(student.id, $event)" (keydown)="handleKeydown($event)" (focus)="onCellFocus(student.id, 8)" placeholder="-" maxlength="4" autocomplete="off" aria-labelledby="th-val-acudiente" />
+                        <span class="comp-social-label">{{ getValoracionAcudienteScaleLabel(student.id) }}</span>
+                      </td>
+
+                      <td class="note-cell">
+                        <input type="text" class="grade-input" [id]="'recup-escrita-' + student.id" [name]="'recup-escrita-' + student.id" [value]="(getCurrentSubjectRecoveryData(student.id)?.written ?? '').toString().replace('.', ',')" (input)="onRecoveryWrittenChange(student.id, $event)" (keydown)="handleKeydown($event)" (focus)="onCellFocus(student.id, 8)" placeholder="-" maxlength="4" autocomplete="off" aria-labelledby="th-recup-escrita" />
+                      </td>
+
+                      <td class="note-cell">
+                        <input type="text" class="grade-input" [id]="'recup-oral-' + student.id" [name]="'recup-oral-' + student.id" [value]="(getCurrentSubjectRecoveryData(student.id)?.oral ?? '').toString().replace('.', ',')" (input)="onRecoveryOralChange(student.id, $event)" (keydown)="handleKeydown($event)" (focus)="onCellFocus(student.id, 8)" placeholder="-" maxlength="4" autocomplete="off" aria-labelledby="th-recup-oral" />
+                      </td>
+
+                      <td class="calc-cell">{{ getNotaRecup(student.id) }}</td>
+
+                      <td class="action-cell">
+                        @if (needsRecovery(student.id) || hasRecoveryPlan(student.id, selectedPeriod)) {
+                          <button class="study-plan-btn" [class.has-plan]="hasRecoveryPlan(student.id, selectedPeriod)" (click)="openStudyPlanModal(student)" title="Generar Plan de Estudio">📚</button>
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+
+          @if (students.length === 0) {
+            <div class="no-students-message">
+              <div class="no-students-content">
+                <h3>No hay estudiantes en este salón</h3>
+                <p>El grado {{ selectedGrade }} - {{ selectedClassroom }} no tiene estudiantes registrados.</p>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<!-- AI Study Plan Modal -->
+@if (showStudyPlanModal) {
+  <div class="fullscreen-modal-overlay" (click)="closeStudyPlanModal()">
+    <div class="fullscreen-modal-content spm" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-labelledby="spm-title">
+
+      <header class="spm-header">
+        <div class="spm-header-icon" aria-hidden="true">📚</div>
+        <div class="spm-header-text">
+          <h2 id="spm-title">Plan de Estudio</h2>
+          <span>Plan personalizado generado con IA</span>
+        </div>
+        <button type="button" class="spm-close" aria-label="Cerrar" (click)="closeStudyPlanModal()">×</button>
+      </header>
+
+      <div class="spm-body">
+        @if (selectedStudentForPlan) {
+          <section class="spm-student">
+            <div class="spm-avatar" aria-hidden="true">{{ (selectedStudentForPlan.name || '').charAt(0) }}{{ (selectedStudentForPlan.surname || '').charAt(0) }}</div>
+            <div class="spm-student-main">
+              <h3>{{ selectedStudentForPlan.surname }} {{ selectedStudentForPlan.name }}</h3>
+              <p>{{ selectedGrade }} <span class="spm-dot">•</span> Período {{ selectedPeriod }}</p>
+            </div>
+            <div class="spm-score">
+              <span class="spm-score-label">Nota actual</span>
+              <span class="spm-score-badge" [class]="getFinalColor(selectedStudentForPlan.id)">{{ getFinalWithRecovery(selectedStudentForPlan.id) }}</span>
+            </div>
+          </section>
+        }
+
+        @if (!planGenerated) {
+          <div class="spm-form">
+            <section class="spm-info">
+              <span class="spm-info-icon" aria-hidden="true">✨</span>
+              <div>
+                <strong>Plan profesional completo</strong>
+                <p>Incluye objetivo, cronograma de un solo día (DÍA 1), recursos reales, ejercicios prácticos, consejos y evaluación final. No se interrumpe a la mitad.</p>
+              </div>
+            </section>
+
+            <section class="spm-card">
+              <label class="spm-label" for="topics">
+                <span aria-hidden="true">📝</span> Temas que debe estudiar el estudiante
+              </label>
+              <textarea id="topics" name="topics" class="spm-textarea" [(ngModel)]="studyPlanTopics" placeholder="Ej: Álgebra básico, ecuaciones de primer grado, operaciones con fracciones..." rows="5" autocomplete="off"></textarea>
+            </section>
+
+            <section class="spm-card">
+              <input type="file" id="topicImage" name="topicImage" class="spm-file" accept="image/*" (change)="onImageSelected($event)" multiple autocomplete="off">
+              <label for="topicImage" class="spm-drop">
+                <span class="spm-drop-icon" aria-hidden="true">📷</span>
+                <span class="spm-drop-text">
+                  <strong>Adjuntar imagen <em>(opcional)</em></strong>
+                  <small>Fotos del cuaderno, guía o evaluación para que la IA se base en ellas</small>
+                </span>
+                <span class="spm-drop-action">Elegir</span>
+              </label>
+              @if (uploadedImages.length > 0) {
+                <div class="spm-thumbs">
+                  @for (img of uploadedImages; track $index) {
+                    <div class="spm-thumb">
+                      <img [src]="img.preview" alt="Imagen adjunta">
+                      <button type="button" class="spm-thumb-x" aria-label="Quitar imagen" (click)="removeImage($index)">✕</button>
+                    </div>
+                  }
+                </div>
+              }
+            </section>
+
+            <button type="button" class="spm-generate" [class.is-generating]="isGeneratingPlan" (click)="generateStudyPlan()" [disabled]="!studyPlanTopics.trim() || isGeneratingPlan">
+              @if (isGeneratingPlan) {
+                <span class="btn-progress-bar"><span class="btn-progress-fill" [style.width.%]="progressPercent"></span></span>
+                <span class="btn-progress-text">Generando plan… {{ progressPercent | number:'1.0-0' }}%</span>
+              } @else {
+                <span aria-hidden="true">🤖</span> Generar plan con IA
+              }
+            </button>
+            @if (!studyPlanTopics.trim() && !isGeneratingPlan) {
+              <p class="spm-hint">Escribe al menos un tema para poder generar el plan.</p>
+            }
+          </div>
+        }
+
+        @if (studyPlanContent && !isGeneratingPlan) {
+          <div class="plan-content-fullscreen" id="study-plan-content" [class.fade-in]="planGenerated">
+            <h3>Plan de Estudio</h3>
+            <div class="plan-text" [innerHTML]="studyPlanContentSafe"></div>
+          </div>
+        }
+      </div>
+
+      @if (studyPlanContent && planGenerated) {
+        <footer class="spm-footer">
+          <button type="button" class="spm-btn spm-btn-ghost" (click)="printStudyPlan()">🖨️ Imprimir plan</button>
+          @if (planSaved) {
+            <button type="button" class="spm-btn spm-btn-saved" (click)="closeStudyPlanModal()">✓ Guardado — cerrar</button>
+          } @else {
+            <button type="button" class="spm-btn spm-btn-primary" (click)="savePlan()">💾 Guardar plan</button>
+          }
+        </footer>
+      }
+    </div>
+  </div>
+}

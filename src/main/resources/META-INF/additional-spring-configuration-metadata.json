@@ -1,0 +1,9 @@
+{
+  "properties": [
+    {
+      "name": "boletines.output-dir",
+      "type": "java.lang.String",
+      "description": "Ruta absoluta donde se guardan los boletines generados. Al ser global, no depende del directorio de trabajo (user.dir) desde el que se lance el backend."
+    }
+  ]
+}

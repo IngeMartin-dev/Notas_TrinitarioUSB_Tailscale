@@ -1,0 +1,398 @@
+<div class="boletines-container">
+  <div class="boletines-header">
+    <h2>📋 Boletines</h2>
+  </div>
+
+  @if (showFormView) {
+    <div class="form-view" [class.fade-out]="fadeOutForm">
+
+      <!-- FILTROS -->
+      <div class="filters-section">
+        <div class="filter-group">
+          <label>Grado:</label>
+          <select [(ngModel)]="selectedGrade" (change)="onGradeChange()">
+            <option value="">Seleccione un grado</option>
+            @for (grade of grades; track grade) {
+              <option [value]="grade">{{ grade }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>Salón:</label>
+          <select [(ngModel)]="selectedClassroom" (change)="onClassroomChange()">
+            <option value="">Seleccione un salón</option>
+            @for (classroom of classrooms; track classroom) {
+              <option [value]="classroom">{{ classroom }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>Período:</label>
+          <select [(ngModel)]="selectedPeriod" (change)="onPeriodChange()">
+            @for (p of [1,2,3,4]; track p) {
+              <option [value]="p">Período {{ p }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <!-- MATERIAS PERDIDAS DEL PERÍODO SELECCIONADO -->
+      @if (lostAreasPreview.length > 0) {
+        <div class="section-card lost-areas-card">
+          <h3><span class="material-icons">warning</span> Materias perdidas — Período {{ selectedPeriod }}</h3>
+          <div class="lost-areas-list">
+            @for (item of lostAreasPreview; track item.studentName) {
+              <div class="lost-areas-row">
+                <span class="lost-areas-student">{{ item.studentName }}</span>
+                <span class="lost-areas-subjects">{{ item.subjects.join(', ') }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- PASO 1: INDICADORES POR MATERIA (UNA PANTALLA POR MATERIA) -->
+      @if (students.length > 0 && currentStep === 'subjectIndicators') {
+        <div class="section-card">
+          <h3>Paso 1: Indicadores por Materia</h3>
+          <p class="step-hint">
+            Materia {{ currentSubjectIndex + 1 }} de {{ subjects.length }}: {{ subjects[currentSubjectIndex] }}
+          </p>
+
+@if (presetPeriods.length > 0) {
+            <div class="preset-objectives">
+              <button type="button" class="btn-preset" (click)="togglePresetMenu()">
+                🎯 Objetivos predeterminados
+              </button>
+              @if (showPresetMenu) {
+                <div class="preset-menu">
+                  @for (p of presetPeriods; track p) {
+                    <button type="button" class="preset-option" (click)="applyPreset(p)">{{ presetPeriodLabel(p) }}</button>
+                  }
+                </div>
+              }
+            </div>
+          }
+
+<div class="subject-indicators-card">
+             <div class="subject-header">{{ subjects[currentSubjectIndex] }}</div>
+             <div class="objective-field">
+               <label>Objetivo de la materia:</label>
+               <textarea
+                 [ngModel]="getGroupObjective(subjects[currentSubjectIndex])"
+                 (ngModelChange)="setGroupObjective(subjects[currentSubjectIndex], $event)"
+                 placeholder="Objetivo..."
+                 class="objective-textarea"
+                 rows="2">
+               </textarea>
+             </div>
+              @if (isValoracionAcudiente(subjects[currentSubjectIndex])) {
+                <div class="students-indicators-table">
+                  <table class="indicators-table">
+                     <thead>
+                      <tr>
+                        <th>Estudiante</th>
+                        <th>Nota Val. Acudiente</th>
+                        <th>I.H.</th>
+                        <th>F.A.</th>
+                        <th>F.A.A.</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (student of students; track student.id) {
+                        <tr>
+                          <td class="td-student-name">{{ student.surname }} {{ student.name }}</td>
+                          <td class="td-indicator">
+                            <div class="grade-input-with-scale">
+                              <input type="text" inputmode="decimal"
+                                     [value]="getValoracionAcudiente(student.id) ?? ''"
+                                     (input)="onValoracionAcudienteInput(student.id, $event)"
+                                     class="indicator-input-small"
+                                     maxlength="4"
+                                     placeholder="0,0">
+                              @if (getValoracionAcudienteScaleLabel(student.id)) {
+                                <span class="scale-badge scale-{{ getValoracionAcudienteScaleLabel(student.id) }}">{{ getValoracionAcudienteScaleLabel(student.id) }}</span>
+                              }
+                            </div>
+                          </td>
+                          <td class="td-indicator">
+                            <input type="number" min="0" [ngModel]="getStudentIndicator(student.id, subjects[currentSubjectIndex]).ih ?? null" (ngModelChange)="setStudentIndicator(student.id, subjects[currentSubjectIndex], 'ih', $event)" class="indicator-input-small">
+                          </td>
+                          <td class="td-indicator">
+                            <input type="number" min="0" [ngModel]="getStudentIndicator(student.id, subjects[currentSubjectIndex]).fa ?? null" (ngModelChange)="setStudentIndicator(student.id, subjects[currentSubjectIndex], 'fa', $event)" class="indicator-input-small">
+                          </td>
+                          <td class="td-indicator">
+                            <input type="number" min="0" [ngModel]="getStudentIndicator(student.id, subjects[currentSubjectIndex]).faa ?? null" (ngModelChange)="setStudentIndicator(student.id, subjects[currentSubjectIndex], 'faa', $event)" class="indicator-input-small">
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              } @else {
+                <div class="students-indicators-table">
+                  <table class="indicators-table">
+                    <thead>
+                      <tr>
+                        <th>Estudiante</th>
+                        <th>I.H</th>
+                        <th>F.A</th>
+                        <th>F.A.A</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (student of students; track student.id) {
+                        <tr>
+                          <td class="td-student-name">{{ student.surname }} {{ student.name }}</td>
+                          <td class="td-indicator">
+                            <input type="number" min="0" [ngModel]="getStudentIndicator(student.id, subjects[currentSubjectIndex]).ih ?? null" (ngModelChange)="setStudentIndicator(student.id, subjects[currentSubjectIndex], 'ih', $event)" class="indicator-input-small">
+                          </td>
+                          <td class="td-indicator">
+                            <input type="number" min="0" [ngModel]="getStudentIndicator(student.id, subjects[currentSubjectIndex]).fa ?? null" (ngModelChange)="setStudentIndicator(student.id, subjects[currentSubjectIndex], 'fa', $event)" class="indicator-input-small">
+                          </td>
+                          <td class="td-indicator">
+                            <input type="number" min="0" [ngModel]="getStudentIndicator(student.id, subjects[currentSubjectIndex]).faa ?? null" (ngModelChange)="setStudentIndicator(student.id, subjects[currentSubjectIndex], 'faa', $event)" class="indicator-input-small">
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              }
+           </div>
+
+          <div class="step-actions">
+            @if (currentSubjectIndex > 0) {
+              <button class="btn-back" (click)="prevSubjectIndicators()">
+                ← Anterior
+              </button>
+            }
+            <button class="btn-next" (click)="nextSubjectIndicators()">
+              @if (currentSubjectIndex < subjects.length - 1) {
+                Siguiente Materia →
+              } @else {
+                Continuar →
+              }
+            </button>
+          </div>
+        </div>
+      }
+
+      <!-- PASO 2: COMPORTAMIENTO SOCIAL (INDICADORES + OBJETIVO + CALIFICACIÓN) -->
+      @if (students.length > 0 && currentStep === 'comportamiento') {
+        <div class="section-card">
+          <h3>Paso 2: Comportamiento Social por Estudiante</h3>
+          <p class="step-hint">
+            Ingrese la calificación valorativa, los indicadores (I.H. / F.A. / F.A.A.) y el objetivo general
+            del comportamiento social.
+          </p>
+
+          <div class="objective-field" style="margin-bottom: 12px;">
+            <label>Objetivo / descripción del Comportamiento Social (se imprime en el boletín):</label>
+            <textarea
+              [ngModel]="compSocialObjetivo"
+              (ngModelChange)="compSocialObjetivo = $event"
+              placeholder="Objetivo / recomendación general del Comportamiento Social…"
+              class="objective-textarea"
+              rows="2">
+            </textarea>
+          </div>
+
+          <div class="students-indicators-table">
+            <table class="indicators-table">
+               <thead>
+                <tr>
+                  <th>Estudiante</th>
+                  <th>Nota Comp. Social</th>
+                  <th>I.H.</th>
+                  <th>F.A.</th>
+                  <th>F.A.A.</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (student of students; track student.id) {
+                  <tr>
+                    <td class="td-student-name">{{ student.surname }} {{ student.name }}</td>
+                    <td class="td-indicator">
+                      <div class="grade-input-with-scale">
+                        <input type="text" inputmode="decimal"
+                               [value]="getCompSocialRating(student.id) ?? ''"
+                               (input)="onCompSocialInput(student.id, $event)"
+                               class="indicator-input-small"
+                               maxlength="4"
+                               placeholder="0,0">
+                        @if (getCompSocialScaleLabel(student.id)) {
+                          <span class="scale-badge scale-{{ getCompSocialScaleLabel(student.id) }}">{{ getCompSocialScaleLabel(student.id) }}</span>
+                        }
+                      </div>
+                    </td>
+                    <td class="td-indicator">
+                      <input type="number" min="0"
+                             [ngModel]="getCompSocialIndicator(student.id).ih ?? null"
+                             (ngModelChange)="setCompSocialIndicator(student.id, 'ih', $event)"
+                             class="indicator-input-small"
+                             placeholder="I.H.">
+                    </td>
+                    <td class="td-indicator">
+                      <input type="number" min="0"
+                             [ngModel]="getCompSocialIndicator(student.id).fa ?? null"
+                             (ngModelChange)="setCompSocialIndicator(student.id, 'fa', $event)"
+                             class="indicator-input-small"
+                             placeholder="F.A.">
+                    </td>
+                    <td class="td-indicator">
+                      <input type="number" min="0"
+                             [ngModel]="getCompSocialIndicator(student.id).faa ?? null"
+                             (ngModelChange)="setCompSocialIndicator(student.id, 'faa', $event)"
+                             class="indicator-input-small"
+                             placeholder="F.A.A.">
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <div class="step-actions">
+            <button class="btn-back" (click)="currentStep = 'subjectIndicators'">
+              ← Atrás
+            </button>
+            <button class="btn-next" (click)="goToFinal()">
+              Continuar →
+            </button>
+          </div>
+        </div>
+      }
+
+      <!-- PASO 3: FIRMA Y GENERAR -->
+      @if (students.length > 0 && currentStep === 'final') {
+        <div class="section-card">
+          <h3>Paso 3: Generar Boletines</h3>
+          <p class="step-hint">Seleccione la firma del director y genere los boletines.</p>
+
+          <div class="signature-management">
+            <h4>Firma del Director</h4>
+            <button class="btn-manage-sig" (click)="openSignaturePanel()">
+              📁 Gestionar Firmas
+            </button>
+            @if (selectedDirectorSignature) {
+              <div class="selected-sig-preview">
+                <span>Firma seleccionada:</span>
+                <img [src]="apiBaseUrl + selectedDirectorSignature" [alt]="'Firma director'" class="sig-thumb" (error)="onImageError($event)">
+                <button class="btn-clear-sig" (click)="selectedDirectorSignature = undefined">✕</button>
+              </div>
+            }
+          </div>
+
+          <div class="step-actions">
+            <button class="btn-next" (click)="initiateGenerate()">
+              Generar Boletines
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Generation progress -->
+  @if (!showFormView && isGenerating) {
+    <div class="generating-view fade-in">
+      <h3>⏳ Generando Boletines...</h3>
+      <div class="progress-section">
+        <div class="progress-bar-wrapper">
+          <div class="progress-bar" [style.width.%]="generationProgress"></div>
+        </div>
+        <div class="progress-text">{{ generationProgress }}% completado @if (generatingTotal > 0) { · {{ generatingCompleted }} / {{ generatingTotal }} boletines }</div>
+      </div>
+      <div class="generating-list">
+        @for (student of students; track student.id; let i = $index) {
+          <div class="generating-item" [class.generating]="i === currentGeneratingIndex" [class.done]="i < currentGeneratingIndex">
+            <span class="gen-name">{{ student.surname }} {{ student.name }}</span>
+            <span class="gen-status">
+              @if (i < currentGeneratingIndex) {
+                <span class="status-done">✅</span>
+              } @else if (i === currentGeneratingIndex) {
+                <span class="status-active">⏳</span>
+              } @else {
+                <span class="status-pending">⬜</span>
+              }
+            </span>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Results -->
+  @if (!showFormView && !isGenerating && generatedFiles.length > 0) {
+    <div class="results-view fade-in">
+      <h3>✅ Boletines Generados</h3>
+      <div class="results-summary">
+        Se generaron {{ generatedFiles.length }} boletines correctamente.
+      </div>
+      <div class="results-list">
+        @for (file of generatedFiles; track file.fileName) {
+          <div class="result-card">
+            <div class="result-info">
+              <div class="result-name">{{ file.studentName }}</div>
+              <div class="result-file">{{ file.fileName }}</div>
+            </div>
+            <div class="result-actions">
+              <button class="preview-btn" (click)="previewPdf(file.studentId, file.fileName)">
+                👁️ Vista Previa
+              </button>
+              <button class="download-btn" (click)="downloadPdf(file.studentId, file.fileName)">
+                📥 Descargar
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+      <button class="back-btn" (click)="backToForm()">
+        ← Volver a generar
+      </button>
+    </div>
+  }
+
+  <!-- Signature Panel -->
+  @if (showSignaturePanel) {
+    <div class="signature-panel-overlay" (click)="closeSignaturePanel()">
+      <div class="signature-panel" (click)="$event.stopPropagation()">
+        <div class="panel-header">
+          <h3>Gestionar Firmas</h3>
+          <button class="panel-close" (click)="closeSignaturePanel()">✕</button>
+        </div>
+        <div class="panel-body">
+          <div class="upload-zone" (dragover)="onDragOver($event)" (drop)="onDrop($event)">
+            <p>Arrastra fotos de firmas aquí o</p>
+            <input type="file" accept="image/*" (change)="onSignatureUpload($event)" multiple>
+            <button class="btn-upload">Seleccionar archivos</button>
+          </div>
+          <div class="signatures-gallery">
+            <div class="sig-card a11y-clickable" [class.selected]="!selectedDirectorSignature" role="button" tabindex="0" aria-label="Sin firma de director" (click)="selectedDirectorSignature = undefined" (keydown.enter)="selectedDirectorSignature = undefined" (keydown.space)="selectedDirectorSignature = undefined; $event.preventDefault()">
+              <div class="sig-img no-sig">
+                <span class="no-sig-icon">📝</span>
+                <span class="no-sig-text">Sin firma personalizada</span>
+              </div>
+              <div class="sig-name">Por defecto</div>
+            </div>
+            @for (sig of signatures; track sig.path) {
+              <div class="sig-card a11y-clickable" [class.selected]="selectedDirectorSignature === sig.path" role="button" tabindex="0" [attr.aria-label]="'Firma ' + sig.name" (click)="selectedDirectorSignature = sig.path" (keydown.enter)="selectedDirectorSignature = sig.path" (keydown.space)="selectedDirectorSignature = sig.path; $event.preventDefault()">
+                <div class="sig-img">
+                  <img [src]="apiBaseUrl + sig.path" [alt]="sig.name" (error)="onImageError($event)">
+ </div>
+                <div class="sig-name">{{ sig.name }}</div>
+              </div>
+            }
+          </div>
+        </div>
+        <div class="panel-footer">
+          <button class="btn-cancel" (click)="closeSignaturePanel()">Cerrar</button>
+          <button class="btn-confirm" (click)="confirmSignature()">Aceptar</button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

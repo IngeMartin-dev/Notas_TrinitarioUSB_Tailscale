@@ -1,0 +1,360 @@
+<!-- Show full layout only when not on login route -->
+@if (!isLoginRoute()) {
+  <div>
+    <!-- Main App Container -->
+    <div class="app-container">
+      <!-- Sidebar Navigation - Show on all authenticated pages -->
+      @if (!isLoginRoute()) {
+        <aside class="sidebar" [class.sidebar-animated]="sidebarAnimated()" [class.open]="sidebarOpen()">
+          <div class="sidebar-header">
+            <div class="logo-container">
+              <img src="Logo Colegio.png" alt="Logo" class="logo" />
+              <h1>Notas<br />Trinitario</h1>
+            </div>
+          </div>
+          <nav class="nav-menu">
+            <ul>
+              <!-- Panel: visible para cualquier rol reconocido -->
+              @if (hasKnownRole()) {
+                <li [class.active]="activeRoute() === 'dashboard'">
+                  <a routerLink="/dashboard" (click)="setActiveRoute('dashboard')">
+                    <span class="material-icons">dashboard</span>
+                    <span class="menu-text">Panel</span>
+                  </a>
+                </li>
+              }
+              <!-- Estudiantes: solo Administrador -->
+              @if (isAdmin()) {
+                <li [class.active]="activeRoute() === 'students'">
+                  <a routerLink="/students" (click)="setActiveRoute('students')">
+                    <span class="material-icons">school</span>
+                    <span class="menu-text">Estudiantes</span>
+                  </a>
+                </li>
+              }
+              <!-- Padres de Familia: solo Administrador -->
+              @if (isAdmin()) {
+                <li [class.active]="activeRoute() === 'parents'">
+                  <a routerLink="/parents" (click)="setActiveRoute('parents')">
+                    <span class="material-icons">family_restroom</span>
+                    <span class="menu-text">Padres de Familia</span>
+                  </a>
+                </li>
+              }
+              <!-- Profesores: solo Administrador -->
+              @if (isAdmin()) {
+                <li [class.active]="activeRoute() === 'teachers'">
+                  <a routerLink="/teachers" (click)="setActiveRoute('teachers')">
+                    <span class="material-icons">person</span>
+                    <span class="menu-text">Profesores</span>
+                  </a>
+                </li>
+              }
+              <!-- Directores de Grupo: solo Administrador -->
+              @if (isAdmin()) {
+                <li [class.active]="activeRoute() === 'directors-group'">
+                  <a routerLink="/directors-group" (click)="setActiveRoute('directors-group')">
+                    <span class="material-icons">groups</span>
+                    <span class="menu-text">Directores de Grupo</span>
+                  </a>
+                </li>
+              }
+              <!-- Chats: cualquier rol reconocido (dentro del chat, los padres no ven profesores/admins, según regla propia del chat) -->
+              @if (hasKnownRole()) {
+                <li [class.active]="activeRoute() === 'chats'">
+                  <a routerLink="/chats" (click)="setActiveRoute('chats')">
+                    <span class="material-icons">chat</span>
+                    <span class="menu-text">Chats</span>
+                  </a>
+                </li>
+              }
+              <!-- Materias: solo Administrador -->
+              @if (isAdmin()) {
+                <li [class.active]="activeRoute() === 'subjects'">
+                  <a routerLink="/subjects" (click)="setActiveRoute('subjects')">
+                    <span class="material-icons">menu_book</span>
+                    <span class="menu-text">Materias</span>
+                  </a>
+                </li>
+              }
+              <!-- Calificaciones: Profesor/Director editan; Padre de Familia solo lectura (del hijo enlazado y activo) -->
+              @if (isTeacherOrDirector() || isParent()) {
+                <li [class.active]="activeRoute() === 'grades'">
+                  <a [routerLink]="gradesRoute()" (click)="setActiveRoute('grades')">
+                    <span class="material-icons">assignment</span>
+                    <span class="menu-text">Calificaciones</span>
+                  </a>
+                </li>
+              }
+              <!-- Boletines: Administrador (generación) y Padre de Familia (solo lectura, del hijo enlazado y activo) -->
+              @if (isAdmin() || isParent()) {
+                <li [class.active]="activeRoute() === 'boletines'">
+                  <a [routerLink]="boletinesRoute()" (click)="setActiveRoute('boletines')">
+                    <span class="material-icons">description</span>
+                    <span class="menu-text">Boletines</span>
+                  </a>
+                </li>
+              }
+              <!-- Boletines Generados: solo Administrador -->
+              @if (isAdmin()) {
+                <li [class.active]="activeRoute() === 'boletines-generados'">
+                  <a routerLink="/boletines-generados" (click)="setActiveRoute('boletines-generados')">
+                    <span class="material-icons">folder_special</span>
+                    <span class="menu-text">Boletines Generados</span>
+                  </a>
+                </li>
+              }
+              <!-- Recuperaciones: solo Profesor / Director de Grupo -->
+              @if (isTeacherOrDirector()) {
+                <li [class.active]="activeRoute() === 'recoveries'">
+                  <a routerLink="/recoveries" (click)="setActiveRoute('recoveries')">
+                    <span class="material-icons">school</span>
+                    <span class="menu-text">Recuperaciones</span>
+                  </a>
+                </li>
+              }
+              <!-- Reportes: Administrador y Director de Grupo (NO Profesor sin rol de director, NO Padre) -->
+              @if (isDirectorOrAdmin()) {
+                <li [class.active]="activeRoute() === 'reports'">
+                  <a routerLink="/reports" (click)="setActiveRoute('reports')">
+                    <span class="material-icons">assessment</span>
+                    <span class="menu-text">Consolidados</span>
+                  </a>
+                </li>
+                <li [class.active]="activeRoute() === 'consolidados-generados'">
+                  <a routerLink="/consolidados-generados" (click)="setActiveRoute('consolidados-generados')">
+                    <span class="material-icons">folder_special</span>
+                    <span class="menu-text">Consolidados Generados</span>
+                  </a>
+                </li>
+              }
+              <!-- Promociones (egresados de Grado 11º): solo Administrador -->
+              @if (isAdmin()) {
+                <li [class.active]="activeRoute() === 'promociones'">
+                  <a routerLink="/promociones" (click)="setActiveRoute('promociones')">
+                    <span class="material-icons">workspace_premium</span>
+                    <span class="menu-text">Promociones</span>
+                  </a>
+                </li>
+              }
+              <!-- Períodos: solo Administrador -->
+              @if (isAdmin()) {
+                <li [class.active]="activeRoute() === 'periods'">
+                  <a routerLink="/periods" (click)="setActiveRoute('periods')">
+                    <span class="material-icons">calendar_month</span>
+                    <span class="menu-text">Períodos</span>
+                  </a>
+                </li>
+              }
+               <!-- Configuración de Año: solo Administrador -->
+              @if (isAdmin()) {
+                <li [class.active]="activeRoute() === 'school-year-config'">
+                  <a routerLink="/school-year-config" (click)="setActiveRoute('school-year-config')">
+                    <span class="material-icons">event_repeat</span>
+                    <span class="menu-text">Configuración de Año</span>
+                  </a>
+                </li>
+              }
+              <!-- Configuración: cualquier rol reconocido -->
+              @if (hasKnownRole()) {
+                <li [class.active]="activeRoute() === 'settings'">
+                  <a routerLink="/settings" (click)="setActiveRoute('settings')">
+                    <span class="material-icons">settings</span>
+                    <span class="menu-text">Configuración</span>
+                  </a>
+                </li>
+              }
+
+            </ul>
+          </nav>
+          <div class="user-profile">
+            <div class="user-avatar" [attr.data-username]="getDisplayName()">
+              @if (currentUser()?.profilePicture) {
+                <img
+                  [src]="getCorrectImageUrl(currentUser()?.profilePicture)"
+                  alt="Foto de perfil del usuario"
+                  title="Foto de perfil"
+                  class="user-image"
+                />
+              }
+              @if (!currentUser()?.profilePicture) {
+                <div class="user-initials">
+                  {{ getUserInitials() }}
+                </div>
+              }
+            </div>
+            <div class="user-info">
+              <h4>{{ getDisplayName() }}</h4>
+              @if (getDisplayUsername() || getDisplayRole()) {
+                <p>
+                  @{{ getDisplayUsername() }}
+                  @if (getDisplayUsername() && getDisplayRole()) {
+                    <span>• </span>
+                  }
+                  {{ getDisplayRole() }}
+                </p>
+              }
+            </div>
+          </div>
+         </aside>
+         <div class="sidebar-backdrop" [class.show]="sidebarOpen()" (click)="toggleSidebar()"></div>
+       }
+       <!-- Main Content Area -->
+       <main class="main-content">
+         <!-- Top Navigation Bar -->
+         <header class="top-bar">
+            <div class="top-bar-left">
+              <button class="menu-toggle-btn" (click)="toggleSidebar()" aria-label="Abrir menú">
+                <span class="material-icons">menu</span>
+              </button>
+              @if (!isDashboardRoute()) {
+                <div class="search-bar">
+                  <span class="material-icons">search</span>
+                  <input
+                    type="text"
+                    id="search-input"
+                    name="search"
+                    placeholder="Buscar..."
+                    autocomplete="off"
+                    aria-label="Buscar"
+                  />
+                </div>
+              }
+            </div>
+          <div class="top-bar-actions">
+            <div class="message-container">
+              <button class="message-btn" (click)="toggleMessagesDropdown()">
+                <span class="material-icons">mail</span>
+                @if (unreadTotalCount() > 0) {
+                  <span class="message-badge">
+                    {{ unreadTotalCount() }}
+                  </span>
+                }
+              </button>
+              <app-messages-dropdown
+                [isOpen]="showMessagesDropdown()"
+                (close)="closeMessagesDropdown()"
+                (messageClick)="onMessageClick($event)"
+                [notifications]="allNotifications"
+                [messages]="allMessages"
+              >
+              </app-messages-dropdown>
+            </div>
+          </div>
+        </header>
+        <!-- Page Content -->
+        <div class="content-wrapper">
+          <router-outlet></router-outlet>
+        </div>
+      </main>
+    </div>
+    <!-- Mobile Navigation -->
+    @if (!isDashboardRoute()) {
+      <nav class="mobile-nav">
+        @if (hasKnownRole()) {
+          <a
+            [class.active]="activeRoute() === 'dashboard'"
+            routerLink="/dashboard"
+            (click)="setActiveRoute('dashboard')"
+          >
+            <span class="material-icons">dashboard</span>
+            <span>Inicio</span>
+          </a>
+        }
+        @if (isAdmin()) {
+          <a
+            [class.active]="activeRoute() === 'students'"
+            routerLink="/students"
+            (click)="setActiveRoute('students')"
+          >
+            <span class="material-icons">school</span>
+            <span>Estudiantes</span>
+          </a>
+        }
+        @if (isTeacherOrDirector() || isParent()) {
+          <a
+            [class.active]="activeRoute() === 'grades'"
+            [routerLink]="gradesRoute()"
+            (click)="setActiveRoute('grades')"
+          >
+            <span class="material-icons">assignment</span>
+            <span>Calificaciones</span>
+          </a>
+        }
+        @if (isAdmin() || isParent()) {
+          <a
+            [class.active]="activeRoute() === 'boletines'"
+            [routerLink]="boletinesRoute()"
+            (click)="setActiveRoute('boletines')"
+          >
+            <span class="material-icons">description</span>
+            <span>Boletines</span>
+          </a>
+        }
+        @if (isDirectorOrAdmin()) {
+          <a
+            [class.active]="activeRoute() === 'reports'"
+            routerLink="/reports"
+            (click)="setActiveRoute('reports')"
+          >
+            <span class="material-icons">assessment</span>
+            <span>Reportes</span>
+          </a>
+        }
+        @if (hasKnownRole()) {
+          <a
+            [class.active]="activeRoute() === 'chats'"
+            routerLink="/chats"
+            (click)="setActiveRoute('chats')"
+          >
+            <span class="material-icons">chat</span>
+            <span>Chats</span>
+          </a>
+        }
+      </nav>
+    }
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" [class.hidden]="!isLoading()">
+      <div class="spinner"></div>
+    </div>
+    <!-- Notification Details Modal -->
+    <app-notification-details
+      [notification]="selectedNotification"
+      [isOpen]="showNotificationDetailsModal()"
+      [readOnly]="notificationDetailsReadOnly()"
+      (close)="closeNotificationDetailsModal()"
+      (reply)="handleNotificationReply($event)"
+    >
+    </app-notification-details>
+  </div>
+}
+
+<!-- Show only router outlet for login route -->
+@if (isLoginRoute()) {
+  <div>
+    <router-outlet></router-outlet>
+  </div>
+}
+
+<!-- Notificaciones de generación de boletines (tipo "push"): se montan
+     siempre, fuera de los dos bloques de arriba, para que la pila de
+     notificaciones con la barra de progreso se vea sin importar en qué
+     apartado esté el usuario y no desaparezca al navegar entre secciones. -->
+<app-generation-notifications></app-generation-notifications>
+
+<!-- Diálogo global (alert/confirm) con pantalla propia de la app, en vez
+     de los cuadros nativos del navegador ("localhost:4200 dice..."). -->
+<app-dialog></app-dialog>
+
+<!-- Bloqueo obligatorio de consentimiento: se monta siempre, pero solo se
+     renderiza a sí mismo (ver consent-gate.html) cuando hay un usuario
+     logueado que todavía no aceptó Términos y/o Privacidad. No se coloca
+     dentro de los bloques @if de arriba a propósito, para que también
+     cubra la ruta de login apenas el usuario complete su sesión. -->
+<app-consent-gate></app-consent-gate>
+
+<!-- Sin conexión con el servidor: cubre TODA la pantalla (sidebar incluida).
+     La ruta no cambia; al reconectar desaparece sola y el usuario queda donde estaba. -->
+@if (connection.offline()) {
+  <app-connection-lost></app-connection-lost>
+}

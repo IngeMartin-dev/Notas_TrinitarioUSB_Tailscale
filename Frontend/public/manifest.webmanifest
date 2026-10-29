@@ -1,0 +1,16 @@
+{
+  "name": "Sistema de Gestión de Calificaciones - Notas Trinitario",
+  "short_name": "Notas Trinitario",
+  "description": "Sistema de Gestión de Calificaciones",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3f51b5",
+  "icons": [
+    {
+      "src": "Notas_Trinitario_ICONO.ico",
+      "sizes": "any",
+      "type": "image/x-icon"
+    }
+  ]
+}

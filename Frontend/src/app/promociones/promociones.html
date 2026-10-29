@@ -1,0 +1,83 @@
+<div class="pr-container">
+  <div class="page-header">
+    <h2><span class="material-icons">workspace_premium</span> Promociones</h2>
+    <p class="page-subtitle">
+      Estudiantes que terminaron Grado 11º. Sus boletines se conservan 5 años y después se borran automáticamente.
+    </p>
+  </div>
+
+  @if (isLoading) {
+    <div class="pr-info">Cargando promociones…</div>
+  }
+  @if (errorMessage) {
+    <div class="pr-info pr-error">{{ errorMessage }}</div>
+  }
+
+  @if (!isLoading && !errorMessage && promociones.length === 0) {
+    <div class="pr-empty">
+      <span class="material-icons">school</span>
+      <h3>Aún no hay promociones</h3>
+      <p>Cuando el administrador adelante el año, los estudiantes de Grado 11º aparecerán aquí.</p>
+    </div>
+  }
+
+  <!-- Recuadros: uno por año -->
+  @if (!isLoading && promociones.length > 0 && anioSeleccionado === null) {
+    <div class="pr-years-grid">
+      @for (a of anios; track a.anio) {
+        <div class="pr-year-card a11y-clickable" role="button" tabindex="0"
+             [attr.aria-label]="'Abrir Promoción ' + a.anio"
+             (click)="abrirAnio(a.anio)" (keydown.enter)="abrirAnio(a.anio)" (keydown.space)="abrirAnio(a.anio); $event.preventDefault()">
+          <div class="pr-year-icon"><span class="material-icons">workspace_premium</span></div>
+          <div class="pr-year-info">
+            <h4>Promoción {{ a.anio }}</h4>
+            <span class="pr-year-badge">{{ a.total }} egresado(s)</span>
+            <p class="pr-year-meta">{{ a.conBoletines }} con boletines guardados</p>
+          </div>
+          <span class="material-icons pr-year-arrow">chevron_right</span>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Estudiantes de la promoción elegida -->
+  @if (anioSeleccionado !== null) {
+    <div class="pr-year-header">
+      <button type="button" class="pr-back-btn" (click)="volver()">
+        <span class="material-icons">arrow_back</span> Promociones
+      </button>
+      <h3>Promoción {{ anioSeleccionado }}</h3>
+      <input type="text" class="pr-search" placeholder="Buscar por nombre o documento…" [(ngModel)]="busqueda">
+    </div>
+
+    @if (estudiantesDelAnio.length === 0) {
+      <div class="pr-info">Ningún estudiante coincide con la búsqueda.</div>
+    } @else {
+      <div class="pr-students-grid">
+        @for (p of estudiantesDelAnio; track p.id) {
+          <div class="pr-student-card">
+            <div class="pr-student-top">
+              <div class="pr-student-icon"><span class="material-icons">school</span></div>
+              <div class="pr-student-info">
+                <h4>{{ p.surname }} {{ p.name }}</h4>
+                <p class="pr-year-meta">{{ p.documentNumber || 'Sin documento' }} · {{ p.grade }}{{ p.classGroup ? ' · ' + p.classGroup : '' }}</p>
+                <p class="pr-year-meta">Se borra el {{ fecha(p.expiresAt) }} (en {{ restante(p.daysLeft) }})</p>
+              </div>
+            </div>
+            @if (p.periodos.length === 0) {
+              <span class="pr-muted">Sin boletines guardados</span>
+            } @else {
+              <div class="pr-periods">
+                @for (per of p.periodos; track per) {
+                  <button type="button" class="pr-period-btn" [disabled]="abriendo[p.id + '-' + per]" (click)="abrirBoletin(p, per)">
+                    <span class="material-icons">picture_as_pdf</span> Período {{ per }}
+                  </button>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+  }
+</div>
