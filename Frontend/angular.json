@@ -56,6 +56,10 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
+          "options": {
+            "host": "127.0.0.1",
+            "liveReload": false
+          },
           "configurations": {
             "production": {
               "buildTarget": "Frontend:build:production"
