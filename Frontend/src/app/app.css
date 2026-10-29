@@ -933,14 +933,6 @@ input:checked + .slider:before {
   max-width: 100%;
 }
 
-/* Hamburguesa visible: antes era blanca sobre la barra blanca del modo claro. */
-.menu-toggle-btn {
-  color: #1b6aeb;
-}
-:host-context([data-theme="dark"]) .menu-toggle-btn {
-  color: #ffffff;
-}
-
 @media (max-width: 768px) {
   .sidebar,
   .sidebar.sidebar-animated {
