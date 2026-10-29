@@ -47,3 +47,6 @@ venv/
 .env
 *.env
 application-local.properties
+
+# Secretos locales (nunca subir)
+.env

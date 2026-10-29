@@ -134,8 +134,8 @@ CREATE DATABASE db_notastrinitario CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode
 ```
 
 ```bash
-mysql -u root -p0316 db_notastrinitario < z_sql/student_data_test.sql
-mysql -u root -p0316 db_notastrinitario < z_sql/Usuarios.sql
+mysql -u root -p"TU_CLAVE_MYSQL" db_notastrinitario < z_sql/student_data_test.sql
+mysql -u root -p"TU_CLAVE_MYSQL" db_notastrinitario < z_sql/Usuarios.sql
 ```
 
 ### Configuración real — `application.properties`
@@ -143,7 +143,7 @@ mysql -u root -p0316 db_notastrinitario < z_sql/Usuarios.sql
 ```properties
 spring.datasource.url=jdbc:mysql://localhost:3306/db_notastrinitario?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=America/Bogota&useUnicode=true&characterEncoding=UTF-8
 spring.datasource.username=root
-spring.datasource.password=0316
+spring.datasource.password=${DB_PASSWORD}
 spring.jpa.hibernate.ddl-auto=update
 app.jwt.expiration=604800000          # access token 7 días
 app.jwt.secret=***                    # secreto para firmar JWT
