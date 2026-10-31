@@ -105,6 +105,15 @@ public class StudentController {
             }
         }
         Student created = studentService.save(s);
+        try {
+            String grado = created.getGrade() != null ? created.getGrade() : "";
+            String salon = created.getClassGroup() != null ? " - " + created.getClassGroup() : "";
+            notificationService.notifyAdmins("Nuevo estudiante registrado",
+                    created.getName() + " " + created.getSurname() + " (" + grado + salon + ")",
+                    "STUDENT_CREATED");
+        } catch (Exception e) {
+            System.err.println("[StudentController] No se pudo notificar el nuevo estudiante: " + e.getMessage());
+        }
         return ResponseEntity.ok(created);
     }
 
