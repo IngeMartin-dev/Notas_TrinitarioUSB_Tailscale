@@ -25,6 +25,7 @@ interface Activity {
 }
 
 import { SchoolYearService } from '../services/school-year.service';
+import { ActivityService } from '../services/activity.service';
 @Component({
   selector: 'app-dashboard',
   imports: [RouterModule, FormsModule],
@@ -351,7 +352,7 @@ export class Dashboard implements OnInit {
 
   // Dynamic Recent Activities
   recentActivities: Activity[] = [];
-  private readonly ACTIVITIES_KEY = 'recent_activities';
+  private activityService = inject(ActivityService);
   private readonly MAX_ACTIVITIES = 5;
 
   constructor() {
@@ -375,37 +376,13 @@ export class Dashboard implements OnInit {
   }
 
   loadRecentActivities() {
-    const saved = localStorage.getItem(this.ACTIVITIES_KEY);
-    if (saved) {
-      this.recentActivities = JSON.parse(saved);
-    } else {
-      // Default empty
-      this.recentActivities = [];
-    }
-  }
-
-  saveRecentActivities() {
-    localStorage.setItem(this.ACTIVITIES_KEY, JSON.stringify(this.recentActivities));
+    this.recentActivities = this.activityService.load();
   }
 
   addActivity(icon: string, description: string) {
-    const activity: Activity = {
-      icon: icon,
-      description: description,
-      timestamp: Date.now()
-    };
-    
-    // Add to beginning
-    this.recentActivities.unshift(activity);
-    
-    // Keep only max activities
-    if (this.recentActivities.length > this.MAX_ACTIVITIES) {
-      this.recentActivities = this.recentActivities.slice(0, this.MAX_ACTIVITIES);
-    }
-    
-    this.saveRecentActivities();
+    this.recentActivities = this.activityService.add(icon, description);
   }
-  
+
   // Format timestamp to readable time
   formatActivityTime(timestamp: number): string {
     const now = Date.now();

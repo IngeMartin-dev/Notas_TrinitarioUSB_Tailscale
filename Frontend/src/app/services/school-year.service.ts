@@ -2,6 +2,8 @@ import { Router } from '@angular/router';
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { tap } from 'rxjs/operators';
+import { ActivityService } from './activity.service';
 
 export interface SchoolYearConfigDto {
   yearEndDate: string | null;
@@ -68,6 +70,7 @@ export interface UsuarioGestionRol {
 @Injectable({ providedIn: 'root' })
 export class SchoolYearService {
   private readonly http = inject(HttpClient);
+  private readonly activity = inject(ActivityService);
   private readonly API_BASE = 'http://localhost:8080/api/school-year';
   private readonly USERS_BASE = 'http://localhost:8080/api/users';
 
@@ -165,6 +168,8 @@ export class SchoolYearService {
    *  de organización de salones: a diferencia de los demás grados, a Grado
    *  1 no llega nadie promovido, solo estudiantes nuevos). */
   createStudent(student: { name: string; surname: string; documentNumber: string; grade: string; classGroup: string; active: boolean }): Observable<any> {
-    return this.http.post('http://localhost:8080/api/students', student);
+    return this.http.post('http://localhost:8080/api/students', student).pipe(
+      tap(() => this.activity.add('person_add',
+        `Nuevo estudiante: ${student.name} ${student.surname} (${student.grade})`)));
   }
 }
