@@ -98,31 +98,7 @@ export class NotificationService {
    * Show a push notification with app logo
    */
   private showPushNotification(title: string, body: string, icon?: string): void {
-    if (Notification.permission !== 'granted') {
-      return;
-    }
-
-    // Use app logo or default icon
-    const notificationIcon = icon || '/Logo Colegio.png';
-
-    const notification = new Notification(title, {
-      body: body,
-      icon: notificationIcon,
-      badge: notificationIcon,
-      tag: 'notas-trinitario',
-      requireInteraction: false,
-      silent: false
-    });
-
-    notification.onclick = () => {
-      window.focus();
-      notification.close();
-    };
-
-    // Auto close after 5 seconds
-    setTimeout(() => {
-      notification.close();
-    }, 5000);
+    this.firebasePush.showPushNotification(title, body);
   }
 
   /**
@@ -131,6 +107,8 @@ export class NotificationService {
   private checkForNewNotifications(newNotifications: Notification[]): void {
     // Get IDs of notifications that have already shown a push notification
     const pushedNotificationIds = this.getPushedNotificationIds();
+    const primeraCarga = this.previousNotifications.length === 0;
+    const hace2min = Date.now() - 2 * 60 * 1000;
     
     // Find notifications that weren't in the previous list AND haven't shown a push yet
     const newOnes = newNotifications.filter(newNotif => 
@@ -140,6 +118,11 @@ export class NotificationService {
 
     // Show push notification for each new notification
     newOnes.forEach(notification => {
+      // En la primera carga, lo viejo no se vuelve a mostrar (solo lo de hace < 2 min).
+      if (primeraCarga && (new Date(notification.createdAt).getTime() || 0) < hace2min) {
+        this.markNotificationAsPushed(notification.id);
+        return;
+      }
       this.showPushNotification(
         notification.title,
         notification.message
@@ -284,6 +267,9 @@ export class NotificationService {
             return notification;
           });
           
+          // Avisos nuevos: se muestran de inmediato (antes solo al recargar con F5).
+          this.checkForNewNotifications(notifications);
+
           // Show all notifications to authenticated users
           this.notificationsSubject.next(notificationsWithPreservedReadStatus);
           this.updateUnreadCount(notificationsWithPreservedReadStatus);

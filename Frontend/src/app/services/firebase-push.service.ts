@@ -38,6 +38,7 @@ export class FirebasePushService {
   private app: FirebaseApp | null = null;
   private messaging: Messaging | null = null;
   private initialized = false;
+  private ultimosAvisos = new Map<string, number>();
 
   constructor() {
     this.initializeService();
@@ -172,6 +173,12 @@ export class FirebasePushService {
   /** Notificación nativa del navegador, usada cuando la app está en primer plano. */
   showPushNotification(title: string, body: string, data?: any): void {
     if (!('Notification' in window) || Notification.permission !== 'granted') return;
+
+    // Anti-duplicado: el mismo aviso (push FCM + sondeo) en menos de 20 s se muestra una vez.
+    const clave = title + '|' + body;
+    const ahora = Date.now();
+    if (ahora - (this.ultimosAvisos.get(clave) ?? 0) < 20000) return;
+    this.ultimosAvisos.set(clave, ahora);
 
     const options: NotificationOptions = {
       body,
