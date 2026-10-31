@@ -390,16 +390,42 @@ export class Dashboard implements OnInit {
 
   /** Une la actividad local con las notificaciones del servidor (boletines,
    *  consolidados, profesores, padres, materias, año, promociones, etc.). */
+  /** Claves de actividades que acaban de aparecer (para animarlas). */
+  private nuevasActividades = new Set<string>();
+  private actividadesConocidas = new Set<string>();
+  private actividadesInicializadas = false;
+
+  activityKey(a: Activity): string {
+    return a.description.toLowerCase().replace(/\s+/g, ' ') + '|' + Math.floor(a.timestamp / 60000);
+  }
+
+  esActividadNueva(a: Activity): boolean {
+    return this.nuevasActividades.has(this.activityKey(a));
+  }
+
   private mergeActivities() {
     const todo = [...this.localActivities, ...this.serverActivities].sort((a, b) => b.timestamp - a.timestamp);
     const vistos = new Set<string>();
-    this.recentActivities = todo.filter(a => {
+    const lista = todo.filter(a => {
       // Mismo texto en el mismo minuto = el mismo hecho (local + servidor).
-      const k = a.description.toLowerCase().replace(/\s+/g, ' ') + '|' + Math.floor(a.timestamp / 60000);
+      const k = this.activityKey(a);
       if (vistos.has(k)) return false;
       vistos.add(k);
       return true;
     }).slice(0, 8);
+
+    // Las que no estaban antes entran con animación (no en la primera carga).
+    if (this.actividadesInicializadas) {
+      for (const a of lista) {
+        const k = this.activityKey(a);
+        if (!this.actividadesConocidas.has(k)) {
+          this.nuevasActividades.add(k);
+          setTimeout(() => this.nuevasActividades.delete(k), 1200);
+        }
+      }
+    }
+    lista.forEach(a => this.actividadesConocidas.add(this.activityKey(a)));
+    this.recentActivities = lista;
   }
 
   loadRecentActivities() {
@@ -413,6 +439,8 @@ export class Dashboard implements OnInit {
       }));
       this.mergeActivities();
     });
+    // La primera carga (local + primera respuesta del servidor) entra sin animar.
+    setTimeout(() => { this.actividadesInicializadas = true; }, 4500);
   }
 
   addActivity(icon: string, description: string) {

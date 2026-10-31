@@ -226,14 +226,18 @@
     <h2>Actividad Reciente</h2>
     <div class="activity-list">
       @if (recentActivities.length > 0) {
-        @for (activity of recentActivities; track $index) {
-          <div class="activity-item">
-            <div class="activity-icon">
-              <span class="material-icons">{{ activity.icon }}</span>
-            </div>
-            <div class="activity-content">
-              <p>{{ activity.description }}</p>
-              <small>{{ formatActivityTime(activity.timestamp) }}</small>
+        @for (activity of recentActivities; track activityKey(activity)) {
+          <div class="activity-slot" [class.activity-new]="esActividadNueva(activity)">
+            <div class="activity-slot-inner">
+              <div class="activity-item">
+                <div class="activity-icon">
+                  <span class="material-icons">{{ activity.icon }}</span>
+                </div>
+                <div class="activity-content">
+                  <p>{{ activity.description }}</p>
+                  <small>{{ formatActivityTime(activity.timestamp) }}</small>
+                </div>
+              </div>
             </div>
           </div>
         }

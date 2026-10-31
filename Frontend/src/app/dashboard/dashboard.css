@@ -790,7 +790,37 @@
 .activity-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 0;
+}
+
+/* Cada actividad vive en una "ranura" cuya altura crece al aparecer: las de
+   abajo bajan suavemente y la nueva entra deslizándose desde arriba. */
+.activity-slot {
+  display: grid;
+  grid-template-rows: 1fr;
+}
+.activity-slot-inner {
+  min-height: 0;
+  overflow: hidden;
+  padding-bottom: 16px;
+}
+.activity-slot.activity-new {
+  animation: activitySlotOpen 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.activity-slot.activity-new .activity-item {
+  animation: activityItemIn 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes activitySlotOpen {
+  from { grid-template-rows: 0fr; }
+  to   { grid-template-rows: 1fr; }
+}
+@keyframes activityItemIn {
+  0%   { opacity: 0; transform: translateY(-24px) scale(0.97); }
+  60%  { opacity: 1; }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .activity-slot.activity-new, .activity-slot.activity-new .activity-item { animation: none; }
 }
 
 .activity-item {
