@@ -644,7 +644,8 @@
   max-height: 40px;
   object-fit: contain;
   border: 1px solid var(--border);
-  background: #fff;
+  background: #ffffff !important;
+  padding: 2px;
 }
 
 .back-btn {
@@ -996,10 +997,13 @@
   border: 1px solid var(--border);
   border-radius: var(--r-sm);
   overflow: hidden;
-  background: var(--surface-2);
+  /* Siempre blanco: las firmas son tinta oscura (a veces PNG transparente) y sobre
+     el fondo oscuro del tema se veían negras. */
+  background: #ffffff !important;
 }
 
 .sig-img img {
+  background: #ffffff;
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;

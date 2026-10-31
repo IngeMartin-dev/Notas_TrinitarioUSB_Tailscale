@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, inject, effect } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, inject, effect } from '@angular/core';
 
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -32,7 +32,7 @@ import { ActivityService } from '../services/activity.service';
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
-export class Dashboard implements OnInit {
+export class Dashboard implements OnInit, OnDestroy {
   // Start with zeros for instant loading
   totalStudents = 0;
   totalGrades = 0;
@@ -98,6 +98,9 @@ export class Dashboard implements OnInit {
   showCountdownTimer = false;
   countdownName = '';
   countdownTargetDate = '';
+  /** Cronómetro en vivo (lo que se muestra); el formulario usa countdownName/TargetDate. */
+  liveCountdownName = '';
+  liveCountdownTarget = '';
   countdownDaysInput = 0;
   countdownEndDate = '';
   countdownDays = '00';
@@ -115,34 +118,86 @@ export class Dashboard implements OnInit {
   notification7DaysSent = false;
 
   // Countdown Timer Methods
+  private countdownSyncHandle: any = null;
+  private countdownSyncing = false;
+
+  /** Cronómetro compartido: se pide al servidor y se revisa cada 3 s, así lo ven
+   *  todas las cuentas y se actualiza en tiempo real cuando el admin lo cambia. */
   loadCountdownConfig() {
-    const savedConfig = localStorage.getItem('countdownConfig');
-    if (savedConfig) {
-      const config = JSON.parse(savedConfig);
-      this.countdownName = config.name || '';
-      this.countdownTargetDate = config.targetDate || '';
-      
-      // Load notification flags
-      this.notification12HoursSent = localStorage.getItem('countdownNotification12h') === 'true';
-      this.notificationFinishedSent = localStorage.getItem('countdownNotificationFinished') === 'true';
-      this.notification7DaysSent = localStorage.getItem('countdownNotification7d') === 'true';
-      
-      if (this.countdownName && this.countdownTargetDate) {
-        this.showCountdownTimer = true;
-        // Format end date for display
-        const endDate = new Date(this.countdownTargetDate);
-        this.countdownEndDate = endDate.toLocaleDateString('es-CO', {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        });
-        this.startCountdown();
-      }
+    this.syncCountdown();
+    if (!this.countdownSyncHandle) {
+      this.countdownSyncHandle = setInterval(() => this.syncCountdown(), 3000);
     }
   }
 
+  private syncCountdown() {
+    if (this.countdownSyncing) return;
+    this.countdownSyncing = true;
+    this.http.get<{ active: boolean; name: string | null; targetDate: string | null }>(
+      'http://localhost:8080/api/countdown'
+    ).subscribe({
+      next: (c) => {
+        this.countdownSyncing = false;
+        if (!c.active || !c.name || !c.targetDate) {
+          // Si este navegador tenía uno guardado de antes, el admin lo sube una vez.
+          this.migrarCronometroLocal();
+          this.ocultarCronometro();
+          return;
+        }
+        this.aplicarCronometro(c.name, c.targetDate);
+      },
+      error: () => { this.countdownSyncing = false; /* sin red: se deja lo que se ve */ }
+    });
+  }
+
+  private migrarCronometroLocal() {
+    try {
+      const saved = localStorage.getItem('countdownConfig');
+      if (saved && this.isAdmin()) {
+        const cfg = JSON.parse(saved);
+        localStorage.removeItem('countdownConfig');
+        if (cfg?.name && cfg?.targetDate) {
+          this.http.put('http://localhost:8080/api/countdown', { name: cfg.name, targetDate: cfg.targetDate })
+            .subscribe({ error: () => {} });
+        }
+      } else if (saved) {
+        localStorage.removeItem('countdownConfig');
+      }
+    } catch { /* nada */ }
+  }
+
+  private ocultarCronometro() {
+    if (!this.showCountdownTimer) return;
+    this.showCountdownTimer = false;
+    this.liveCountdownName = '';
+    this.liveCountdownTarget = '';
+    if (this.countdownInterval) { clearInterval(this.countdownInterval); this.countdownInterval = null; }
+  }
+
+  /** Muestra el cronómetro del servidor (solo reinicia si cambió título o fecha). */
+  private aplicarCronometro(name: string, targetDate: string) {
+    const cambio = name !== this.liveCountdownName || targetDate !== this.liveCountdownTarget;
+    this.liveCountdownName = name;
+    this.liveCountdownTarget = targetDate;
+    this.showCountdownTimer = true;
+    if (!cambio && this.countdownInterval) return;
+
+    // Banderas de avisos (7 días / 12 h / terminado): una por fecha objetivo.
+    const k = (x: string) => `countdown_${x}_${targetDate}`;
+    this.notification7DaysSent = localStorage.getItem(k('7d')) === 'true';
+    this.notification12HoursSent = localStorage.getItem(k('12h')) === 'true';
+    this.notificationFinishedSent = localStorage.getItem(k('fin')) === 'true';
+
+    this.countdownEndDate = new Date(targetDate).toLocaleDateString('es-CO', {
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+    });
+    this.startCountdown();
+  }
+
   openCountdownConfig() {
+    this.countdownName = this.liveCountdownName;
+    this.countdownTargetDate = '';
+    this.countdownDaysInput = 0;
     this.showCountdownConfigModal = true;
   }
 
@@ -169,25 +224,17 @@ export class Dashboard implements OnInit {
       return;
     }
     
-    // Reset notification flags for new countdown
-    this.notification12HoursSent = false;
-    this.notificationFinishedSent = false;
-    this.notification7DaysSent = false;
-    localStorage.removeItem('countdownNotification12h');
-    localStorage.removeItem('countdownNotificationFinished');
-    localStorage.removeItem('countdownNotification7d');
-    
-    const config = {
-      name: this.countdownName,
-      targetDate: targetDate.toISOString()
-    };
-    localStorage.setItem('countdownConfig', JSON.stringify(config));
-    
-    this.showCountdownTimer = true;
-    this.closeCountdownConfig();
-    this.startCountdown();
-    this.showSuccessNotification('Cronómetro configurado correctamente');
-    
+    const nombre = this.countdownName;
+    const objetivoIso = targetDate.toISOString();
+    this.http.put('http://localhost:8080/api/countdown', { name: nombre, targetDate: objetivoIso }).subscribe({
+      next: () => {
+        this.aplicarCronometro(nombre, objetivoIso);
+        this.closeCountdownConfig();
+        this.showSuccessNotification('Cronómetro configurado para todas las cuentas');
+      },
+      error: (e) => this.showErrorNotification(e?.error?.error || 'No se pudo guardar el cronómetro')
+    });
+
     // Format detailed time remaining
     const now = new Date();
     const diff = targetDate.getTime() - now.getTime();
@@ -223,7 +270,7 @@ export class Dashboard implements OnInit {
     }).subscribe({ error: (e) => console.error('No se pudo enviar el push del cronómetro', e) });
     
     // Track activity
-    this.addActivity('timer', `Cronómetro configurado: ${this.countdownName} - ${dateStr}`);
+    this.addActivity('timer', `Cronómetro configurado: ${nombre} - ${dateStr}`);
   }
 
   startCountdown() {
@@ -238,9 +285,9 @@ export class Dashboard implements OnInit {
   }
 
   updateCountdown() {
-    if (!this.countdownTargetDate) return;
+    if (!this.liveCountdownTarget) return;
     
-    const target = new Date(this.countdownTargetDate).getTime();
+    const target = new Date(this.liveCountdownTarget).getTime();
     const now = new Date().getTime();
     const distance = target - now;
     
@@ -254,13 +301,13 @@ export class Dashboard implements OnInit {
       // Send notification if not already sent
       if (!this.notificationFinishedSent) {
         this.notificationFinishedSent = true;
-        localStorage.setItem('countdownNotificationFinished', 'true');
+        localStorage.setItem(`countdown_fin_${this.liveCountdownTarget}`, 'true');
         this.notificationService.showNativePushNotification(
-          this.countdownName,
+          this.liveCountdownName,
           '¡El tiempo ha terminado!'
         );
         // Track activity - timer finished
-        this.addActivity('check_circle', `Tiempo terminado: ${this.countdownName}`);
+        this.addActivity('check_circle', `Tiempo terminado: ${this.liveCountdownName}`);
       }
       
       if (this.countdownInterval) {
@@ -283,21 +330,21 @@ export class Dashboard implements OnInit {
     const sevenDays = 7 * 24 * 60 * 60 * 1000;
     if (distance <= sevenDays && !this.notification7DaysSent) {
       this.notification7DaysSent = true;
-      localStorage.setItem('countdownNotification7d', 'true');
+      localStorage.setItem(`countdown_7d_${this.liveCountdownTarget}`, 'true');
 
       this.notificationService.showNativePushNotification(
-        this.countdownName,
+        this.liveCountdownName,
         `Faltan 7 días o menos (${days} día${days !== 1 ? 's' : ''})`
       );
       // Track activity - 7 days remaining
-      this.addActivity('schedule', `Recordatorio ${this.countdownName}: Faltan 7 días o menos`);
+      this.addActivity('schedule', `Recordatorio ${this.liveCountdownName}: Faltan 7 días o menos`);
     }
 
     // Check if 12 hours remaining (43200000 ms = 12 hours)
     const twelveHours = 12 * 60 * 60 * 1000;
     if (distance <= twelveHours && !this.notification12HoursSent) {
       this.notification12HoursSent = true;
-      localStorage.setItem('countdownNotification12h', 'true');
+      localStorage.setItem(`countdown_12h_${this.liveCountdownTarget}`, 'true');
       
       let timeText = '';
       if (days > 0) {
@@ -309,11 +356,11 @@ export class Dashboard implements OnInit {
       }
       
       this.notificationService.showNativePushNotification(
-        this.countdownName,
+        this.liveCountdownName,
         `Faltan ${timeText}`
       );
       // Track activity - 12 hours remaining
-      this.addActivity('schedule', `Recordatorio ${this.countdownName}: Faltan ${timeText}`);
+      this.addActivity('schedule', `Recordatorio ${this.liveCountdownName}: Faltan ${timeText}`);
     }
   }
 
@@ -554,6 +601,11 @@ export class Dashboard implements OnInit {
       }, delay);
       delay += 30;
     }
+  }
+
+  ngOnDestroy() {
+    if (this.countdownSyncHandle) { clearInterval(this.countdownSyncHandle); this.countdownSyncHandle = null; }
+    if (this.countdownInterval) { clearInterval(this.countdownInterval); this.countdownInterval = null; }
   }
 
   ngOnInit() {

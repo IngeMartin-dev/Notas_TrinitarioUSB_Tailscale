@@ -623,11 +623,32 @@ export class Boletines implements OnInit, OnDestroy {
       .subscribe({
         next: (data) => {
           this.signatures = data;
+          data.forEach(sig => this.cargarImagenFirma(sig.path));
         },
         error: () => {
           this.signatures = [];
         }
       });
+  }
+
+  /** Las firmas viven detrás del login (/Firmas/**): un <img src> directo no envía el
+   *  token y la imagen no cargaba (quedaba un recuadro vacío/negro). Se pide con el
+   *  token y se muestra desde un blob. */
+  sigBlobUrls: Record<string, string> = {};
+
+  sigSrc(path?: string): string {
+    return (path && this.sigBlobUrls[path]) || '';
+  }
+
+  private cargarImagenFirma(path: string) {
+    if (!path || this.sigBlobUrls[path]) return;
+    this.http.get(`http://localhost:8080${path}`, { responseType: 'blob' }).subscribe({
+      next: (blob) => {
+        this.sigBlobUrls[path] = URL.createObjectURL(blob);
+        this.cdr.detectChanges();
+      },
+      error: () => { /* sin imagen: se muestra el nombre */ }
+    });
   }
 
   private initializeData() {
@@ -809,6 +830,7 @@ export class Boletines implements OnInit, OnDestroy {
           .subscribe({
             next: (sig) => {
               this.signatures.push(sig);
+              this.cargarImagenFirma(sig.path);
             },
             error: () => {
               this.dialogService.alert('Error al subir la firma', 'Error');
@@ -850,6 +872,7 @@ export class Boletines implements OnInit, OnDestroy {
       .subscribe({
         next: (sig) => {
           this.signatures.push(sig);
+              this.cargarImagenFirma(sig.path);
         },
           error: () => {
             this.dialogService.alert('Error al subir la firma', 'Error');

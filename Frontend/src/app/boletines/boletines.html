@@ -280,7 +280,9 @@
             @if (selectedDirectorSignature) {
               <div class="selected-sig-preview">
                 <span>Firma seleccionada:</span>
-                <img [src]="apiBaseUrl + selectedDirectorSignature" [alt]="'Firma director'" class="sig-thumb" (error)="onImageError($event)">
+                @if (sigSrc(selectedDirectorSignature)) {
+                  <img [src]="sigSrc(selectedDirectorSignature)" [alt]="'Firma director'" class="sig-thumb">
+                }
                 <button class="btn-clear-sig" (click)="selectedDirectorSignature = undefined">✕</button>
               </div>
             }
@@ -381,7 +383,9 @@
             @for (sig of signatures; track sig.path) {
               <div class="sig-card a11y-clickable" [class.selected]="selectedDirectorSignature === sig.path" role="button" tabindex="0" [attr.aria-label]="'Firma ' + sig.name" (click)="selectedDirectorSignature = sig.path" (keydown.enter)="selectedDirectorSignature = sig.path" (keydown.space)="selectedDirectorSignature = sig.path; $event.preventDefault()">
                 <div class="sig-img">
-                  <img [src]="apiBaseUrl + sig.path" [alt]="sig.name" (error)="onImageError($event)">
+                  @if (sigSrc(sig.path)) {
+                    <img [src]="sigSrc(sig.path)" [alt]="sig.name">
+                  }
  </div>
                 <div class="sig-name">{{ sig.name }}</div>
               </div>

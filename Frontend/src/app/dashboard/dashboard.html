@@ -77,7 +77,7 @@
       @if (showCountdownTimer) {
         <div class="countdown-timer-card">
           <div class="countdown-header">
-            <h3>{{ countdownName }}</h3>
+            <h3>{{ liveCountdownName }}</h3>
             @if (isAdmin()) {
               <button class="countdown-config-btn" aria-label="Configurar cuenta regresiva" (click)="openCountdownConfig()">
                 <span class="material-icons">edit</span>
