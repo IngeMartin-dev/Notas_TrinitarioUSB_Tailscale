@@ -254,20 +254,16 @@ public class SchoolYearService {
                 resultado.estudiantesGraduados++;
             } else {
                 s.setGrade(formatearGrado(numero + 1));
-                // El estudiante conserva su salón (A sigue en A, B en B) para que
-                // aparezca de inmediato en su nuevo grado. Solo quedan "pendientes"
-                // los que ya venían sin salón; el administrador puede cambiar
-                // el salón de cualquiera desde Estudiantes.
+                // Nadie conserva su salon: el administrador asigna A o B a cada uno.
+                s.setClassGroup(null);
                 resultado.estudiantesPromovidos++;
 
-                if (s.getClassGroup() == null) {
-                    Map<String, Object> pendiente = new LinkedHashMap<>();
-                    pendiente.put("studentId", s.getId());
-                    pendiente.put("name", s.getName());
-                    pendiente.put("surname", s.getSurname());
-                    pendiente.put("newGrade", s.getGrade());
-                    resultado.pendientesDeOrganizar.add(pendiente);
-                }
+                Map<String, Object> pendiente = new LinkedHashMap<>();
+                pendiente.put("studentId", s.getId());
+                pendiente.put("name", s.getName());
+                pendiente.put("surname", s.getSurname());
+                pendiente.put("newGrade", s.getGrade());
+                resultado.pendientesDeOrganizar.add(pendiente);
             }
         }
 

@@ -174,7 +174,7 @@ export class SchoolYearConfig implements OnInit {
   // ── Adelantar / retroceder año ───────────────────────────────────────
   async advanceYear() {
     const ok = await this.dialogService.confirm(
-      '¿Seguro que quieres pasar de año? Todos los estudiantes activos subirán un grado y conservarán su salón (Grado 1º pasa a 2º, 2º a 3º… y los de Grado 11º pasan a Promociones). Grado 1º quedará vacío para que añadas a los estudiantes nuevos. Se borrarán TODAS las notas, los boletines y consolidados generados y los porcentajes de calificaciones (Promociones, estudiantes y cuentas de profesores se conservan), y el año académico sube en uno. Podrás deshacer el cambio de grados con "Retroceder año" (lo borrado no se recupera).',
+      '¿Seguro que quieres pasar de año? Todos los estudiantes activos subirán un grado y deberás elegir manualmente su salón A o B (Grado 1º pasa a 2º, 2º a 3º… y los de Grado 11º pasan a Promociones). Grado 1º quedará vacío para que añadas a los estudiantes nuevos. Se borrarán TODAS las notas, los boletines y consolidados generados y los porcentajes de calificaciones (Promociones, estudiantes y cuentas de profesores se conservan), y el año académico sube en uno. Podrás deshacer el cambio de grados con "Retroceder año" (lo borrado no se recupera).',
       'Adelantar año'
     );
     if (!ok) return;
@@ -184,7 +184,7 @@ export class SchoolYearConfig implements OnInit {
     this.service.advanceYear().subscribe({
       next: (res) => {
         this.advancing = false;
-        this.advanceMessage = `Listo: ${res.estudiantesPromovidos} estudiante(s) pasaron al grado siguiente y ${res.estudiantesGraduados} pasaron a Promociones (Grado 11º). Grado 1º quedó sin estudiantes: añade a los nuevos.`;
+        this.advanceMessage = `Listo: ${res.estudiantesPromovidos} estudiante(s) pasaron al grado siguiente y ${res.estudiantesGraduados} pasaron a Promociones (Grado 11º). Ahora elige el salón (A o B) de cada estudiante en el asistente. Grado 1º quedó sin estudiantes: añade a los nuevos.`;
         this.advanceDone = true;
         this.service.reiniciarAvisoFinDeAno();
         this.pendientes = res.pendientesDeOrganizar;
