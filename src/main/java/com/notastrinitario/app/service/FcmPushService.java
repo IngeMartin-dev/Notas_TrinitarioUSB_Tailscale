@@ -160,7 +160,7 @@ public class FcmPushService {
                                     .setChannelId("notas_trinitario")
                                     .setTitle(title)
                                     .setBody(body)
-                                    .setIcon("/Logo Colegio.png")
+                                    .setIcon("/icon-192.png")
                                     .setSound("default")
                                     .build())
                             .build())
@@ -168,7 +168,7 @@ public class FcmPushService {
                             .setNotification(WebpushNotification.builder()
                                     .setTitle(title)
                                     .setBody(body)
-                                    .setIcon("/Logo Colegio.png")
+                                    .setIcon("/icon-192.png")
                                     .build())
                             .build());
 

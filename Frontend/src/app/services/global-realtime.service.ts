@@ -41,7 +41,7 @@ export class GlobalRealtimeService {
   
   private showPushNotification(title: string, body: string, icon?: string) {
     if ('Notification' in window && Notification.permission === 'granted') {
-      const notificationIcon = icon || '/Logo Colegio.png';
+      const notificationIcon = icon || '/icon-192.png';
       
       console.log('[Notifications] Showing push notification:', title, body);
       
@@ -239,7 +239,7 @@ export class GlobalRealtimeService {
     if ('Notification' in window && Notification.permission === 'granted') {
       new Notification('🔔 Notificaciones activas', {
         body: 'Las notificaciones push funcionan correctamente',
-        icon: '/Logo Colegio.png'
+        icon: '/icon-192.png'
       });
     }
   }

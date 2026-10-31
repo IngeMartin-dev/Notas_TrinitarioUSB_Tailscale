@@ -182,8 +182,8 @@ export class FirebasePushService {
 
     const options: NotificationOptions = {
       body,
-      icon: '/Logo Colegio.png',
-      badge: '/Logo Colegio.png',
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
       data
     };
 
