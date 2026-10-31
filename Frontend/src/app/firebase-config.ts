@@ -13,8 +13,8 @@ export const FIREBASE_CONFIG = {
   projectId: 'notas-trinitario',
   storageBucket: 'notas-trinitario.firebasestorage.app',
   messagingSenderId: '593665027046',
-  appId: '1:593665027046:web:f6d9d428fcd1026ce4c427',
-  measurementId: 'G-L46RJJLB1X',
+  appId: '1:593665027046:web:1bb8915ac51f5613e4c427',
+  measurementId: 'G-9DHV77YBV7',
 } satisfies FirebaseOptions;
 
 /**
