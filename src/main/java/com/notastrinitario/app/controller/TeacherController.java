@@ -24,6 +24,8 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/teachers")
 public class TeacherController {
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.notastrinitario.app.service.NotificationService notificationService;
 
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(TeacherController.class);
 
@@ -137,6 +139,12 @@ public class TeacherController {
         response.put("email", saved.getEmail());
         response.put("role", saved.getRole() != null ? saved.getRole().getName() : null);
         response.put("message", "Profesor creado correctamente");
+
+        try {
+            notificationService.notifyAdmins("Nuevo profesor",
+                    "Se creó la cuenta del profesor " + saved.getName() + " " + saved.getSurname() + ".",
+                    "TEACHER_CREATED");
+        } catch (Exception ignored) { }
 
         return ResponseEntity.ok(response);
     }

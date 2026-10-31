@@ -214,10 +214,13 @@ export class Dashboard implements OnInit {
     });
     
     // Send push notification about new timer with detailed info
-    this.notificationService.showNativePushNotification(
-      '⏰ ' + this.countdownName,
-      `Fecha: ${dateStr}. Tiempo: ${timeRemaining}`
-    );
+    // (push real por FCM a todos los dispositivos, enviado desde el servidor)
+    this.http.post('http://localhost:8080/api/notifications/send', {
+      title: '⏰ ' + this.countdownName,
+      message: `Fecha: ${dateStr}. Tiempo: ${timeRemaining}`,
+      type: 'COUNTDOWN',
+      recipientType: 'ALL'
+    }).subscribe({ error: (e) => console.error('No se pudo enviar el push del cronómetro', e) });
     
     // Track activity
     this.addActivity('timer', `Cronómetro configurado: ${this.countdownName} - ${dateStr}`);

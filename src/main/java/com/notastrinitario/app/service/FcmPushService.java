@@ -65,6 +65,7 @@ public class FcmPushService {
                         fcmTokenRepository.findByUserIdAndIsActiveTrue(userId).stream()
                                 .filter(t -> !t.getToken().equals(token))
                                 .filter(t -> deviceType.equals(t.getDeviceType()))
+                                .filter(t -> deviceName == null || deviceName.equals(t.getDeviceName()))
                                 .collect(java.util.stream.Collectors.toList());
                 for (FcmToken viejo : otrosDelMismoDispositivo) {
                     viejo.setActive(false);

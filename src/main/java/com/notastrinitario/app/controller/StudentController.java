@@ -24,33 +24,6 @@ public class StudentController {
         this.notificationService = notificationService;
     }
 
-    /**
-     * Si el estado activo/inactivo del estudiante cambió, avisa a sus
-     * padres enlazados. Al desactivarlo: se les explica que no verán más
-     * boletines hasta que se reactive (aunque el backend igual deja de
-     * mostrárselos vía /api/boletines/mis-boletines, ese filtro es
-     * silencioso — este aviso es lo que se nota "en tiempo real").
-     */
-    private void notifyParentsIfActiveStatusChanged(Student existing, boolean wasActive) {
-        boolean nowActive = existing.isActive();
-        if (wasActive == nowActive) return;
-
-        String studentName = (existing.getName() + " " + existing.getSurname()).trim();
-        for (User parent : existing.getParents()) {
-            if (nowActive) {
-                notificationService.sendNotification(parent,
-                        "✅ Estudiante activado",
-                        "El estudiante " + studentName + " fue reactivado. Ya puedes ver sus boletines nuevamente.",
-                        "STUDENT_ACTIVATED");
-            } else {
-                notificationService.sendNotification(parent,
-                        "⚠️ Estudiante inactivo",
-                        "El estudiante " + studentName + " fue marcado como inactivo. No recibirás sus boletines hasta que sea reactivado.",
-                        "STUDENT_DEACTIVATED");
-            }
-        }
-    }
-
     // Ver/crear/editar/borrar estudiantes es trabajo de personal del
     // colegio, nunca de una cuenta de padre de familia. Antes estos
     // endpoints no tenían ninguna restricción de rol: cualquier cuenta ya
@@ -80,14 +53,12 @@ public class StudentController {
             Student existing = studentService.findByDocumentNumber(s.getDocumentNumber().trim())
                     .orElse(null);
             if (existing != null) {
-                boolean wasActive = existing.isActive();
                 existing.setName(s.getName());
                 existing.setSurname(s.getSurname());
                 existing.setGrade(s.getGrade());
                 existing.setClassGroup(s.getClassGroup());
                 existing.setActive(Boolean.TRUE.equals(s.isActive()));
                 Student updated = studentService.save(existing);
-                notifyParentsIfActiveStatusChanged(updated, wasActive);
                 return ResponseEntity.ok(updated);
             }
         }
@@ -122,8 +93,7 @@ public class StudentController {
     public ResponseEntity<?> update(@PathVariable Long id, @RequestBody Student s) {
         return studentService.findById(id)
                 .map(existing -> {
-                    boolean wasActive = existing.isActive();
-                    existing.setName(s.getName());
+                        existing.setName(s.getName());
                     existing.setSurname(s.getSurname());
                     if (s.getDocumentNumber() != null && !s.getDocumentNumber().isBlank()) {
                         String doc = s.getDocumentNumber().trim();
@@ -145,7 +115,6 @@ public class StudentController {
                     }
                     existing.setActive(Boolean.TRUE.equals(s.isActive()));
                     Student saved = studentService.save(existing);
-                    notifyParentsIfActiveStatusChanged(saved, wasActive);
                     return ResponseEntity.ok((Object) saved);
                 }).orElse(ResponseEntity.notFound().build());
     }

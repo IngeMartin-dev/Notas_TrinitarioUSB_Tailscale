@@ -24,6 +24,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class BoletinService {
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.notastrinitario.app.service.NotificationService notificationService;
 
     /**
      * Materia virtual que aparece como fila editable (IH/FA/FAA/objetivo) en
@@ -183,6 +185,14 @@ public class BoletinService {
             }
 
             job.setStatus(job.getFiles().isEmpty() && !job.getErrors().isEmpty() ? "ERROR" : "DONE");
+            if ("DONE".equals(job.getStatus())) {
+                try {
+                    notificationService.notifyAdmins("Boletines generados",
+                            "Se generaron " + job.getFiles().size() + " boletín(es) de " + job.getGrade() + " "
+                                    + job.getClassroom() + " del Período " + job.getPeriod() + ".",
+                            "REPORT_GENERATED");
+                } catch (Exception ignored) { /* el push nunca debe tumbar la generación */ }
+            }
         } catch (Exception e) {
             job.getErrors().add("Error general del job: " + e.getMessage());
             job.setStatus("ERROR");

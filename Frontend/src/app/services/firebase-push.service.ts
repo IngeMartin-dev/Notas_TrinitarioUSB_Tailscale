@@ -124,7 +124,7 @@ export class FirebasePushService {
         return null;
       }
 
-      await this.saveTokenToServer(userId, token, 'web-push');
+      await this.saveTokenToServer(userId, token, this.getDeviceInfo().deviceType);
       return token;
     } catch (error) {
       console.error('Error solicitando permiso/token de notificaciones:', error);
@@ -171,23 +171,30 @@ export class FirebasePushService {
 
   /** Notificación nativa del navegador, usada cuando la app está en primer plano. */
   showPushNotification(title: string, body: string, data?: any): void {
-    if (Notification.permission !== 'granted') return;
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
 
-    const notification = new Notification(title, {
+    const options: NotificationOptions = {
       body,
       icon: '/Logo Colegio.png',
-      tag: 'notas-trinitario-push',
-      requireInteraction: false,
+      badge: '/Logo Colegio.png',
       data
-    });
-
-    notification.onclick = (event) => {
-      event.preventDefault();
-      window.focus();
-      notification.close();
     };
 
-    setTimeout(() => notification.close(), 8000);
+    // En Android/Chrome móvil `new Notification()` lanza error: hay que mostrarla
+    // a través del service worker. Se usa eso primero y, si no hay, el constructor.
+    const respaldo = () => {
+      try {
+        const n = new Notification(title, options);
+        setTimeout(() => n.close(), 8000);
+      } catch { /* sin soporte */ }
+    };
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js')
+        .then(reg => reg ? reg.showNotification(title, options) : navigator.serviceWorker.ready.then(r => r.showNotification(title, options)))
+        .catch(respaldo);
+    } else {
+      respaldo();
+    }
   }
 
   removeTokenFromServer(userId: number): Observable<any> {

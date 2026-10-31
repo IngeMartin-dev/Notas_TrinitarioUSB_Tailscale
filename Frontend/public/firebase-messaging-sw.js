@@ -22,19 +22,11 @@ if (firebaseConfig.apiKey) {
   firebase.initializeApp(firebaseConfig);
   const messaging = firebase.messaging();
 
-  // Notificación cuando la app/pestaña está en segundo plano o cerrada.
-  messaging.onBackgroundMessage((payload) => {
-    const title = payload.notification?.title || 'Notas Trinitario';
-    const body = payload.notification?.body || '';
-
-    self.registration.showNotification(title, {
-      body,
-      icon: '/Logo Colegio.png',
-      badge: '/Logo Colegio.png',
-      tag: 'notas-trinitario-push',
-      data: payload.data || {}
-    });
-  });
+  // En segundo plano, FCM ya muestra la notificación por sí mismo (el servidor
+  // envía el bloque `notification`). Mostrar otra aquí la duplicaba, y con una
+  // etiqueta fija cada aviso nuevo reemplazaba al anterior. Solo se inicializa
+  // el cliente de mensajería para que FCM pueda entregar en este service worker.
+  void messaging;
 }
 
 self.addEventListener('notificationclick', (event) => {

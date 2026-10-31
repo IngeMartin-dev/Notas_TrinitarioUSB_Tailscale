@@ -19,6 +19,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class SchoolYearService {
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.notastrinitario.app.service.NotificationService notificationService;
 
     private final SchoolYearConfigRepository schoolYearConfigRepository;
     private final StudentRepository studentRepository;
@@ -297,6 +299,19 @@ public class SchoolYearService {
         schoolYearConfigRepository.save(config);
 
         resultado.pendientesDeOrganizar.sort(Comparator.comparing(m -> (String) m.get("surname")));
+
+        // Las notificaciones viejas se borran arriba; estas son las del cierre.
+        try {
+            notificationService.notifyAdmins("Año escolar cerrado",
+                    "Se cerró el año escolar: " + resultado.estudiantesPromovidos
+                            + " estudiante(s) subieron de grado. Falta elegir el salón de cada uno.",
+                    "SCHOOL_YEAR_CLOSED");
+            if (resultado.estudiantesGraduados > 0) {
+                notificationService.notifyAdmins("Nueva promoción",
+                        resultado.estudiantesGraduados + " estudiante(s) de Grado 11º pasaron a Promociones.",
+                        "PROMOTION_CREATED");
+            }
+        } catch (Exception ignored) { }
 
         return resultado;
     }
