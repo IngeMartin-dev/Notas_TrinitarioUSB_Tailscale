@@ -1,7 +1,6 @@
 package com.notastrinitario.app.controller;
 
 import com.notastrinitario.app.entity.Student;
-import com.notastrinitario.app.entity.User;
 import com.notastrinitario.app.service.NotificationService;
 import com.notastrinitario.app.service.StudentService;
 import org.springframework.http.ResponseEntity;
