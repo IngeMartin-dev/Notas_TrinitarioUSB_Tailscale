@@ -181,8 +181,6 @@ public class BoletinController {
             Integer requestValNota = toInt(request.get("valoracionAcudienteNota"));
             if (requestValNota != null && requestValNota > 0) {
                 data.setValoracionAcudienteNota(requestValNota);
-            } else if (data.getValoracionAcudienteNota() == null) {
-                data.setValoracionAcudienteNota(5);
             }
 
             String requestValAcudiente = str(request.get("valoracionAcudiente"));

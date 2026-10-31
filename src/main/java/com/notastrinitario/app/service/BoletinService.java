@@ -295,9 +295,8 @@ public class BoletinService {
             Integer requestValNota = toInt(request.get("valoracionAcudienteNota"));
             if (requestValNota != null && requestValNota > 0) {
                 data.setValoracionAcudienteNota(requestValNota);
-            } else if (data.getValoracionAcudienteNota() == null) {
-                data.setValoracionAcudienteNota(5);
             }
+            // Sin nada digitado: NO se inventa un 5; queda en 0.
             String requestValAcudiente = str(request.get("valoracionAcudiente"));
             if (requestValAcudiente != null && !requestValAcudiente.isBlank()) {
                 data.setValoracionAcudiente(requestValAcudiente);
@@ -963,7 +962,6 @@ public class BoletinService {
         Double notaPeriodoActualAcudiente = null;
         String letraFinalAcudiente = "";
 
-        int periodoParaCalculo = periodoActual != null ? periodoActual : 1;
         for (int p = 1; p <= 4; p++) {
             boolean esFuturo = periodoActual != null && p > periodoActual;
             Double valor;
@@ -980,14 +978,7 @@ public class BoletinService {
                 }
             }
 
-            if (!esFuturo && valor == null && periodoActual != null && p == periodoActual) {
-                valor = 5.0;
-            }
-
             String letra = escalaConductualLetra(valor);
-            if (letra.isEmpty() && p == periodoParaCalculo) {
-                letra = "E";
-            }
             // 2 decimales exactos (no se trunca a 1 decimal).
             String notaTexto = valor != null ? String.format("%.2f", valor) : "0";
 
@@ -998,13 +989,9 @@ public class BoletinService {
                 acumuladoAcudiente = 0.25 * valor + acumuladoAcudiente;
             }
             if (periodoActual != null && p == periodoActual) {
-                notaPeriodoActualAcudiente = valor != null ? valor : 5.0;
+                notaPeriodoActualAcudiente = valor;
                 letraFinalAcudiente = letra;
             }
-        }
-
-        if (letraFinalAcudiente.isEmpty()) {
-            letraFinalAcudiente = "E";
         }
 
         r.put("{{IH_ACUDIENTE}}", indicadorTexto(vaIh));
