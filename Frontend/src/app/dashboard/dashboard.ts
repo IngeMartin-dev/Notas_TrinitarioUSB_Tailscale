@@ -378,12 +378,46 @@ export class Dashboard implements OnInit {
     });
   }
 
+  private localActivities: Activity[] = [];
+  private serverActivities: Activity[] = [];
+
+  private static readonly ICONOS_NOTIF: Record<string, string> = {
+    REPORT_GENERATED: 'description', STUDENT_CREATED: 'person_add', PARENT_CREATED: 'family_restroom',
+    TEACHER_CREATED: 'badge', SUBJECT_CREATED: 'menu_book', SUBJECT_UPDATED: 'menu_book',
+    PROMOTION_CREATED: 'school', SCHOOL_YEAR_CLOSED: 'event_available', COUNTDOWN: 'timer',
+    PERIOD_OPENED: 'lock_open', PERIOD_CLOSED: 'lock'
+  };
+
+  /** Une la actividad local con las notificaciones del servidor (boletines,
+   *  consolidados, profesores, padres, materias, año, promociones, etc.). */
+  private mergeActivities() {
+    const todo = [...this.localActivities, ...this.serverActivities].sort((a, b) => b.timestamp - a.timestamp);
+    const vistos = new Set<string>();
+    this.recentActivities = todo.filter(a => {
+      // Mismo texto en el mismo minuto = el mismo hecho (local + servidor).
+      const k = a.description.toLowerCase().replace(/\s+/g, ' ') + '|' + Math.floor(a.timestamp / 60000);
+      if (vistos.has(k)) return false;
+      vistos.add(k);
+      return true;
+    }).slice(0, 8);
+  }
+
   loadRecentActivities() {
-    this.recentActivities = this.activityService.load();
+    this.localActivities = this.activityService.load();
+    this.mergeActivities();
+    this.notificationService.notifications$.subscribe(list => {
+      this.serverActivities = (list || []).map(n => ({
+        icon: Dashboard.ICONOS_NOTIF[n.notificationType] || 'notifications',
+        description: n.message ? `${n.title}: ${n.message}` : n.title,
+        timestamp: new Date(n.createdAt).getTime() || Date.now()
+      }));
+      this.mergeActivities();
+    });
   }
 
   addActivity(icon: string, description: string) {
-    this.recentActivities = this.activityService.add(icon, description);
+    this.localActivities = this.activityService.add(icon, description);
+    this.mergeActivities();
   }
 
   // Format timestamp to readable time

@@ -226,7 +226,7 @@
     <h2>Actividad Reciente</h2>
     <div class="activity-list">
       @if (recentActivities.length > 0) {
-        @for (activity of recentActivities; track activity.timestamp) {
+        @for (activity of recentActivities; track $index) {
           <div class="activity-item">
             <div class="activity-icon">
               <span class="material-icons">{{ activity.icon }}</span>
