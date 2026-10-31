@@ -9,7 +9,6 @@ import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
 import org.springframework.web.servlet.config.annotation.AsyncSupportConfigurer;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
-@SuppressWarnings("unused")
 @Configuration
 public class WebMvcConfig implements WebMvcConfigurer {
 
