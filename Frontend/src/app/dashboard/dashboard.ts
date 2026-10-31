@@ -786,11 +786,7 @@ export class Dashboard implements OnInit {
         const classText = studentData.classGroup ? ` - Grupo ${studentData.classGroup}` : '';
         const gradeInfo = gradeText + classText;
         
-        // Send push notification about new student
-        this.notificationService.showNativePushNotification(
-          '👨‍🎓 Nuevo estudiante registrado',
-          `${studentData.name} ${studentData.surname}${gradeInfo ? ' - ' + gradeInfo : ''}`
-        );
+        // El push de nuevo estudiante lo envía el servidor (NotificationService.notifyAdmins)
         
         // Track activity
         this.addActivity('person_add', `Nuevo estudiante: ${studentData.name} ${studentData.surname}${gradeInfo ? ' (' + gradeInfo + ')' : ''}`);

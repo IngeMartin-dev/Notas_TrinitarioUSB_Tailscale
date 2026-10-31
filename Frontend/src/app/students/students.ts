@@ -4,7 +4,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { ActivityService } from '../services/activity.service';
-import { NotificationService } from '../services/notification.service';
 
 interface Student {
   id: number;
@@ -58,7 +57,6 @@ export class Students implements OnInit {
 
   private route = inject(ActivatedRoute);
   private activityService = inject(ActivityService);
-  private notificationService = inject(NotificationService);
 
   constructor(private http: HttpClient) {}
 
@@ -661,9 +659,8 @@ export class Students implements OnInit {
         this.showSuccessNotification(`El estudiante "${studentName}" fue agregado correctamente`);
         this.loadSinSalon();
 
-        // Notificación y "Actividad reciente" del Panel
+        // "Actividad reciente" del Panel (el push lo envía el servidor)
         const gradoInfo = `${studentData.grade} - Salón ${studentData.classGroup}`;
-        this.notificationService.showNativePushNotification('👨‍🎓 Nuevo estudiante registrado', `${studentName} - ${gradoInfo}`);
         this.activityService.add('person_add', `Nuevo estudiante: ${studentName} (${gradoInfo})`);
         
         // Refresh the student list
