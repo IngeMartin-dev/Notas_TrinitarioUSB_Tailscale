@@ -161,17 +161,18 @@ export class App implements OnInit, OnDestroy {
           console.log('🚀 Triggering sidebar animation...');
           this.sidebarAnimated.set(true);
 
+          // Push: con sesión ya iniciada (sin pasar por el login) el token FCM
+          // del dispositivo nunca se registraba. Si el permiso ya está
+          // concedido, se registra/renueva el token en cada arranque.
+          if (user?.id && typeof window !== 'undefined' && 'Notification' in window && window.Notification.permission === 'granted') {
+            this.notificationService.registerPushToken(user.id);
+          }
+
           // Si es administrador y se alcanzó la fecha de fin de año,
           // redirigir directo a Configuración de Año.
+          // (una sola vez por sesión, para no impedir el acceso al Panel).
           if (this.isAdmin()) {
-            this.schoolYearService.fechaAlcanzada().subscribe({
-              next: (res) => {
-                if (res.alcanzada && !this.router.url.includes('/school-year-config')) {
-                  this.router.navigate(['/school-year-config']);
-                }
-              },
-              error: () => {}
-            });
+            this.schoolYearService.irAConfiguracionSiFinDeAno(this.router);
           }
         },
         error: (err) => {

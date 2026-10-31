@@ -4,6 +4,25 @@
     <p class="page-subtitle">Fin de año escolar, adelantar/retroceder año, nota mínima y usuarios sin rol.</p>
   </div>
 
+  <!-- Aviso: llegó la fecha de fin de año -->
+  @if (config?.fechaAlcanzada) {
+    <div class="syc-year-end-banner">
+      <span class="material-icons">event_available</span>
+      <div>
+        <strong>Llegó la fecha de fin de año escolar ({{ config?.yearEndDate }})</strong>
+        <p>
+          Pulsa <em>Adelantar año</em> para pasar a todos los estudiantes al grado siguiente
+          (Grado 1º → 2º, 2º → 3º … y Grado 11º a Promociones). Grado 1º quedará vacío para que
+          añadas a los estudiantes nuevos.
+        </p>
+      </div>
+      <button class="syc-advance-btn" [disabled]="advancing" (click)="advanceYear()">
+        <span class="material-icons">arrow_upward</span>
+        @if (advancing) { Adelantando... } @else { Adelantar año }
+      </button>
+    </div>
+  }
+
   <!-- Fecha de finalización del año escolar -->
   <div class="syc-card">
     <h3><span class="material-icons">event_busy</span> Fecha de finalización del año escolar</h3>
@@ -52,7 +71,7 @@
   <div class="syc-card">
     <h3><span class="material-icons">swap_vert</span> Adelantar / retroceder año</h3>
     <p class="syc-hint">
-      Adelantar sube un grado a todos los estudiantes activos (Grado 11º pasa a Promociones, donde sus boletines se guardan 5 años) y borra todas las notas, los boletines y consolidados generados y los porcentajes de calificaciones (Promociones se conserva).
+      Adelantar sube un grado a todos los estudiantes activos conservando su salón (Grado 1º → 2º, 2º → 3º … y Grado 11º pasa a Promociones, donde sus boletines se guardan 5 años), deja Grado 1º vacío para añadir estudiantes nuevos, sube el año académico y borra todas las notas, los boletines y consolidados generados y los porcentajes de calificaciones (Promociones se conserva).
       Retroceder deshace el último adelanto.
     </p>
     <div class="syc-row">
@@ -67,6 +86,16 @@
     </div>
     @if (advanceMessage) {
       <p class="syc-message">{{ advanceMessage }}</p>
+    }
+    @if (advanceDone) {
+      <div class="syc-row syc-advance-done">
+        <button class="syc-save-btn" (click)="irAEstudiantes()">
+          <span class="material-icons">school</span> Ver estudiantes
+        </button>
+        <button class="syc-advance-btn" (click)="irAAnadirGrado1()">
+          <span class="material-icons">person_add</span> Añadir estudiantes a Grado 1º
+        </button>
+      </div>
     }
   </div>
 

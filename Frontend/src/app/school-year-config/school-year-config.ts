@@ -5,6 +5,7 @@ import {
   SchoolYearService, SchoolYearConfigDto, PendienteOrganizar, UsuarioSinRol, RoleDto, UsuarioGestionRol
 } from '../services/school-year.service';
 import { DialogService } from '../services/dialog.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-school-year-config',
@@ -16,6 +17,7 @@ import { DialogService } from '../services/dialog.service';
 export class SchoolYearConfig implements OnInit {
   private service = inject(SchoolYearService);
   private dialogService = inject(DialogService);
+  private router = inject(Router);
 
   config: SchoolYearConfigDto | null = null;
   editYearEndDate = '';
@@ -33,6 +35,8 @@ export class SchoolYearConfig implements OnInit {
   advancing = false;
   reverting = false;
   advanceMessage = '';
+  /** true justo después de pasar de año: muestra los accesos a Estudiantes / Añadir estudiantes. */
+  advanceDone = false;
   pendientes: PendienteOrganizar[] = [];
   asignaciones: { [studentId: number]: 'A' | 'B' } = {};
   guardandoEstudiante: { [studentId: number]: boolean } = {};
@@ -155,6 +159,8 @@ export class SchoolYearConfig implements OnInit {
         this.wiping = false;
         this.showWipeConfirm = false;
         this.wipeMessage = 'Se borró la información del año escolar. Estudiantes y padres de familia se conservaron.';
+        this.service.reiniciarAvisoFinDeAno();
+        this.loadConfig();
         this.loadConfig();
         setTimeout(() => this.wipeMessage = '', 6000);
       },
@@ -168,7 +174,7 @@ export class SchoolYearConfig implements OnInit {
   // ── Adelantar / retroceder año ───────────────────────────────────────
   async advanceYear() {
     const ok = await this.dialogService.confirm(
-      '¿Seguro que quieres adelantar el año? Todos los estudiantes activos subirán un grado (los de Grado 11º pasan a Promociones) y se borrarán TODAS las notas, los boletines y consolidados generados y los porcentajes de calificaciones (Promociones, estudiantes y cuentas de profesores se conservan). Podrás organizar los salones a continuación, y deshacer el cambio de grados con "Retroceder año" (lo borrado no se recupera).',
+      '¿Seguro que quieres pasar de año? Todos los estudiantes activos subirán un grado y conservarán su salón (Grado 1º pasa a 2º, 2º a 3º… y los de Grado 11º pasan a Promociones). Grado 1º quedará vacío para que añadas a los estudiantes nuevos. Se borrarán TODAS las notas, los boletines y consolidados generados y los porcentajes de calificaciones (Promociones, estudiantes y cuentas de profesores se conservan), y el año académico sube en uno. Podrás deshacer el cambio de grados con "Retroceder año" (lo borrado no se recupera).',
       'Adelantar año'
     );
     if (!ok) return;
@@ -178,7 +184,9 @@ export class SchoolYearConfig implements OnInit {
     this.service.advanceYear().subscribe({
       next: (res) => {
         this.advancing = false;
-        this.advanceMessage = `${res.estudiantesPromovidos} estudiante(s) promovido(s), ${res.estudiantesGraduados} pasaron a Promociones (Grado 11º).`;
+        this.advanceMessage = `Listo: ${res.estudiantesPromovidos} estudiante(s) pasaron al grado siguiente y ${res.estudiantesGraduados} pasaron a Promociones (Grado 11º). Grado 1º quedó sin estudiantes: añade a los nuevos.`;
+        this.advanceDone = true;
+        this.service.reiniciarAvisoFinDeAno();
         this.pendientes = res.pendientesDeOrganizar;
         this.asignaciones = {};
         this.newStudentsGrade1 = [];
@@ -190,6 +198,16 @@ export class SchoolYearConfig implements OnInit {
         this.advanceMessage = 'No se pudo adelantar el año.';
       }
     });
+  }
+
+  /** Después de pasar de año: abre Estudiantes. */
+  irAEstudiantes() {
+    this.router.navigate(['/students']);
+  }
+
+  /** Después de pasar de año: abre Grado 1º (que queda vacío) listo para añadir estudiantes. */
+  irAAnadirGrado1() {
+    this.router.navigate(['/students'], { queryParams: { grade: 'Grado 1º' } });
   }
 
   async revertYear() {
@@ -204,6 +222,7 @@ export class SchoolYearConfig implements OnInit {
       next: (res) => {
         this.reverting = false;
         this.advanceMessage = `${res.revertidos} estudiante(s) devuelto(s) a su grado y salón anterior.`;
+        this.advanceDone = false;
         this.pendientes = [];
         this.loadConfig();
       },

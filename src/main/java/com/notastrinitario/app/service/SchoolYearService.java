@@ -100,6 +100,24 @@ public class SchoolYearService {
         return schoolYearConfigRepository.save(config);
     }
 
+    /** true si el año ya se cerró (borrado o adelanto) hace menos de 60 días: así borrar y
+     *  adelantar en la misma jornada no suben el año académico dos veces. */
+    private boolean cierreReciente(SchoolYearConfig c, LocalDateTime ahora) {
+        LocalDateTime limite = ahora.minusDays(60);
+        return (c.getLastWipedAt() != null && c.getLastWipedAt().isAfter(limite))
+                || (c.getLastAdvancedAt() != null && c.getLastAdvancedAt().isAfter(limite));
+    }
+
+    /** Fecha de fin del PRÓXIMO año escolar: la actual + 1 año (las veces que haga falta
+     *  hasta quedar en el futuro). Sin fecha configurada se queda sin fecha. */
+    private LocalDate siguienteFinDeAno(LocalDate actual) {
+        if (actual == null) return null;
+        LocalDate hoy = LocalDate.now();
+        LocalDate d = actual.plusYears(1);
+        while (!d.isAfter(hoy)) d = d.plusYears(1);
+        return d;
+    }
+
     /**
      * Borra la informacion propia del ano escolar (notas, boletines,
      * recuperaciones, borradores, chats, configuraciones de columnas,
@@ -122,9 +140,17 @@ public class SchoolYearService {
         homeroomAssignmentRepository.deleteAllInBatch();
 
         SchoolYearConfig config = getConfig();
-        config.setLastWipedAt(LocalDateTime.now());
-        config.setCurrentAcademicYear((config.getCurrentAcademicYear() != null ? config.getCurrentAcademicYear() : LocalDate.now().getYear()) + 1);
+        LocalDateTime ahora = LocalDateTime.now();
+        boolean yaCerrado = cierreReciente(config, ahora);
+        config.setLastWipedAt(ahora);
+        if (!yaCerrado) {
+            config.setCurrentAcademicYear((config.getCurrentAcademicYear() != null ? config.getCurrentAcademicYear() : LocalDate.now().getYear()) + 1);
+            // Se pasa la fecha de fin al próximo año: si no, "ya llegó la fecha" seguía
+            // siendo verdad y el panel redirigía a Configuración de Año para siempre.
+            config.setYearEndDate(siguienteFinDeAno(config.getYearEndDate()));
+        }
         config.setYearEndNotified(false); // listo para avisar de nuevo el próximo año
+        config.setYearEnd7dNotified(false);
         schoolYearConfigRepository.save(config);
     }
 
@@ -228,16 +254,20 @@ public class SchoolYearService {
                 resultado.estudiantesGraduados++;
             } else {
                 s.setGrade(formatearGrado(numero + 1));
-                // Nadie conserva su salon: el administrador asigna A o B a cada uno.
-                s.setClassGroup(null);
+                // El estudiante conserva su salón (A sigue en A, B en B) para que
+                // aparezca de inmediato en su nuevo grado. Solo quedan "pendientes"
+                // los que ya venían sin salón; el administrador puede cambiar
+                // el salón de cualquiera desde Estudiantes.
                 resultado.estudiantesPromovidos++;
 
-                Map<String, Object> pendiente = new LinkedHashMap<>();
-                pendiente.put("studentId", s.getId());
-                pendiente.put("name", s.getName());
-                pendiente.put("surname", s.getSurname());
-                pendiente.put("newGrade", s.getGrade());
-                resultado.pendientesDeOrganizar.add(pendiente);
+                if (s.getClassGroup() == null) {
+                    Map<String, Object> pendiente = new LinkedHashMap<>();
+                    pendiente.put("studentId", s.getId());
+                    pendiente.put("name", s.getName());
+                    pendiente.put("surname", s.getSurname());
+                    pendiente.put("newGrade", s.getGrade());
+                    resultado.pendientesDeOrganizar.add(pendiente);
+                }
             }
         }
 
@@ -251,7 +281,22 @@ public class SchoolYearService {
         // arriba porque ahi se copian a Promociones los boletines de Grado 11º.
         limpiarNotasYDocumentos();
 
-        config.setLastAdvancedAt(LocalDateTime.now());
+        LocalDateTime ahora = LocalDateTime.now();
+        boolean yaCerrado = cierreReciente(config, ahora); // antes de actualizar lastAdvancedAt
+        if (!yaCerrado) {
+            // Pasar de año de verdad: sube el año académico y la fecha de fin
+            // se mueve al próximo año (guardando la anterior para "Retroceder año").
+            config.setYearEndBeforeAdvance(config.getYearEndDate());
+            config.setAdvanceBumpedYear(true);
+            config.setCurrentAcademicYear(anioEscolar + 1);
+            config.setYearEndDate(siguienteFinDeAno(config.getYearEndDate()));
+        } else {
+            config.setAdvanceBumpedYear(false);
+            config.setYearEndBeforeAdvance(null);
+        }
+        config.setYearEndNotified(false);
+        config.setYearEnd7dNotified(false);
+        config.setLastAdvancedAt(ahora);
         config.setAdvancePendingClassroomOrg(!resultado.pendientesDeOrganizar.isEmpty());
         schoolYearConfigRepository.save(config);
 
@@ -326,6 +371,20 @@ public class SchoolYearService {
 
         SchoolYearConfig config = getConfig();
         config.setAdvancePendingClassroomOrg(false);
+        if (revertidos > 0 && config.isAdvanceBumpedYear()) {
+            // Se devuelve también el año académico y la fecha de fin de año.
+            if (config.getCurrentAcademicYear() != null) {
+                config.setCurrentAcademicYear(config.getCurrentAcademicYear() - 1);
+            }
+            config.setYearEndDate(config.getYearEndBeforeAdvance());
+            config.setYearEndNotified(false);
+            config.setYearEnd7dNotified(false);
+        }
+        if (revertidos > 0) {
+            config.setAdvanceBumpedYear(false);
+            config.setYearEndBeforeAdvance(null);
+            config.setLastAdvancedAt(null);
+        }
         schoolYearConfigRepository.save(config);
 
         return revertidos;

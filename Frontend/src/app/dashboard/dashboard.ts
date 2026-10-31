@@ -24,6 +24,7 @@ interface Activity {
   timestamp: number; // Unix timestamp in ms
 }
 
+import { SchoolYearService } from '../services/school-year.service';
 @Component({
   selector: 'app-dashboard',
   imports: [RouterModule, FormsModule],
@@ -44,6 +45,7 @@ export class Dashboard implements OnInit {
   currentUser = signal<any>(null);
   private authService = inject(AuthService);
   private http = inject(HttpClient);
+  private schoolYearService = inject(SchoolYearService);
   private router = inject(Router);
   private notificationService = inject(NotificationService);
   private gradesUpdateService = inject(GradesUpdateService);
@@ -579,15 +581,8 @@ export class Dashboard implements OnInit {
   /** Si el admin entra y ya se alcanzó la fecha de fin de año, lo lleva
    *  directo a Configuración de Año para que decida qué hacer. */
   private checkFechaFinDeAno() {
-    this.http.get<{ alcanzada: boolean }>('http://localhost:8080/api/school-year/fecha-alcanzada')
-      .subscribe({
-        next: (res) => {
-          if (res.alcanzada && this.router.url !== '/school-year-config') {
-            this.router.navigate(['/school-year-config']);
-          }
-        },
-        error: () => { /* silencioso: no bloquea el resto del panel */ }
-      });
+    // Una sola vez por sesión: así el administrador no queda atrapado fuera del Panel.
+    this.schoolYearService.irAConfiguracionSiFinDeAno(this.router);
   }
 
   private loadHomeroomAssignment(userId: number) {

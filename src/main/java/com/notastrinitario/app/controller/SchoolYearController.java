@@ -127,6 +127,8 @@ public class SchoolYearController {
         dto.put("lastAdvancedAt", config.getLastAdvancedAt() != null ? config.getLastAdvancedAt().toString() : null);
         dto.put("advancePendingClassroomOrg", config.isAdvancePendingClassroomOrg());
         dto.put("yearEndNotified", config.isYearEndNotified());
+        // true si hoy ya llegó (o pasó) la fecha de fin de año: el frontend muestra el aviso "Pasar de año".
+        dto.put("fechaAlcanzada", config.getYearEndDate() != null && !LocalDate.now().isBefore(config.getYearEndDate()));
         return dto;
     }
 }

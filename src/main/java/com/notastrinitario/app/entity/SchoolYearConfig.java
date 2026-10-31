@@ -61,6 +61,20 @@ public class SchoolYearConfig implements Serializable {
     @Column(name = "year_end_7d_notified")
     private Boolean yearEnd7dNotified = false;
 
+    // true si el último "Adelantar año" subió el año académico y movió la fecha
+    // de fin de año (así "Retroceder año" sabe si debe devolverlos).
+    @Column(name = "advance_bumped_year")
+    private Boolean advanceBumpedYear = false;
+
+    // Fecha de fin de año que había ANTES del último "Adelantar año" (para poder devolverla).
+    @Column(name = "year_end_before_advance")
+    private LocalDate yearEndBeforeAdvance;
+
+    public boolean isAdvanceBumpedYear() { return Boolean.TRUE.equals(advanceBumpedYear); }
+    public void setAdvanceBumpedYear(Boolean advanceBumpedYear) { this.advanceBumpedYear = advanceBumpedYear; }
+    public LocalDate getYearEndBeforeAdvance() { return yearEndBeforeAdvance; }
+    public void setYearEndBeforeAdvance(LocalDate yearEndBeforeAdvance) { this.yearEndBeforeAdvance = yearEndBeforeAdvance; }
+
     public boolean isYearEndNotified() { return Boolean.TRUE.equals(yearEndNotified); }
     public void setYearEndNotified(Boolean yearEndNotified) { this.yearEndNotified = yearEndNotified; }
 

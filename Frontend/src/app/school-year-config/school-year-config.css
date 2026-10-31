@@ -650,3 +650,21 @@
   white-space: normal;
   overflow-wrap: anywhere;
 }
+
+/* Aviso de "llegó la fecha de fin de año" */
+.syc-year-end-banner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+  padding: 16px 20px;
+  border-radius: 16px;
+  color: #fff;
+  background: linear-gradient(135deg, #1b6aeb, #6d4aff);
+  box-shadow: 0 10px 28px rgba(27, 106, 235, 0.3);
+}
+.syc-year-end-banner > .material-icons { font-size: 34px; }
+.syc-year-end-banner > div { flex: 1; min-width: 220px; }
+.syc-year-end-banner p { margin: 4px 0 0; opacity: 0.95; font-size: 0.92rem; line-height: 1.45; }
+.syc-advance-done { margin-top: 12px; flex-wrap: wrap; }

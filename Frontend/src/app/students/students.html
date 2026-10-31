@@ -5,7 +5,12 @@
     <div class="grades-row">
       @for (grade of grades; track grade) {
         <div class="grade-section">
-          <h3>{{ grade }}</h3>
+          <h3>
+            {{ grade }}
+            @if (gradoVacio(grade)) {
+              <span class="grado-vacio-pill">Sin estudiantes</span>
+            }
+          </h3>
           <div class="classrooms">
             @for (classroom of classrooms; track classroom) {
               <button
@@ -127,6 +132,16 @@
         }
         @if (selectedGrade && selectedClassroom && students.length === 0) {
           <div class="no-students-message">
+            @if (gradoVacio(selectedGrade)) {
+              <div class="grado-vacio-card">
+                <div class="grado-vacio-icon"><span aria-hidden="true">🎒</span></div>
+                <h3>No hay estudiantes en este grado</h3>
+                <p>Por favor, añádelos para empezar el año en {{ selectedGrade }}.</p>
+                <button class="grado-vacio-cta" (click)="openAddStudentModal()">
+                  <span aria-hidden="true">✨</span> Añadir estudiantes
+                </button>
+              </div>
+            } @else {
             <div class="no-students-content">
               <h3>No hay estudiantes en este salón</h3>
               <p>No hay estudiantes aún predefinidos en el grado {{ selectedGradeWord }} ({{ selectedClassroom }}). Por favor, agrégalos.</p>
@@ -134,6 +149,7 @@
                 ➕ Agregar estudiante
               </button>
             </div>
+            }
           </div>
         }
       </div>

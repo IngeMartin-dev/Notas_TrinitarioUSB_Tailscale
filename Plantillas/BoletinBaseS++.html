@@ -2464,7 +2464,8 @@ body {padding:0; margin:0; text-align:center; background-color:#777}
 
   function collapseSvgRows(svgEl, rowStartTys, rowHeight, cierreStartTy, trailing) {
     if (!(trailing > 0)) return;
-    var firstEmptyTy = rowStartTys[rowStartTys.length - trailing] - 1.5;
+    // Margen amplio: el fondo/borde de la fila arranca por encima de la línea base de su texto.
+    var firstEmptyTy = rowStartTys[rowStartTys.length - trailing] - 15;
     var shiftAmount = trailing * rowHeight;
     var svgRect = svgEl.getBoundingClientRect();
     // Se usa la posición real en pantalla (getBoundingClientRect) en vez del

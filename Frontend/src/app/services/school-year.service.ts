@@ -1,3 +1,4 @@
+import { Router } from '@angular/router';
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -10,6 +11,8 @@ export interface SchoolYearConfigDto {
   lastAdvancedAt: string | null;
   advancePendingClassroomOrg: boolean;
   yearEndNotified: boolean;
+  /** true si hoy ya llegó (o pasó) la fecha de fin de año. */
+  fechaAlcanzada?: boolean;
 }
 
 export interface PendienteOrganizar {
@@ -125,6 +128,37 @@ export class SchoolYearService {
 
   fechaAlcanzada(): Observable<{ alcanzada: boolean }> {
     return this.http.get<{ alcanzada: boolean }>(`${this.API_BASE}/fecha-alcanzada`);
+  }
+
+  /** Clave de sessionStorage: el aviso de fin de año redirige UNA sola vez por sesión. */
+  private static readonly CLAVE_REDIRECCION = 'syc_redirigido';
+
+  /**
+   * Si ya llegó la fecha de fin de año, lleva al administrador a Configuración de Año
+   * para que pase de año y configure a los estudiantes. Solo lo hace la primera vez que
+   * entra en la sesión: antes redirigía en CADA carga del Panel y, como la fecha seguía
+   * "alcanzada", el administrador quedaba atrapado sin poder ver el Panel.
+   */
+  irAConfiguracionSiFinDeAno(router: Router): void {
+    try {
+      if (sessionStorage.getItem(SchoolYearService.CLAVE_REDIRECCION) === '1') return;
+    } catch { /* sin sessionStorage: se redirige igual */ }
+
+    this.fechaAlcanzada().subscribe({
+      next: (res) => {
+        if (!res.alcanzada) return;
+        try { sessionStorage.setItem(SchoolYearService.CLAVE_REDIRECCION, '1'); } catch { /* nada */ }
+        if (!router.url.includes('/school-year-config')) {
+          router.navigate(['/school-year-config']);
+        }
+      },
+      error: () => { /* silencioso: no bloquea el resto de la app */ }
+    });
+  }
+
+  /** Tras pasar de año se borra la marca, para que el próximo año vuelva a avisar. */
+  reiniciarAvisoFinDeAno(): void {
+    try { sessionStorage.removeItem(SchoolYearService.CLAVE_REDIRECCION); } catch { /* nada */ }
   }
 
   /** Registra un estudiante nuevo (usado en el paso "Grado 1" del asistente

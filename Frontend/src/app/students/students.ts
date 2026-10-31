@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -53,6 +54,8 @@ export class Students implements OnInit {
   notificationType: 'success' | 'error' | null = null;
   notificationMessage: string = '';
 
+  private route = inject(ActivatedRoute);
+
   constructor(private http: HttpClient) {}
 
   // ── Estudiantes sin salón (los que acaban de subir al adelantar el año) ──
@@ -62,14 +65,31 @@ export class Students implements OnInit {
   sinSalonGrade: string | null = null;
   asignando: { [id: number]: boolean } = {};
 
+  /** Todos los estudiantes activos (para saber qué grados están vacíos). */
+  todosActivos: Student[] = [];
+  todosCargados = false;
+
   ngOnInit() {
     this.loadSinSalon();
+
+    // Acceso directo desde Configuración de Año: /students?grade=Grado 1º
+    const grado = this.route.snapshot.queryParamMap.get('grade');
+    if (grado && this.grades.includes(grado)) {
+      this.selectClassroom(grado, this.classrooms[0]);
+    }
+  }
+
+  /** true cuando el grado no tiene ningún estudiante activo (ya cargó la lista). */
+  gradoVacio(grade: string | null): boolean {
+    return !!grade && this.todosCargados && !this.todosActivos.some(st => st.grade === grade);
   }
 
   /** Carga todos los estudiantes y se queda con los que no tienen salón. */
   loadSinSalon() {
     this.http.get<Student[]>('http://localhost:8080/api/students').subscribe({
       next: (list) => {
+        this.todosActivos = (list || []).filter(st => st.active !== false);
+        this.todosCargados = true;
         this.sinSalonTodos = (list || []).filter(st =>
           st.active !== false && !['Salon A', 'Salon B'].includes((st.classGroup || '').trim()) && /^Grado \d+º$/.test(st.grade || ''));
       },
@@ -635,6 +655,7 @@ export class Students implements OnInit {
         // Show success notification
         const studentName = `${studentData.name} ${studentData.surname}`;
         this.showSuccessNotification(`El estudiante "${studentName}" fue agregado correctamente`);
+        this.loadSinSalon();
         
         // Refresh the student list
         if (this.selectedGrade && this.selectedClassroom) {
@@ -719,6 +740,7 @@ export class Students implements OnInit {
         this.students = this.students.filter(s => s.id !== student.id);
         this.showSuccessNotification(`El estudiante "${student.surname} ${student.name}" fue eliminado correctamente`);
         this.closeDeleteModal();
+        this.loadSinSalon();
       },
       error: (error) => {
         console.error('❌ Failed to delete student:', error);
