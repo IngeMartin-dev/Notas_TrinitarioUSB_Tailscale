@@ -54,6 +54,45 @@ export const PLAN_PAPER_CSS = `
 .plan-paper .pp-foot { margin-top: 22px; padding-top: 8px; border-top: 1px solid var(--pp-line); font-family: Arial, Helvetica, sans-serif; font-size: 8pt; color: var(--pp-muted); text-align: center; }
 @media screen and (max-width: 820px) { .plan-paper { padding: 22px 18px; min-height: 0; font-size: 11pt; } .plan-paper .pp-meta { grid-template-columns: 1fr; } .plan-paper .pp-meta div:nth-child(odd) { border-right: 0; } .plan-paper .pp-meta div:nth-last-child(-n+2) { border-bottom: 1px solid var(--pp-line); } .plan-paper .pp-meta div:last-child { border-bottom: 0; } .plan-paper .pp-head { flex-wrap: wrap; } .plan-paper .pp-doc { text-align: left; } }
 @media print { .plan-paper { box-shadow: none; width: auto; min-height: 0; padding: 0; } }
+
+/* ── Color por sección ─────────────────────────────────────────────── */
+.plan-paper [data-sec] { --sec: #1e3a8a; --sec2: #2563eb; --sec-bg: #eff4ff; }
+.plan-paper [data-sec="obj"]  { --sec: #1d4ed8; --sec2: #3b82f6; --sec-bg: #eff6ff; }
+.plan-paper [data-sec="intro"]{ --sec: #0f766e; --sec2: #14b8a6; --sec-bg: #f0fdfa; }
+.plan-paper [data-sec="des"]  { --sec: #4338ca; --sec2: #818cf8; --sec-bg: #eef2ff; }
+.plan-paper [data-sec="err"]  { --sec: #b91c1c; --sec2: #f87171; --sec-bg: #fef2f2; }
+.plan-paper [data-sec="cons"] { --sec: #b45309; --sec2: #f59e0b; --sec-bg: #fffbeb; }
+.plan-paper [data-sec="tall"] { --sec: #15803d; --sec2: #4ade80; --sec-bg: #f0fdf4; }
+.plan-paper [data-sec="prof"] { --sec: #7e22ce; --sec2: #c084fc; --sec-bg: #faf5ff; }
+.plan-paper [data-sec="cier"] { --sec: #be185d; --sec2: #f472b6; --sec-bg: #fdf2f8; }
+.plan-paper .pp-head { border-top: 7px solid transparent; border-image: linear-gradient(90deg, #1d4ed8, #14b8a6, #f59e0b, #ec4899) 1; padding-top: 10px; }
+.plan-paper .plan-text h2[data-sec] { background: linear-gradient(90deg, var(--sec), var(--sec2)); }
+.plan-paper .plan-text h2[data-sec]::before { content: attr(data-ico); margin-right: 8px; }
+.plan-paper .plan-text h3[data-sec] { color: var(--sec); border-bottom: 2px solid var(--sec2); }
+.plan-paper .plan-text [data-sec] strong { color: var(--sec); }
+.plan-paper .plan-text li[data-sec]::marker, .plan-paper .plan-text [data-sec] li::marker { color: var(--sec); }
+.plan-paper .plan-text ol[data-sec="tall"] { list-style: none; counter-reset: ej; padding-left: 0; }
+.plan-paper .plan-text ol[data-sec="tall"] > li { counter-increment: ej; background: var(--sec-bg); border-left: 4px solid var(--sec2); border-radius: 0 6px 6px 0; padding: 6px 10px 6px 12px; margin-bottom: 7px; }
+.plan-paper .plan-text ul[data-sec="err"] > li { background: var(--sec-bg); border-left: 4px solid var(--sec2); border-radius: 0 6px 6px 0; padding: 6px 10px 6px 12px; margin-bottom: 7px; list-style: none; }
+.plan-paper .plan-text p[data-sec="cier"] { background: var(--sec-bg); border-radius: 6px; padding: 8px 12px; }
+/* Recuadros de colores que puede usar la IA */
+.plan-paper .pp-box { margin: 10px 0 12px; padding: 8px 12px 6px; border-radius: 6px; border: 1px solid var(--bx2); border-left: 6px solid var(--bx); background: var(--bxbg); break-inside: avoid; page-break-inside: avoid; }
+.plan-paper .pp-box > strong:first-child { display: block; font-family: Arial, Helvetica, sans-serif; font-size: 9.5pt; letter-spacing: .5px; text-transform: uppercase; color: var(--bx) !important; margin-bottom: 3px; }
+.plan-paper .pp-box p:last-child { margin-bottom: 4px; }
+.plan-paper .pp-def  { --bx: #1d4ed8; --bx2: #bfdbfe; --bxbg: #eff6ff; }
+.plan-paper .pp-ex   { --bx: #15803d; --bx2: #bbf7d0; --bxbg: #f0fdf4; }
+.plan-paper .pp-tip  { --bx: #b45309; --bx2: #fde68a; --bxbg: #fffbeb; }
+.plan-paper .pp-warn { --bx: #b91c1c; --bx2: #fecaca; --bxbg: #fef2f2; }
+.plan-paper .pp-def > strong:first-child::before  { content: '📘 '; }
+.plan-paper .pp-ex > strong:first-child::before   { content: '✏️ '; }
+.plan-paper .pp-tip > strong:first-child::before  { content: '💡 '; }
+.plan-paper .pp-warn > strong:first-child::before { content: '⚠️ '; }
+/* Imágenes */
+.plan-paper .pp-photo { margin: 12px auto 14px; max-width: 360px; padding: 6px; border: 1px solid var(--pp-line); border-radius: 8px; background: #fff; box-shadow: 0 2px 8px rgba(15,23,42,.10); text-align: center; break-inside: avoid; page-break-inside: avoid; }
+.plan-paper .pp-photo img { display: block; width: 100%; max-height: 240px; object-fit: contain; border-radius: 4px; background: #f8fafc; }
+.plan-paper .pp-photo figcaption { font-family: Arial, Helvetica, sans-serif; font-size: 8.5pt; color: var(--pp-muted); margin-top: 5px; line-height: 1.3; }
+.plan-paper .pp-photo .pp-credit { display: block; font-size: 7pt; opacity: .85; }
+.plan-paper .pp-photo-loading { font-family: Arial, Helvetica, sans-serif; font-size: 9pt; color: var(--pp-muted); padding: 22px 0; }
 `;
 
 /** Inserta una sola vez los estilos de la hoja en la página (vista previa). */
@@ -374,10 +413,127 @@ export function renderPlanHtml(html: string): string {
       }
     });
 
+    // 1b) Imágenes pedidas por la IA: <div class="pp-img" data-query="..." data-caption="...">
+    body.querySelectorAll('.pp-img').forEach(el => {
+      const q = (el.getAttribute('data-query') || '').trim();
+      if (!q) { el.remove(); return; }
+      const cap = (el.getAttribute('data-caption') || '').trim();
+      const cached = IMG_CACHE.get(q.toLowerCase());
+      if (cached === null) { el.remove(); return; }
+      const fig = document.createElement('figure');
+      fig.className = 'pp-photo';
+      fig.setAttribute('data-query', q);
+      if (cap) fig.setAttribute('data-caption', cap);
+      fig.innerHTML = cached ? photoInner(cached, cap) : '<div class="pp-photo-loading">Buscando imagen…</div>';
+      if (cached) fig.setAttribute('data-done', '1');
+      el.replaceWith(fig);
+    });
+
+    // 1c) Color por sección: cada bloque hereda el color de su <h2>
+    decorateSections(body);
+
     // 2) Fórmulas (solo cuando KaTeX ya cargó; si no, queda el flujo anterior)
     renderMathIn(body as unknown as HTMLElement);
     return body.innerHTML;
   } catch {
     return html;
   }
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────
+// Color por sección
+// ─────────────────────────────────────────────────────────────────────────
+const SECTIONS: { key: string; re: RegExp; ico: string }[] = [
+  { key: 'obj',   re: /objetivo/i,              ico: '🎯' },
+  { key: 'intro', re: /introducci/i,            ico: '📖' },
+  { key: 'des',   re: /desarrollo/i,            ico: '🧠' },
+  { key: 'err',   re: /errores/i,               ico: '⚠️' },
+  { key: 'cons',  re: /consejos/i,              ico: '💡' },
+  { key: 'tall',  re: /taller|pr[aá]ctica/i,    ico: '✏️' },
+  { key: 'prof',  re: /profundiz/i,             ico: '🔭' },
+  { key: 'cier',  re: /cierre|motivador/i,      ico: '🌟' }
+];
+
+function decorateSections(body: HTMLElement): void {
+  let cur: { key: string; ico: string } | null = null;
+  Array.from(body.children).forEach(el => {
+    if (el.tagName === 'H2') {
+      const t = el.textContent || '';
+      const sec = SECTIONS.find(x => x.re.test(t));
+      cur = sec ? { key: sec.key, ico: sec.ico } : null;
+      if (cur) { el.setAttribute('data-sec', cur.key); el.setAttribute('data-ico', cur.ico); }
+      return;
+    }
+    if (cur) {
+      el.setAttribute('data-sec', cur.key);
+      // las <p> del cierre llevan fondo suave (ver CSS); el resto solo hereda el color
+    }
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Imágenes reales (Wikimedia Commons, licencias libres)
+// ─────────────────────────────────────────────────────────────────────────
+interface PhotoInfo { url: string; credit: string; title: string; }
+const IMG_CACHE = new Map<string, PhotoInfo | null>();
+
+function stripTags(s: string): string {
+  return (s || '').replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
+}
+
+function photoInner(info: PhotoInfo, caption: string): string {
+  const alt = escapeHtml(caption || info.title);
+  return `<img src="${escapeHtml(info.url)}" alt="${alt}" loading="eager" referrerpolicy="no-referrer">` +
+    `<figcaption>${caption ? escapeHtml(caption) : ''}<span class="pp-credit">${escapeHtml(info.credit)}</span></figcaption>`;
+}
+
+async function fetchPhoto(query: string): Promise<PhotoInfo | null> {
+  const url = 'https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*'
+    + '&generator=search&gsrnamespace=6&gsrlimit=8&gsrsearch=' + encodeURIComponent(query + ' filetype:bitmap')
+    + '&prop=imageinfo&iiprop=url|mime|extmetadata&iiurlwidth=700';
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 8000);
+  try {
+    const res = await fetch(url, { signal: ctrl.signal });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const pages: any[] = Object.values(data?.query?.pages || {});
+    pages.sort((a, b) => (a.index || 0) - (b.index || 0));
+    for (const pg of pages) {
+      const ii = pg.imageinfo && pg.imageinfo[0];
+      if (!ii || !/^image\/(jpeg|png)$/.test(ii.mime || '')) continue;
+      const md = ii.extmetadata || {};
+      const license = stripTags(md.LicenseShortName?.value || '');
+      // Solo licencias libres (CC / dominio público)
+      if (!/^(cc|public domain|pd)/i.test(license)) continue;
+      const author = stripTags(md.Artist?.value || '') || 'Autor desconocido';
+      return {
+        url: ii.thumburl || ii.url,
+        title: stripTags(md.ObjectName?.value || pg.title || query),
+        credit: `Imagen: ${author.slice(0, 60)} · ${license} · Wikimedia Commons`
+      };
+    }
+    return null;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/** Busca las imágenes pendientes del plan y las coloca; si no hay, quita el hueco. */
+export async function hydratePlanImages(root: HTMLElement | null): Promise<void> {
+  if (!root) return;
+  const pending = Array.from(root.querySelectorAll<HTMLElement>('figure.pp-photo[data-query]:not([data-done])'));
+  await Promise.all(pending.map(async fig => {
+    const q = fig.getAttribute('data-query') || '';
+    const key = q.toLowerCase();
+    let info = IMG_CACHE.get(key);
+    if (info === undefined) { info = await fetchPhoto(q); IMG_CACHE.set(key, info); }
+    if (!fig.isConnected) return;
+    if (!info) { fig.remove(); return; }
+    fig.innerHTML = photoInner(info, fig.getAttribute('data-caption') || '');
+    fig.setAttribute('data-done', '1');
+  }));
 }

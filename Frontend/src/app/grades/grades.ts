@@ -42,7 +42,7 @@ interface RecoveryPlan {
 
 interface PctCategory { id: string; name: string; pct: number | null; }
 
-import { renderPlanHtml, ensurePlanPaperStyles, PLAN_PAPER_CSS } from './plan-render';
+import { renderPlanHtml, ensurePlanPaperStyles, hydratePlanImages, PLAN_PAPER_CSS } from './plan-render';
 
 @Component({
   selector: 'app-grades',
@@ -2276,6 +2276,8 @@ loadTeacherSubjectsForGradeRange() {
   private renderMathExpressions() {
     const planContent = document.getElementById('study-plan-content');
     if (!planContent) return;
+    // Imágenes reales pedidas por la IA (se rellenan solas; si no hay, se quitan)
+    hydratePlanImages(planContent).catch(() => { /* noop */ });
     const waitForKatex = (callback: () => void, maxAttempts = 50) => {
       let attempts = 0;
       const check = () => {
@@ -3025,14 +3027,25 @@ ESTRUCTURA OBLIGATORIA (encabezados <h2> en este orden EXACTO, sin saltarse ning
 8. <h2>CIERRE MOTIVADOR</h2>
    2-3 párrafos cortos, personalizados (usa ${studentName} una vez), con mentalidad de crecimiento. Tono cálido y realista, nada de frases vacías.
 
+11. IMÁGENES (opcional, máximo 2 en todo el documento, solo si realmente ayudan: un lugar, un personaje histórico, un animal, un órgano, un fenómeno natural, una obra, etc.). Pon el marcador EXACTO, vacío y cerrado, dentro de DESARROLLO DEL TEMA o INTRODUCCIÓN:
+   <div class="pp-img" data-query="Término específico como título de Wikipedia" data-caption="Frase corta que explica la imagen"></div>
+   - data-query: 2-5 palabras, concretas y fáciles de encontrar en Wikimedia Commons (ej: "Mitocondria microscopio electrónico", "Batalla de Boyacá pintura", "Sistema solar planetas"). Preferiblemente en español o el nombre propio/científico.
+   - NO uses imágenes para Matemáticas puras (para eso están las gráficas). NO inventes URLs, solo el término de búsqueda.
+
 ESTILO VISUAL OBLIGATORIO:
 - <h2> secciones principales, <h3> solo dentro del TALLER y para subtemas del DESARROLLO.
 - <p> con párrafos CORTOS (2-4 frases). NUNCA párrafos de 8+ líneas.
 - <strong> para énfasis puntual, <em> para tono reflexivo.
 - <ul>/<ol> SOLO en "Errores comunes" y "Taller de práctica".
 - Sin tablas (no se necesitan en este formato).
-- Sin recuadros, sin divs de colores, sin bloques estructurados.
-- El documento debe leerse como un artículo de blog educativo bien editado.
+- RECUADROS DE COLOR (usa de 3 a 6 en total, bien repartidos, con este formato exacto: título en <strong> y texto en <p>):
+  <div class="pp-box pp-def"><strong>Definición</strong><p>…</p></div>   (azul: definiciones y conceptos clave)
+  <div class="pp-box pp-ex"><strong>Ejemplo resuelto</strong><p>…</p></div>   (verde: ejemplos)
+  <div class="pp-box pp-tip"><strong>Recuerda</strong><p>…</p></div>   (ámbar: trucos y consejos)
+  <div class="pp-box pp-warn"><strong>Cuidado</strong><p>…</p></div>   (rojo: errores típicos o advertencias)
+  Dentro de los recuadros puedes usar fórmulas con $…$. No anides recuadros ni uses otros divs con estilos propios.
+- El color de cada sección y los íconos de los títulos los pone el sistema automáticamente; tú no escribas estilos ni emojis en los <h2>.
+- El documento debe leerse como un artículo educativo bien editado, claro y visualmente atractivo.
 
 EJEMPLO DE ANCLAJE DE ESTILO (solo referencia, NO copies literal):
 <h2>OBJETIVO</h2>
@@ -3611,6 +3624,8 @@ if (!response.ok) {
     }
 
     const printNode = printContent.cloneNode(true) as HTMLElement;
+    // Imágenes que aún no se resolvieron: fuera (no imprimir "Buscando imagen…")
+    printNode.querySelectorAll('figure.pp-photo:not([data-done])').forEach(f => f.remove());
 
     // Misma hoja que la vista previa (mismos estilos: PLAN_PAPER_CSS).
     const printHTML = `
@@ -3636,7 +3651,19 @@ if (!response.ok) {
             var host = window.parent && window.parent.__printStudyPlanNode;
             var body = document.querySelector('.print-body');
             if (host && body) { body.appendChild(host); }
-            setTimeout(function(){ window.print(); }, 1200);
+            var imgs = Array.prototype.slice.call(document.images || []);
+            var waits = imgs.map(function(im){
+              return new Promise(function(res){
+                if (im.complete) return res();
+                im.addEventListener('load', res); im.addEventListener('error', function(){
+                  var f = im.closest && im.closest('figure'); if (f) f.remove(); res();
+                });
+              });
+            });
+            var limit = new Promise(function(res){ setTimeout(res, 6000); });
+            Promise.race([Promise.all(waits), limit]).then(function(){
+              setTimeout(function(){ window.print(); }, 1200);
+            });
           })();
         </script>
       </body>
