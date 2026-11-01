@@ -1,0 +1,9 @@
+{
+  // Oculta de "Problemas" las sugerencias de análisis de nulos de Java
+  // (no son errores y no afectan la compilación).
+  "java.compile.nullAnalysis.mode": "disabled",
+
+  // Oculta la sugerencia "Convert @Autowired field into Constructor Parameter".
+  "spring-boot.ls.problem.boot2.JAVA_CONSTRUCTOR_PARAMETER_INJECTION": "IGNORE",
+  "spring-boot.ls.problem.boot3.JAVA_CONSTRUCTOR_PARAMETER_INJECTION": "IGNORE"
+}
