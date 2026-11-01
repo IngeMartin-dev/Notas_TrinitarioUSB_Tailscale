@@ -33,8 +33,8 @@ public class CountdownController {
         boolean activo = c != null && c.getName() != null && !c.getName().isBlank()
                 && c.getTargetDate() != null && !c.getTargetDate().isBlank();
         m.put("active", activo);
-        m.put("name", activo ? c.getName() : null);
-        m.put("targetDate", activo ? c.getTargetDate() : null);
+        m.put("name", activo && c != null ? c.getName() : null);
+        m.put("targetDate", activo && c != null ? c.getTargetDate() : null);
         m.put("updatedAt", c != null && c.getUpdatedAt() != null ? c.getUpdatedAt().toString() : null);
         return m;
     }
