@@ -2,7 +2,6 @@ package com.notastrinitario.app.service;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.BufferedReader;
