@@ -42,6 +42,8 @@ interface RecoveryPlan {
 
 interface PctCategory { id: string; name: string; pct: number | null; }
 
+import { renderPlanHtml, ensurePlanPaperStyles, PLAN_PAPER_CSS } from './plan-render';
+
 @Component({
   selector: 'app-grades',
   standalone: true,
@@ -234,6 +236,7 @@ gradesData: { [studentId: number]: { [noteIndex: number]: number | null } } = {}
   private previousAvailablePeriods: number[] = [1];
 
   ngOnInit() {
+    ensurePlanPaperStyles();
     this.loadTeacherGradeRange();
     this.loadTeacherSubjectsForGradeRange();
     this.loadUnlockedPeriods();
@@ -2223,6 +2226,23 @@ loadTeacherSubjectsForGradeRange() {
     this.noteNames[index] = name;
   }
 
+  /** HTML del plan → vista segura con fórmulas KaTeX y gráficas ya dibujadas. */
+  private planToSafe(html: string): SafeHtml {
+    return this.sanitizer.bypassSecurityTrustHtml(renderPlanHtml(html));
+  }
+
+  /** Datos del encabezado de la hoja (vista previa e impresión). */
+  get planMeta() {
+    const st = this.selectedStudentForPlan;
+    return {
+      student: st ? `${st.name || ''} ${st.surname || ''}`.trim() : '',
+      grade: [this.selectedGrade, this.selectedClassroom].filter(Boolean).join(' - '),
+      subject: this.selectedSubject || this.teacherSubjectName || '',
+      period: this.selectedPeriod ? `Período ${this.selectedPeriod}` : '',
+      date: new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' })
+    };
+  }
+
   private combineMathParagraphs(html: string): string {
     const operators = ['×', '\\times', '\\cdot', '\\div', '\\pm', '\\mp', '=', '+', '-', '⋅', '/', '·', '*', '·'];
     const operatorPattern = operators.map(op => op.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
@@ -2468,7 +2488,7 @@ loadTeacherSubjectsForGradeRange() {
             content = this.convertMarkdownToHtml(content);
           }
           this.studyPlanContent = this.keepOnlyDayOne(this.combineMathParagraphs(content));
-          this.studyPlanContentSafe = this.sanitizer.bypassSecurityTrustHtml(this.studyPlanContent);
+          this.studyPlanContentSafe = this.planToSafe(this.studyPlanContent);
           this.planGenerated = true;
           this.planSaved = true;
           this.showProgressBar = false;
@@ -2489,7 +2509,7 @@ loadTeacherSubjectsForGradeRange() {
         console.error('Error loading existing plan:', err);
         // Show error message in modal
         this.studyPlanContent = 'Error al cargar el plan existente.';
-        this.studyPlanContentSafe = this.sanitizer.bypassSecurityTrustHtml(this.studyPlanContent);
+        this.studyPlanContentSafe = this.planToSafe(this.studyPlanContent);
         this.planGenerated = true;
       }
     });
@@ -2959,12 +2979,21 @@ REGLAS INQUEBRANTABLES DE FORMATO (incumplir cualquiera = respuesta inválida):
 1. SALIDA = SOLO HTML válido y bien formado. PROHIBIDO: bloques de código (\`\`\`html, \`\`\`), comillas invertidas, markdown, fences, texto fuera de etiquetas HTML.
 2. PROHIBIDO todo contenido audiovisual externo: nada de videos, YouTube, "ver video", "no disponible", "enlace roto", links a plataformas de video. Solo recursos TEXTUALES (libros, guías, apuntes, fichas).
 3. PROHIBIDO fechas concretas o años. NO incluir cronogramas por días, semanas ni horarios. NO usar bloques tipo "Día 1", "Bloque 1", "Sesión 1", "Semana X", "Minuto X", ni divisiones temporales de ningún tipo. El plan es continuo, no calendarizado.
-4. Fórmulas matemáticas SOLO en línea con \$...\$ (ej: \$\\frac{a}{b} \\times \\frac{c}{d}\$). NUNCA rompas una operación en varias líneas. NUNCA uses \[...\] ni $$...$$.
+4. Fórmulas matemáticas SIEMPRE entre signos de dólar, en LaTeX válido y completo: \$...\$ (ej: \$\\frac{a}{b} \\times \\frac{c}{d}\$). Esto incluye integrales (\$\\int_{0}^{2} x^2\\,dx\$), derivadas (\$\\frac{d}{dx}\\left(x^3\\right)=3x^2\$ o \$f'(x)=2x\$), límites (\$\\lim_{x \\to 2}\\frac{x^2-4}{x-2}\$), sumatorias y raíces. NUNCA escribas comandos LaTeX (\\int, \\frac, \\lim…) fuera de los signos de dólar. NUNCA rompas una operación en varias líneas. NUNCA uses \[...\] ni $$...$$.
 5. SI el área es matemáticas o ciencias: TODA fórmula debe ir en \$...\$, inline. SI el área es lengua/inglés/sociales: NO uses notación matemática; usa texto natural entrecomillado si necesitas ejemplos.
 6. El documento DEBE terminar EXACTAMENTE con la línea: PLAN DE ESTUDIO COMPLETO.
 7. NO incluyas saludos, introducciones tipo "Aquí tienes tu plan…", ni cierres tipo "Espero que te sirva…". Empieza directamente por la primera etiqueta <h2>.
 8. NO uses <br> para separar párrafos; usa SIEMPRE <p>…</p> con cierre correcto. NO uses <h1>; usa <h2> para secciones principales y <h3> solo dentro del TALLER FINAL si necesitas agrupar ejercicios.
 9. SEPARACIÓN ORTOGRÁFICA: cada párrafo debe ir en su propio <p> con margen visible (el CSS ya añade separación, pero tú DEBES entregar párrafos cortos, de 2-4 frases máximo, NO bloques compactos). Tras cada <p> añade UN párrafo en blanco (un <p></p> vacío) SOLO si quieres forzar un salto mayor; en general basta con párrafos cortos.
+10. GRÁFICAS DE FUNCIONES (solo si el área es Matemáticas o Ciencias Naturales y el tema se presta: funciones, derivadas, integrales, límites, ecuaciones, física del movimiento, etc.): incluye de 1 a 3 gráficas dentro de DESARROLLO DEL TEMA con este marcador EXACTO, sin contenido dentro y cerrado con </div>:
+   <div class="fn-plot" data-fn="x^2-4*x+3" data-label="f(x)=x^2-4x+3" data-xmin="-1" data-xmax="5" data-caption="Parábola con raíces en x=1 y x=3"></div>
+   - data-fn: la(s) función(es) en x, separadas por ";" (máximo 4), con sintaxis simple: + - * / ^ ( ), x, pi, e y sin cos tan sqrt abs ln log exp. Ej: "x^3-3*x", "sin(x)", "2*x" (usa * entre número y x si dudas).
+   - data-label: la etiqueta en LaTeX de cada función, en el mismo orden y separadas por ";" (ej: "f(x)=x^2;f'(x)=2x"). Sin signos de dólar.
+   - data-xmin y data-xmax: el intervalo a mostrar (obligatorios). data-ymin / data-ymax son opcionales.
+   - data-area="a,b": para ilustrar una INTEGRAL definida, sombrea el área bajo la PRIMERA función entre a y b (ej: data-area="0,2").
+   - Para una DERIVADA, grafica en la misma figura la función y su derivada (data-fn="x^3-3*x;3*x^2-3").
+   - data-caption: una frase corta que diga qué muestra la gráfica.
+   - La función de la gráfica DEBE ser la misma que explicas en el texto. NO inventes gráficas decorativas. Si el tema no es graficable (lengua, sociales, inglés, etc.), NO incluyas ninguna.
 
 ESTRUCTURA OBLIGATORIA (encabezados <h2> en este orden EXACTO, sin saltarse ninguno, sin agregar secciones extra):
 
@@ -3063,7 +3092,7 @@ if (!response.ok) {
              errorMsg = `Error del servidor (${response.status}). Por favor intenta de nuevo.`;
            }
            this.studyPlanContent = errorMsg;
-           this.studyPlanContentSafe = this.sanitizer.bypassSecurityTrustHtml(errorMsg);
+           this.studyPlanContentSafe = this.planToSafe(errorMsg);
            this.showProgressBar = false;
            this.isGeneratingPlan = false;
            this.planGenerated = true; // Show error as generated content
@@ -3153,7 +3182,7 @@ if (!response.ok) {
            if (!fullText || !fullText.trim()) {
              const errorMsg = 'La IA no devolvió contenido. Por favor intenta generar el plan de nuevo.';
              this.studyPlanContent = errorMsg;
-             this.studyPlanContentSafe = this.sanitizer.bypassSecurityTrustHtml(errorMsg);
+             this.studyPlanContentSafe = this.planToSafe(errorMsg);
              this.showProgressBar = false;
              this.progressPercent = 0;
              this.planGenerated = true;
@@ -3205,13 +3234,13 @@ if (!response.ok) {
 
             this.studyPlanContent = this.keepOnlyDayOne(this.combineMathParagraphs(cleanHtml.trim()));
            // Filter out unavailable videos
-           this.studyPlanContentSafe = this.sanitizer.bypassSecurityTrustHtml(this.studyPlanContent);
+           this.studyPlanContentSafe = this.planToSafe(this.studyPlanContent);
 
            // Apply video filtering after HTML is generated
            setTimeout(async () => {
              const filteredContent = await this.filterUnavailableVideos(this.studyPlanContent);
              this.studyPlanContent = filteredContent;
-             this.studyPlanContentSafe = this.sanitizer.bypassSecurityTrustHtml(filteredContent);
+             this.studyPlanContentSafe = this.planToSafe(filteredContent);
              // Re-renderizar KaTeX DESPUÉS de la reescritura del DOM.
              this.renderMathExpressions();
            }, 100);
@@ -3231,13 +3260,13 @@ if (!response.ok) {
            markdown = markdown.replace(/Open tabs:[\s\S]*$/gi, '');
 
             this.studyPlanContent = this.keepOnlyDayOne(this.combineMathParagraphs(this.convertMarkdownToHtml(markdown)));
-           this.studyPlanContentSafe = this.sanitizer.bypassSecurityTrustHtml(this.studyPlanContent);
+           this.studyPlanContentSafe = this.planToSafe(this.studyPlanContent);
 
            // Apply video filtering after HTML is generated
            setTimeout(async () => {
              const filteredContent = await this.filterUnavailableVideos(this.studyPlanContent);
              this.studyPlanContent = filteredContent;
-             this.studyPlanContentSafe = this.sanitizer.bypassSecurityTrustHtml(filteredContent);
+             this.studyPlanContentSafe = this.planToSafe(filteredContent);
              // Re-renderizar KaTeX DESPUÉS de la reescritura del DOM.
              this.renderMathExpressions();
            }, 100);
@@ -3255,11 +3284,11 @@ if (!response.ok) {
                mergedHtml += '\n' + this.convertMarkdownToHtml(continuedText.trim());
              }
               this.studyPlanContent = this.keepOnlyDayOne(this.combineMathParagraphs(mergedHtml.trim()));
-             this.studyPlanContentSafe = this.sanitizer.bypassSecurityTrustHtml(this.studyPlanContent);
+             this.studyPlanContentSafe = this.planToSafe(this.studyPlanContent);
              setTimeout(async () => {
                const filteredContent = await this.filterUnavailableVideos(this.studyPlanContent);
                this.studyPlanContent = filteredContent;
-               this.studyPlanContentSafe = this.sanitizer.bypassSecurityTrustHtml(filteredContent);
+               this.studyPlanContentSafe = this.planToSafe(filteredContent);
                // Re-renderizar KaTeX DESPUÉS de la reescritura del DOM.
                this.renderMathExpressions();
              }, 100);
@@ -3280,7 +3309,7 @@ if (!response.ok) {
              ? error.message
              : 'Error de conexión. Por favor verifica tu conexión a internet e intenta de nuevo.');
        this.studyPlanContent = errorMsg;
-       this.studyPlanContentSafe = this.sanitizer.bypassSecurityTrustHtml(errorMsg);
+       this.studyPlanContentSafe = this.planToSafe(errorMsg);
        this.stopProgressAnimation();
        this.showProgressBar = false;
        this.progressPercent = 0;
@@ -3433,13 +3462,13 @@ if (!response.ok) {
 
     if (sanitizedPreview.trim()) {
       this.studyPlanContent = this.convertMarkdownToHtml(sanitizedPreview);
-      this.studyPlanContentSafe = this.sanitizer.bypassSecurityTrustHtml(this.studyPlanContent);
+      this.studyPlanContentSafe = this.planToSafe(this.studyPlanContent);
 
       // Apply video filtering to preview as well
       setTimeout(async () => {
         const filteredContent = await this.filterUnavailableVideos(this.studyPlanContent);
         this.studyPlanContent = filteredContent;
-        this.studyPlanContentSafe = this.sanitizer.bypassSecurityTrustHtml(filteredContent);
+        this.studyPlanContentSafe = this.planToSafe(filteredContent);
         // Re-renderizar KaTeX DESPUÉS de la reescritura del DOM.
         this.renderMathExpressions();
       }, 100);
@@ -3583,6 +3612,7 @@ if (!response.ok) {
 
     const printNode = printContent.cloneNode(true) as HTMLElement;
 
+    // Misma hoja que la vista previa (mismos estilos: PLAN_PAPER_CSS).
     const printHTML = `
       <!DOCTYPE html>
       <html>
@@ -3591,25 +3621,15 @@ if (!response.ok) {
         <title>Plan de Estudio</title>
         <link href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" rel="stylesheet">
         <style>
-          @page { size: A4; margin: 15mm; }
-          html, body { height: 100%; margin: 0; padding: 0; }
-          body { font-family: Arial, sans-serif; padding: 20px; line-height: 1.45; color: #222; }
-          .print-header { text-align: left; margin-bottom: 8px; }
-          .print-header h1 { margin: 0; font-size: 20px; color: #1b6aeb; }
-          .print-body { width: 100%; }
-          h2 { color: #2c3e50; border-bottom: 1px solid #e6eefc; padding-bottom: 6px; }
-          table { width: 100%; border-collapse: collapse; }
-          th, td { padding: 8px; border: 1px solid #ddd; }
-          .katex-display { display: inline-block !important; margin: 0 4px; }
-          .katex { display: inline-block !important; vertical-align: middle; }
-          img { max-width: 100%; height: auto; }
+          @page { size: A4; margin: 14mm 14mm 16mm; }
+          html, body { margin: 0; padding: 0; background: #fff; }
+          img, svg { max-width: 100%; }
           * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+          ${PLAN_PAPER_CSS}
+          .plan-paper { box-shadow: none !important; width: auto !important; min-height: 0 !important; padding: 0 !important; }
         </style>
       </head>
       <body>
-        <div class="print-header">
-          <h1>Plan de Estudio</h1>
-        </div>
         <div class="print-body"></div>
         <script>
           (function(){

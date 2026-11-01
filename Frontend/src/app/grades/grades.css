@@ -826,18 +826,16 @@
 .plan-guidelines p { margin: 0; font-size: .92rem; line-height: 1.6; }
 
 .plan-content-fullscreen {
-  background: linear-gradient(180deg, #f8fafc, #fff, #f1f5f9);
-  padding: 40px;
+  /* "Escritorio" gris sobre el que descansa la hoja, como en un visor de documentos. */
+  background: #e6eaf1;
+  padding: 28px 18px;
   border-radius: 16px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #d5dbe6;
   flex: 1;
-  overflow-y: auto;
-  box-shadow: inset 0 0 30px #1b6aeb08;
+  overflow: auto;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
 }
 
 .plan-content-fullscreen h3 {

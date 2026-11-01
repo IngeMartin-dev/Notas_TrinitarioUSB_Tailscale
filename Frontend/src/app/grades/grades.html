@@ -408,9 +408,28 @@
         }
 
         @if (studyPlanContent && !isGeneratingPlan) {
-          <div class="plan-content-fullscreen" id="study-plan-content" [class.fade-in]="planGenerated">
-            <h3>Plan de Estudio</h3>
-            <div class="plan-text" [innerHTML]="studyPlanContentSafe"></div>
+          <div class="plan-content-fullscreen" [class.fade-in]="planGenerated">
+            <article class="plan-paper" id="study-plan-content">
+              <header class="pp-head">
+                <img class="pp-logo" src="/Logo Colegio.png" alt="" />
+                <div class="pp-inst">
+                  <b>Corporación Colegio Trinitario</b>
+                  <span>Cartagena de Indias, Bolívar</span>
+                </div>
+                <div class="pp-doc">
+                  <h1>Plan de Estudio</h1>
+                  <span>Refuerzo académico personalizado</span>
+                </div>
+              </header>
+              <div class="pp-meta">
+                <div><b>Estudiante:</b> {{ planMeta.student }}</div>
+                <div><b>Grado:</b> {{ planMeta.grade }}</div>
+                <div><b>Asignatura:</b> {{ planMeta.subject }}</div>
+                <div><b>Período:</b> {{ planMeta.period }}</div>
+              </div>
+              <div class="plan-text" [innerHTML]="studyPlanContentSafe"></div>
+              <footer class="pp-foot">Generado el {{ planMeta.date }} · Notas Trinitario</footer>
+            </article>
           </div>
         }
       </div>
