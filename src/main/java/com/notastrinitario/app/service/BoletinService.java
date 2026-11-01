@@ -1675,6 +1675,7 @@ public class BoletinService {
             if (Files.isRegularFile(f)) { resultado.put(p, f); continue; }
             // Respaldo: si el estudiante cambió de salón, el PDF puede estar en otra
             // carpeta del mismo período. Se busca por nombre de archivo en todas.
+            final int periodo = p;
             Path periodoDir = Paths.get(OUT_DIR, "Periodo " + p);
             if (!Files.isDirectory(periodoDir)) continue;
             try (var carpetas = Files.list(periodoDir)) {
@@ -1682,7 +1683,7 @@ public class BoletinService {
                         .map(d -> d.resolve(archivo))
                         .filter(Files::isRegularFile)
                         .findFirst()
-                        .ifPresent(x -> resultado.put(p, x));
+                        .ifPresent(x -> resultado.put(periodo, x));
             } catch (IOException ignored) { }
         }
         return resultado;
