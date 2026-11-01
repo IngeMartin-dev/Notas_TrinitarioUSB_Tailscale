@@ -292,6 +292,10 @@ public class SchoolYearService {
             config.setAdvanceBumpedYear(false);
             config.setYearEndBeforeAdvance(null);
         }
+        // Promociones con 5 años escolares o más: se borran (las demás se conservan).
+        if (!yaCerrado) {
+            try { promotionService.purgarPorAnioEscolar(anioEscolar + 1); } catch (RuntimeException ignored) { }
+        }
         config.setYearEndNotified(false);
         config.setYearEnd7dNotified(false);
         config.setLastAdvancedAt(ahora);

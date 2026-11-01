@@ -77,8 +77,11 @@ public class PromotionService {
                             StandardCopyOption.REPLACE_EXISTING);
                 }
             }
-        } catch (IOException | RuntimeException ignored) {
+        } catch (IOException | RuntimeException e) {
             // Sin los PDF igual queda el registro de la promoción.
+            org.slf4j.LoggerFactory.getLogger(PromotionService.class)
+                    .warn("No se pudieron copiar los boletines de {} {} a Promociones: {}",
+                            s.getName(), s.getSurname(), e.getMessage());
         }
         return promotionRepository.save(p);
     }
@@ -127,6 +130,21 @@ public class PromotionService {
                 borradas++;
             } catch (RuntimeException ignored) {
                 // se reintenta en la próxima ejecución
+            }
+        }
+        return borradas;
+    }
+
+    /**
+     * Borra las promociones de hace {@link Promotion#YEARS_TO_KEEP} años escolares
+     * o más (se llama cada vez que se adelanta el año). Con el año escolar
+     * nuevo = N, se borran las de N-5 y anteriores.
+     */
+    public int purgarPorAnioEscolar(int anioEscolarNuevo) {
+        int borradas = 0;
+        for (Promotion p : promotionRepository.findAll()) {
+            if (p.getAcademicYear() != null && p.getAcademicYear() <= anioEscolarNuevo - Promotion.YEARS_TO_KEEP) {
+                try { borrarPromocion(p); borradas++; } catch (RuntimeException ignored) { }
             }
         }
         return borradas;

@@ -119,7 +119,7 @@
                       <div class="pct-row-item">
                         <input type="text" class="pct-name-input" name="act-name" [value]="actName" (input)="onActNameInput($event)" (blur)="onActNameBlur($event)" maxlength="12" autocomplete="off" aria-label="Nombre del grupo" />
                         <input type="text" inputmode="numeric" class="pct-input" name="act-pct" [value]="actPct ?? ''" (input)="onActPctInput($event)" placeholder="%" maxlength="3" autocomplete="off" aria-label="Porcentaje del grupo" />
-                        <span class="pct-row-note">todas las {{ actName }} juntas (1 a 7)</span>
+                        <span class="pct-row-note">todas las {{ actName }} juntas</span>
                       </div>
                       <div class="pct-row-item">
                         <span class="pct-name-fixed">Eval.Period</span>
@@ -143,7 +143,7 @@
                     }
 
                     <p class="pct-hint">
-                      @if (!weightedMode) { Escribe un porcentaje (1-100) en cada nombre. Sin porcentajes se usa el promedio normal. }
+                      @if (!weightedMode) { Por defecto: {{ actName }} 80% y Eval.Period 20%. }
                       @else if (totalPctSum !== 100) { Los porcentajes deberían sumar 100%. }
                       @else { Porcentajes completos. }
                       Para poner una columna en la tabla usa el + del encabezado.
@@ -189,9 +189,9 @@
                         <button type="button" class="col-plus" (click)="toggleAddColumnMenu()" title="Añadir columna">+</button>
                         @if (showAddColumnMenu) {
                           <div class="col-menu">
-                            @if (categories.length === 0) {
-                              <span class="col-menu-empty">Primero crea un nombre en Porcentajes.</span>
-                            }
+                            <button type="button" class="col-menu-item" (click)="addActColumn()">
+                              {{ actName }} <span class="col-menu-pct">{{ actPct ?? 80 }}%</span>
+                            </button>
                             @for (cat of categories; track cat.id) {
                               <button type="button" class="col-menu-item" (click)="addColumnFromCategory(cat)">
                                 {{ cat.name }} <span class="col-menu-pct">{{ cat.pct ?? '-' }}{{ cat.pct ? '%' : '' }}</span>

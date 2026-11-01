@@ -50,7 +50,7 @@ public class PersistentFileStore implements ApplicationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(PersistentFileStore.class);
 
-    private static final List<String> ROOTS = List.of("uploads", "Boletines Generados", "Consolidados Generados");
+    private static final List<String> ROOTS = List.of("uploads", "Boletines Generados", "Consolidados Generados", "Promociones");
     private static final int CHUNK = 1024 * 1024;           // 1 MB por fila
     private static final long MAX_FILE = 20L * 1024 * 1024; // archivos mayores no se respaldan
     private static final long MTIME_TOLERANCE_MS = 2000;

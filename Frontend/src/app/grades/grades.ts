@@ -115,7 +115,7 @@ gradesData: { [studentId: number]: { [noteIndex: number]: number | null } } = {}
 
   // Grupo ACT (ACT1..ACT7): un nombre y un porcentaje (1-100) para todas.
   actName = 'ACT';            // nombre editable del grupo ACT1..ACT7
-  actPct: number | null = null; // un solo porcentaje para todas las ACT
+  actPct: number | null = 80;   // un solo porcentaje para todas las ACT (80% por defecto)
   evalPct = 20;                 // porcentaje de Eval.Period en la nota final (editable)
   // Nombres con porcentaje creados en el panel "Porcentajes" (Quiz, Taller...).
   categories: PctCategory[] = [];
@@ -572,7 +572,7 @@ gradesData: { [studentId: number]: { [noteIndex: number]: number | null } } = {}
     this.configContextKey = null;
     if (this.saveConfigTimer) { clearTimeout(this.saveConfigTimer); this.saveConfigTimer = null; }
     this.gradeColumns = [];
-    this.actPct = null;
+    this.actPct = 80;
     this.actName = 'ACT';
     this.evalPct = 20;
     this.categories = [];
@@ -610,7 +610,7 @@ gradesData: { [studentId: number]: { [noteIndex: number]: number | null } } = {}
     const ctx = this.currentConfigContext();
     if (!ctx) {
       this.gradeColumns = [];
-      this.actPct = null;
+      this.actPct = 80;
       this.actName = 'ACT';
       this.evalPct = 20;
       this.categories = [];
@@ -638,12 +638,12 @@ gradesData: { [studentId: number]: { [noteIndex: number]: number | null } } = {}
           const actEntry = all.find(c => c.id === 'act');
           if (actEntry) {
             this.actName = (actEntry.label || actEntry.name || 'ACT');
-            this.actPct = actEntry.pct ?? null;
+            this.actPct = actEntry.pct ?? 80;
           } else {
             const legacy = all.filter(c => /^act[1-7]$/.test(c.id));
             const sum = legacy.reduce((a, c) => a + (c.pct || 0), 0);
             this.actName = 'ACT';
-            this.actPct = sum > 0 ? Math.min(100, sum) : null;
+            this.actPct = sum > 0 ? Math.min(100, sum) : 80;
           }
           // Porcentaje de Eval.Period (por defecto 20).
           const evalEntry = all.find(c => c.id === 'eval');
@@ -678,7 +678,7 @@ gradesData: { [studentId: number]: { [noteIndex: number]: number | null } } = {}
         error: () => {
           this.gradeColumns = [];
           this.categories = [];
-          this.actPct = null;
+          this.actPct = 80;
           this.evalPct = 20;
           this.markWeightsReady();
           this.cdr.markForCheck();
@@ -733,6 +733,11 @@ gradesData: { [studentId: number]: { [noteIndex: number]: number | null } } = {}
 
   /** Encabezado de una columna agregada: nombre de su categoría + número ("Quiz1", "Quiz2"...). */
   colHeader(col: GradeColumn): string {
+    if (col.cat === 'act') {
+      // Casillas extra del grupo ACT: siguen la numeración (ACT8, ACT9...)
+      const extra = this.gradeColumns.filter(c => c.cat === 'act');
+      return `${this.actName}${7 + extra.findIndex(c => c.id === col.id) + 1}`;
+    }
     const cat = this.categoryById(col.cat);
     const same = this.gradeColumns.filter(c => c.cat === col.cat);
     const n = same.findIndex(c => c.id === col.id) + 1;
@@ -837,7 +842,7 @@ gradesData: { [studentId: number]: { [noteIndex: number]: number | null } } = {}
     this.pctOverNotified = false;
 
     const entries: GradeColumn[] = [
-      { id: 'act', kind: 'cat', name: this.actName, type: 'ACTIVIDAD', pct: this.actPct ?? null, base: true },
+      { id: 'act', kind: 'cat', name: this.actName, type: 'ACTIVIDAD', pct: this.actPct ?? 80, base: true },
       { id: 'eval', name: 'Eval.Period', type: 'ACTIVIDAD', pct: this.evalPct, base: true },
       ...this.categories.map(c => ({
         id: c.id, kind: 'cat' as const, name: c.name, type: 'ACTIVIDAD' as GradeColumnType, pct: c.pct ?? null
@@ -911,6 +916,11 @@ gradesData: { [studentId: number]: { [noteIndex: number]: number | null } } = {}
     this.cdr.markForCheck();
   }
 
+  /** Opción "ACT" del menú del +: agrega una casilla más al grupo ACT. */
+  addActColumn() {
+    this.addColumnFromCategory({ id: 'act', name: this.actName, pct: this.actPct });
+  }
+
   addColumnFromCategory(cat: PctCategory) {
     if (this.pctOver) {
       this.showAddColumnMenu = false;
@@ -923,7 +933,7 @@ gradesData: { [studentId: number]: { [noteIndex: number]: number | null } } = {}
       ...this.noteNames.map(n => n.toLowerCase()), 'nfinal', 'n.final',
       ...this.gradeColumns.map(c => c.name.toLowerCase())
     ]);
-    let n = this.gradeColumns.filter(c => c.cat === cat.id).length + 1;
+    let n = this.gradeColumns.filter(c => c.cat === cat.id).length + 1 + (cat.id === 'act' ? 7 : 0);
     let key = `${cat.name}${n}`;
     while (taken.has(key.toLowerCase())) { n++; key = `${cat.name}${n}`; }
 
@@ -1400,9 +1410,11 @@ loadTeacherSubjectsForGradeRange() {
     // Grupo ACT: promedio de ACT1..ACT7 con nota, con un solo porcentaje.
     const actPct = this.actPct ?? 0;
     if (actPct > 0) {
-      const vals = [1, 2, 3, 4, 5, 6, 7]
-        .map(i => this.getGrade(studentId, i))
-        .filter(v => v !== null) as number[];
+      // ACT1..ACT7 + casillas ACT agregadas + Auto.Eval y Prom.Parc (como antes)
+      const vals = [
+        ...[1, 2, 3, 4, 5, 6, 7, 9, 10].map(i => this.getGrade(studentId, i)),
+        ...this.gradeColumns.filter(c => c.cat === 'act').map(c => this.getDynamicGradeValue(studentId, c.id))
+      ].filter(v => v !== null) as number[];
       if (vals.length > 0) {
         sum += (vals.reduce((a, b) => a + b, 0) / vals.length) * actPct;
         weights += actPct;
