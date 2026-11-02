@@ -305,9 +305,33 @@ def try_split_and_merge(html_text, out_path):
 
 
 
+def _inline_local_images(html_text):
+    """Chromium bloquea las imagenes file:// cuando la pagina se arma con
+    set_content (origen about:blank), asi que la firma del rector nunca se
+    pintaba. Se reemplazan por data URI (base64) antes de renderizar."""
+    import re, base64, mimetypes
+    from urllib.parse import unquote
+
+    def repl(m):
+        attr, url = m.group(1), m.group(2)
+        path = unquote(url[len("file://"):])
+        if re.match(r"^/[A-Za-z]:", path):  # file:///C:/... en Windows
+            path = path[1:]
+        try:
+            with open(path, "rb") as fh:
+                data = base64.b64encode(fh.read()).decode("ascii")
+        except OSError:
+            return m.group(0)
+        mime = mimetypes.guess_type(path)[0] or "image/png"
+        return '%s="data:%s;base64,%s"' % (attr, mime, data)
+
+    return re.sub(r'(xlink:href|href|src)="(file://[^"]+)"', repl, html_text)
+
+
 def generar(html_path, pdf_path):
     with open(html_path, "r", encoding="utf-8") as f:
         html_text = f.read()
+    html_text = _inline_local_images(html_text)
     if 'data-doc="consolidado"' in html_text:
         # Consolidado: Carta horizontal, un solo render con saltos de
         # pagina por CSS (no necesita partir/combinar como el boletin).
