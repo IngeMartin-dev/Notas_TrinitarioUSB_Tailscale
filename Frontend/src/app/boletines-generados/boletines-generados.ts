@@ -1,5 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { PeriodOptionsService } from '../services/period-options.service';
 import { FormsModule } from '@angular/forms';
 import { BoletinesGeneradosService, BoletinGeneradoDto } from '../services/boletines-generados.service';
 import { DialogService } from '../services/dialog.service';
@@ -18,6 +19,9 @@ interface BoletinCard extends BoletinGeneradoDto {
 export class BoletinesGenerados implements OnInit {
   private service = inject(BoletinesGeneradosService);
   private dialogService = inject(DialogService);
+  private periodOptions = inject(PeriodOptionsService);
+  /** 1 .. último período existente (se actualiza al agregar/quitar períodos). */
+  get periodos(): number[] { return this.periodOptions.current; }
 
   grades: string[] = ['Grado 1º', 'Grado 2º', 'Grado 3º', 'Grado 4º', 'Grado 5º', 'Grado 6º',
                        'Grado 7º', 'Grado 8º', 'Grado 9º', 'Grado 10º', 'Grado 11º'];
@@ -27,7 +31,6 @@ export class BoletinesGenerados implements OnInit {
   selectedClassroom: string | null = null;
   selectedPeriod: number | null = null; // null = todos los períodos
 
-  periodos = [1, 2, 3, 4];
 
   boletines: BoletinCard[] = [];
   isLoading = false;

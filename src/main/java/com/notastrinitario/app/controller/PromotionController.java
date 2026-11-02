@@ -53,7 +53,7 @@ public class PromotionController {
     public ResponseEntity<?> boletin(@PathVariable Long id,
                                      @PathVariable int periodo,
                                      @RequestParam(defaultValue = "false") boolean descargar) {
-        if (periodo < 1 || periodo > 4) return ResponseEntity.badRequest().build();
+        if (periodo < 1 || periodo > 12) return ResponseEntity.badRequest().build();
         try {
             Optional<Promotion> opt = promotionService.buscar(id);
             if (opt.isEmpty()) return ResponseEntity.notFound().build();

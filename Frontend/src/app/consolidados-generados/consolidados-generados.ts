@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ConsolidadosGeneradosService, ConsolidadoGeneradoDto } from '../services/consolidados-generados.service';
 import { DialogService } from '../services/dialog.service';
+import { PeriodOptionsService } from '../services/period-options.service';
 
 interface ConsolidadoCard extends ConsolidadoGeneradoDto {
   displayName: string;
@@ -31,7 +32,9 @@ export class ConsolidadosGenerados implements OnInit {
   private dialogService = inject(DialogService);
   private router = inject(Router);
 
-  periodos = [1, 2, 3, 4];
+  private periodOptions = inject(PeriodOptionsService);
+  /** 1 .. último período existente (se actualiza al agregar/quitar períodos). */
+  get periodos(): number[] { return this.periodOptions.current; }
   selectedPeriod: number | null = null; // null = todos los períodos
 
   consolidados: ConsolidadoCard[] = [];

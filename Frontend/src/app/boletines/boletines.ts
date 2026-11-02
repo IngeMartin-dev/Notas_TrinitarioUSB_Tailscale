@@ -1,6 +1,6 @@
 /* este es boletin.ts (este es el Frontend) hace la logica de el formulario */
 
-import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -8,6 +8,7 @@ import { Subscription } from 'rxjs';
 import { GenerationService, GenerationJob } from '../services/generation.service';
 import { API_BASE_URL } from '../config/api-base';
 import { DialogService } from '../services/dialog.service';
+import { PeriodOptionsService } from '../services/period-options.service';
 
 interface Student {
   id: number;
@@ -42,6 +43,9 @@ const VALORACION_ACUDIENTE_SUBJECT = 'Valoracion Acudiente';
   styleUrl: './boletines.css'
 })
 export class Boletines implements OnInit, OnDestroy {
+  private periodOptions = inject(PeriodOptionsService);
+  /** 1 .. último período existente (se actualiza al agregar/quitar períodos). */
+  get periodos(): number[] { return this.periodOptions.current; }
   /** Para las firmas (<img> en el template), que no pasan por el interceptor HTTP. */
   readonly apiBaseUrl = API_BASE_URL;
   grades: string[] = ['Grado 1º', 'Grado 2º', 'Grado 3º', 'Grado 4º', 'Grado 5º', 'Grado 6º', 'Grado 7º', 'Grado 8º', 'Grado 9º', 'Grado 10º', 'Grado 11º'];

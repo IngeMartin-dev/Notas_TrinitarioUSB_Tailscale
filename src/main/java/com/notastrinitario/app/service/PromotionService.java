@@ -97,13 +97,13 @@ public class PromotionService {
     /** Períodos (1..4) que tienen PDF guardado para esa promoción. */
     public List<Integer> periodosDisponibles(Promotion p) {
         List<Integer> r = new ArrayList<>();
-        for (int per = 1; per <= 4; per++) {
+        for (int per = 1; per <= Math.max(4, boletinService.ultimoPeriodo()); per++) {
             if (Files.isRegularFile(archivo(p, per))) r.add(per);
         }
         return r;
     }
 
-    /** Ruta del PDF de un período (solo se aceptan períodos 1..4: sin path traversal). */
+    /** Ruta del PDF de un período (el período es un entero: sin path traversal). */
     public Path archivo(Promotion p, int periodo) {
         return BASE_DIR.resolve(p.getFolder()).resolve("Periodo_" + periodo + ".pdf").normalize();
     }

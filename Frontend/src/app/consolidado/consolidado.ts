@@ -1,8 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { Router } from '@angular/router';
+import { PeriodOptionsService } from '../services/period-options.service';
 
 /**
  * Antes "Reports" (src/app/reports). Renombrado a "Consolidado":
@@ -22,7 +23,9 @@ export class Consolidado {
   grades: string[] = ['Grado 1º', 'Grado 2º', 'Grado 3º', 'Grado 4º', 'Grado 5º', 'Grado 6º',
                        'Grado 7º', 'Grado 8º', 'Grado 9º', 'Grado 10º', 'Grado 11º'];
   classrooms: string[] = ['Salon A', 'Salon B'];
-  periodos = [1, 2, 3, 4];
+  private periodOptions = inject(PeriodOptionsService);
+  /** 1 .. último período existente (se actualiza al agregar/quitar períodos). */
+  get periodos(): number[] { return this.periodOptions.current; }
 
   selectedGrade: string | null = null;
   selectedClassroom: string | null = null;

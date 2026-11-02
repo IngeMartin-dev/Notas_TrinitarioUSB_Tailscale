@@ -558,7 +558,7 @@ public class BoletinService {
         List<Map<String, Object>> resultado = new ArrayList<>();
         if (student == null) return resultado;
 
-        for (int periodo = 1; periodo <= 4; periodo++) {
+        for (int periodo = 1; periodo <= Math.max(4, ultimoPeriodo()); periodo++) {
             try {
                 Path target = resolveGeneratedFilePath(student, periodo);
                 if (target != null && Files.exists(target)) {
@@ -1825,7 +1825,7 @@ public class BoletinService {
         if (student == null) return resultado;
         String salonCarpeta = extraerNumeroGrado(student.getGrade()) + extraerLetraSalon(student.getClassGroup());
         String archivo = nombreArchivoBoletin(student);
-        for (int p = 1; p <= 4; p++) {
+        for (int p = 1; p <= Math.max(4, ultimoPeriodo()); p++) {
             Path f = Paths.get(OUT_DIR, "Periodo " + p, salonCarpeta, archivo);
             if (Files.isRegularFile(f)) { resultado.put(p, f); continue; }
             // Respaldo: si el estudiante cambió de salón, el PDF puede estar en otra
