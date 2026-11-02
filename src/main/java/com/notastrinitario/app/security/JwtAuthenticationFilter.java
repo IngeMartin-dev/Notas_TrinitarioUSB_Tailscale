@@ -15,6 +15,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(JwtAuthenticationFilter.class);
+
 
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
@@ -50,7 +52,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
             } catch (ExpiredJwtException e) {
                 // Token expired - clear auth and return 401
-                System.out.println("JWT token expired");
+                log.info("JWT token expired");
                 SecurityContextHolder.clearContext();
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 response.setContentType("application/json");
@@ -59,15 +61,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             } catch (SignatureException e) {
                 // Invalid signature - this is the main error user is seeing
                 // This happens when token was generated with different secret
-                System.out.println("JWT signature invalid - token was generated with different secret. User needs to log in again.");
+                log.info("JWT signature invalid - token was generated with different secret. User needs to log in again.");
                 SecurityContextHolder.clearContext();
             } catch (MalformedJwtException e) {
                 // Invalid token format
-                System.out.println("JWT token malformed");
+                log.info("JWT token malformed");
                 SecurityContextHolder.clearContext();
             } catch (Exception e) {
                 // Other errors - just clear context
-                System.out.println("JWT validation error: " + e.getMessage());
+                log.info("JWT validation error: " + e.getMessage());
                 SecurityContextHolder.clearContext();
             }
         }

@@ -301,7 +301,7 @@ public class ChatController {
                 Files.createDirectories(uploadDir);
             }
 
-            String safeName = System.currentTimeMillis() + "_" + originalName.replaceAll("[^a-zA-Z0-9._-]", "_");
+            String safeName = java.util.UUID.randomUUID() + "." + extension;
             Path filePath = uploadDir.resolve(safeName);
             Files.write(filePath, file.getBytes());
 

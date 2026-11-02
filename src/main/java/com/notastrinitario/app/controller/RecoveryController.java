@@ -23,6 +23,8 @@ import java.util.regex.Pattern;
 @RestController
 @RequestMapping("/api/grades")
 public class RecoveryController {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(RecoveryController.class);
+
 
     private final RecoveryDataRepository recoveryDataRepository;
     private final RecoveryPlanRepository recoveryPlanRepository;
@@ -301,7 +303,7 @@ public class RecoveryController {
                 recoveryPlan.setDurationDays(durationDays);
                 recoveryPlan.setDay1Content(day1Content);
                 recoveryPlan.setDay2Content(day2Content);
-                System.out.println("Actualizando plan de estudio existente para estudiante " + studentId + " periodo " + period);
+                log.info("Actualizando plan de estudio existente para estudiante " + studentId + " periodo " + period);
             } else {
                 // Create new
                 recoveryPlan = new RecoveryPlan();
@@ -314,7 +316,7 @@ public class RecoveryController {
                 recoveryPlan.setDurationDays(durationDays);
                 recoveryPlan.setDay1Content(day1Content);
                 recoveryPlan.setDay2Content(day2Content);
-                System.out.println("Creando nuevo plan de estudio para estudiante " + studentId + " periodo " + period);
+                log.info("Creando nuevo plan de estudio para estudiante " + studentId + " periodo " + period);
             }
 
             recoveryPlanRepository.save(recoveryPlan);

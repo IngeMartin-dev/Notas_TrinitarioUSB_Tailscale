@@ -29,6 +29,8 @@ import java.nio.file.Paths;
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(UserController.class);
+
 	
     private final UserService userService;
     private final com.notastrinitario.app.repository.UserRepository userRepository;
@@ -269,7 +271,7 @@ public class UserController {
 	   	} catch (Exception e) {
 	   		String detalle = describirCausaRaiz(e);
 	   		System.err.println("[FotoPerfil] Error guardando el usuario " + userId + ": " + detalle);
-	   		e.printStackTrace();
+	   		log.error("Error inesperado", e);
 	   		Map<String, String> response = new HashMap<>();
 	   		response.put("error", "No se pudo guardar el usuario: " + detalle);
 	   		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);

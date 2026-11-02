@@ -13,6 +13,8 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/periods")
 public class PeriodController {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(PeriodController.class);
+
 
     /** Máximo de períodos que se pueden tener creados a la vez. */
     private static final int MAX_PERIODS = 12;
@@ -63,12 +65,12 @@ public class PeriodController {
             }
             
             Boolean isUnlocked = Boolean.TRUE.equals(body.get("unlocked"));
-            System.out.println("Desbloqueando período " + periodNumber + " a " + isUnlocked);
+            log.info("Desbloqueando período " + periodNumber + " a " + isUnlocked);
             
             List<Period> found = periodRepository.findAllByPeriodNumber(periodNumber);
             Period period;
             if (found.isEmpty()) {
-                System.out.println("Creando nuevo período " + periodNumber);
+                log.info("Creando nuevo período " + periodNumber);
                 period = new Period();
                 period.setPeriodNumber(periodNumber);
                 period.setIsUnlocked(false);
@@ -80,20 +82,20 @@ public class PeriodController {
                 for (int i = 1; i < found.size(); i++) {
                     periodRepository.delete(found.get(i));
                 }
-                System.out.println("Encontrado período con " + found.size() + " registros (duplicados limpiados)");
+                log.info("Encontrado período con " + found.size() + " registros (duplicados limpiados)");
             }
             
             period.setIsUnlocked(isUnlocked);
             period.setIsAutomatic(false);
             Period saved = periodRepository.save(period);
-            System.out.println("Período guardado: " + saved.getPeriodNumber() + " - " + saved.getIsUnlocked());
+            log.info("Período guardado: " + saved.getPeriodNumber() + " - " + saved.getIsUnlocked());
             
             return ResponseEntity.ok(Map.of(
                 "periodNumber", periodNumber,
                 "isUnlocked", isUnlocked
             ));
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Error inesperado", e);
             return ResponseEntity.status(500).body(Map.of("error", e.getMessage(), "type", e.getClass().getName()));
         }
     }

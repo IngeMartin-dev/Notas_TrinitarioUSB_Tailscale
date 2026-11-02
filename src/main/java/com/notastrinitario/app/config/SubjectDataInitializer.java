@@ -9,6 +9,8 @@ import java.util.List;
 
 @Component
 public class SubjectDataInitializer implements CommandLineRunner {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(SubjectDataInitializer.class);
+
 
     private final SubjectRepository subjectRepository;
 
@@ -100,7 +102,7 @@ public class SubjectDataInitializer implements CommandLineRunner {
                 subjectRepository.save(subject);
             }
 
-            System.out.println("✅ Subjects seeded: " + subjectRepository.count());
+            log.info("✅ Subjects seeded: " + subjectRepository.count());
         } else {
             // ── Solo seedear materias faltantes del nivel "media" si la BD ya tenía datos ──
             // Esto permite actualizar despliegues previos sin tener que borrar la tabla subjects.
@@ -139,7 +141,7 @@ public class SubjectDataInitializer implements CommandLineRunner {
                     subject.setDescription(s[8]);
                     subjectRepository.save(subject);
                 }
-                System.out.println("➕ Materias de MEDIA sembradas para grados 10-11: " + mediaSubjects.length);
+                log.info("➕ Materias de MEDIA sembradas para grados 10-11: " + mediaSubjects.length);
             }
         }
     }

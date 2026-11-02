@@ -45,6 +45,8 @@ import java.util.TreeSet;
 @RequestMapping("/api/consolidado")
 @PreAuthorize("hasAnyRole('ADMIN','DIRECTOR_DE_GRUPO')")
 public class ConsolidadoController {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(ConsolidadoController.class);
+
 
     private final BoletinService boletinService; // para reutilizar getStudentsByGradeAndClassroom / getSubjectsFilteredByGradeAndClassroom
     private final ConsolidadoService consolidadoService;
@@ -98,7 +100,7 @@ public class ConsolidadoController {
                     .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + fileName + "\"")
                     .body(pdfBytes);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Error inesperado", e);
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }

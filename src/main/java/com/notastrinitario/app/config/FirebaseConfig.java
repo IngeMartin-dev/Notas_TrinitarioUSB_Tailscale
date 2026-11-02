@@ -13,6 +13,8 @@ import org.springframework.core.io.Resource;
 
 @Configuration
 public class FirebaseConfig {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(FirebaseConfig.class);
+
 
     @Bean
     @ConditionalOnProperty(name = "app.firebase.enabled", havingValue = "true", matchIfMissing = true)
@@ -21,7 +23,7 @@ public class FirebaseConfig {
             Resource resource = new ClassPathResource("firebase-service-account.json");
             if (!resource.exists()) {
                 // Si el archivo no existe, retorna null y Spring no inicializará Firebase
-                System.out.println("Firebase service account file not found. Push notifications will be disabled.");
+                log.info("Firebase service account file not found. Push notifications will be disabled.");
                 return null;
             }
 
@@ -30,7 +32,7 @@ public class FirebaseConfig {
                     .build();
 
             FirebaseApp app = FirebaseApp.initializeApp(options);
-            System.out.println("Firebase initialized successfully for Push Notifications!");
+            log.info("Firebase initialized successfully for Push Notifications!");
             return app;
         } catch (Exception e) {
             // Log the error and return null to make Firebase initialization optional

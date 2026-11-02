@@ -8,6 +8,8 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class PeriodDataInitializer {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(PeriodDataInitializer.class);
+
 
     @Bean
     public CommandLineRunner initializePeriods(PeriodRepository periodRepository) {
@@ -21,7 +23,7 @@ public class PeriodDataInitializer {
                     period.setDescription("Período " + i + " del año académico");
                     periodRepository.save(period);
                 }
-                System.out.println("Período académico inicializado: 4 períodos creados");
+                log.info("Período académico inicializado: 4 períodos creados");
             }
         };
     }

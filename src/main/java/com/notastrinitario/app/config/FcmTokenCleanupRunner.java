@@ -14,6 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Component
 public class FcmTokenCleanupRunner implements CommandLineRunner {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(FcmTokenCleanupRunner.class);
+
 
     private final FcmTokenRepository fcmTokenRepository;
 
@@ -27,7 +29,7 @@ public class FcmTokenCleanupRunner implements CommandLineRunner {
         try {
             fcmTokenRepository.deactivateFakeLocalTokens();
         } catch (Exception e) {
-            System.out.println("[FCM cleanup] No se pudieron limpiar tokens falsos: " + e.getMessage());
+            log.info("[FCM cleanup] No se pudieron limpiar tokens falsos: " + e.getMessage());
         }
     }
 }

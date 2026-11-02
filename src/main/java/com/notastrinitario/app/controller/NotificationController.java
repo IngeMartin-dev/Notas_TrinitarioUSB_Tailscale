@@ -14,6 +14,8 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/notifications")
 public class NotificationController {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(NotificationController.class);
+
 
     private final NotificationRepository notificationRepository;
     private final NotificationService notificationService;
@@ -52,7 +54,7 @@ public class NotificationController {
                     .toList();
             return ResponseEntity.ok(notificationDTOs);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Error inesperado", e);
             return ResponseEntity.status(500).body(null);
         }
     }
@@ -223,7 +225,7 @@ public class NotificationController {
             // System.out.println("Deleted " + notifications.size() + " notifications for user " + userId);
             return ResponseEntity.ok(Map.of("success", true, "message", "All notifications deleted"));
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Error inesperado", e);
             return ResponseEntity.status(500).body(Map.of("success", false, "message", "Error deleting notifications"));
         }
     }
@@ -263,7 +265,7 @@ public class NotificationController {
                     "message", "Notificación enviada exitosamente"));
 
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Error inesperado", e);
             return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
                     "message", "Error al enviar la notificación: " + e.getMessage()));
@@ -333,7 +335,7 @@ public class NotificationController {
                     "success", false,
                     "message", "Error en el formato de los IDs: " + e.getMessage()));
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Error inesperado", e);
             return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
                     "message", "Error al enviar la respuesta: " + e.getMessage()));
@@ -368,7 +370,7 @@ public class NotificationController {
                     "message", "Token FCM guardado exitosamente"));
 
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Error inesperado", e);
             return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
                     "message", "Error al guardar token FCM: " + e.getMessage()));
@@ -389,7 +391,7 @@ public class NotificationController {
                     "message", "Tokens FCM eliminados exitosamente"));
 
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Error inesperado", e);
             return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
                     "message", "Error al eliminar tokens FCM: " + e.getMessage()));

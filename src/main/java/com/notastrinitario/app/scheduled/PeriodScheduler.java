@@ -12,6 +12,8 @@ import java.util.List;
 
 @Component
 public class PeriodScheduler {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(PeriodScheduler.class);
+
 
     private final PeriodRepository periodRepository;
     private final FcmPushService fcmPushService;
@@ -114,7 +116,7 @@ public class PeriodScheduler {
 
         period.setIsUnlocked(debeEstarAbierto);
         periodRepository.save(period);
-        System.out.println("Período " + period.getPeriodNumber()
+        log.info("Período " + period.getPeriodNumber()
                 + (debeEstarAbierto ? " desbloqueado" : " bloqueado") + " automáticamente");
         enviarNotificacionPeriodo(period, debeEstarAbierto);
     }

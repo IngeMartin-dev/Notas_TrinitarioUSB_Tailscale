@@ -12,6 +12,8 @@ import java.util.Set;
 
 @Service
 public class NotificationService {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(NotificationService.class);
+
 
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
@@ -42,7 +44,7 @@ public class NotificationService {
         try {
             String dataPayload = "NOTIFICATION_" + notification.getId();
             fcmPushService.sendToUser(user.getId(), title, message, dataPayload);
-            System.out.println("Notificación push enviada a usuario: " + user.getUsername());
+            log.info("Notificación push enviada a usuario: " + user.getUsername());
         } catch (Exception e) {
             System.err.println("Error enviando notificación push: " + e.getMessage());
         }
@@ -106,7 +108,7 @@ public class NotificationService {
         if (student == null) return;
         Set<User> parents = student.getParents();
         if (parents == null || parents.isEmpty()) {
-            System.out.println("[NotificationService] notifyParentsOfStudent sin padres para estudiante " + student.getId());
+            log.info("[NotificationService] notifyParentsOfStudent sin padres para estudiante " + student.getId());
             return;
         }
         for (User p : parents) {
@@ -120,8 +122,8 @@ public class NotificationService {
     public void sendNotificationToAll(String title, String message, String type) {
         List<User> users = userRepository.findAll();
 
-        System.out.println("=== SEND NOTIFICATION TO ALL ===");
-        System.out.println("Total users found: " + users.size());
+        log.info("=== SEND NOTIFICATION TO ALL ===");
+        log.info("Total users found: " + users.size());
 
         int adminCount = 0;
         int teacherCount = 0;
@@ -129,7 +131,7 @@ public class NotificationService {
         int otherCount = 0;
 
         for (User user : users) {
-            System.out.println("Processing user: " + user.getName() + " " + user.getSurname() + " - Role: " +
+            log.info("Processing user: " + user.getName() + " " + user.getSurname() + " - Role: " +
                     (user.getRole() != null ? user.getRole().getName() : "NO ROLE"));
 
             if (user.getRole() != null) {
@@ -148,12 +150,12 @@ public class NotificationService {
             }
         }
 
-        System.out.println("Notifications sent to:");
-        System.out.println("- Administrators: " + adminCount);
-        System.out.println("- Teachers: " + teacherCount);
-        System.out.println("- Parents: " + parentCount);
-        System.out.println("- Others: " + otherCount);
-        System.out.println("================================");
+        log.info("Notifications sent to:");
+        log.info("- Administrators: " + adminCount);
+        log.info("- Teachers: " + teacherCount);
+        log.info("- Parents: " + parentCount);
+        log.info("- Others: " + otherCount);
+        log.info("================================");
     }
 
     /**
@@ -161,9 +163,9 @@ public class NotificationService {
      * notification)
      */
     public void sendPushOnly(String title, String message, String type, String recipientType) {
-        System.out.println("=== SEND PUSH ONLY ===");
-        System.out.println("Title: " + title);
-        System.out.println("Recipient Type: " + recipientType);
+        log.info("=== SEND PUSH ONLY ===");
+        log.info("Title: " + title);
+        log.info("Recipient Type: " + recipientType);
 
         try {
             switch (recipientType) {
@@ -181,7 +183,7 @@ public class NotificationService {
                     fcmPushService.sendToAll(title, message, type);
                     break;
             }
-            System.out.println("Push notifications sent successfully");
+            log.info("Push notifications sent successfully");
         } catch (Exception e) {
             System.err.println("Error sending push notifications: " + e.getMessage());
         }

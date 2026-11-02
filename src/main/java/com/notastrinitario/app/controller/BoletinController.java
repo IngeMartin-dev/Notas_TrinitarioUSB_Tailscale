@@ -24,6 +24,8 @@ import java.util.*;
 @RequestMapping("/api/boletines")
 @CrossOrigin(origins = "*")
 public class BoletinController {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(BoletinController.class);
+
 
     private final BoletinService    boletinService;
     private final StudentRepository studentRepository;
@@ -35,7 +37,7 @@ public class BoletinController {
         this.boletinService    = boletinService;
         this.studentRepository = studentRepository;
         this.resourceLoader    = resourceLoader;
-        System.out.println("*** BoletinController bean CREATED ***");
+        log.info("*** BoletinController bean CREATED ***");
     }
 
     // ─────────────────────────────────────────────────────────────────
@@ -81,7 +83,7 @@ public class BoletinController {
                     boletinService.getSubjectsByGradeAndClassroomAndPeriod(grade, classroom, period);
             return ResponseEntity.ok(subjects);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Error inesperado", e);
             return ResponseEntity.ok(new ArrayList<>());
         }
     }
@@ -101,7 +103,7 @@ public class BoletinController {
                     boletinService.getSubjectsFilteredByGradeAndClassroom(grade, classroom);
             return ResponseEntity.ok(subjects);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Error inesperado", e);
             return ResponseEntity.ok(new ArrayList<>());
         }
     }
@@ -137,8 +139,8 @@ public class BoletinController {
     @PostMapping("/generar")
     public ResponseEntity<?> generateBoletin(@RequestBody Map<String, Object> request) {
         try {
-            System.out.println("=== GENERAR BOLETIN REQUEST ===");
-            System.out.println("Request: " + request);
+            log.info("=== GENERAR BOLETIN REQUEST ===");
+            log.info("Request: " + request);
 
             // ── Parámetros obligatorios ───────────────────────────────
             Long    studentId = toLong(request.get("studentId"));
@@ -254,7 +256,7 @@ public class BoletinController {
                     + "_G" + nvl(data.getGrade(), "")
                     + "_" + studentName + ".pdf";
 
-            System.out.println("PDF generado OK: " + savedPath + " (" + pdfBytes.length + " bytes)");
+            log.info("PDF generado OK: " + savedPath + " (" + pdfBytes.length + " bytes)");
 
             return ResponseEntity.ok()
                     .contentType(MediaType.APPLICATION_PDF)
@@ -263,7 +265,7 @@ public class BoletinController {
                     .body(new ByteArrayResource(pdfBytes));
 
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Error inesperado", e);
             return ResponseEntity.badRequest()
                     .body(Map.of("error", "Error general: " + e.getClass().getSimpleName()
                             + " – " + e.getMessage()));
@@ -302,7 +304,7 @@ public class BoletinController {
 
             return ResponseEntity.ok(job);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Error inesperado", e);
             return ResponseEntity.badRequest()
                     .body(Map.of("error", "Error iniciando la generación: " + e.getClass().getSimpleName()
                             + " – " + e.getMessage()));
@@ -320,7 +322,7 @@ public class BoletinController {
         try {
             return ResponseEntity.ok(boletinService.getJobs());
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Error inesperado", e);
             return ResponseEntity.ok(new ArrayList<>());
         }
     }
@@ -365,7 +367,7 @@ public class BoletinController {
                     .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + fileName + "\"")
                     .body(new ByteArrayResource(pdfBytes));
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Error inesperado", e);
             return ResponseEntity.badRequest()
                     .body(Map.of("error", "Error general: " + e.getClass().getSimpleName()
                             + " – " + e.getMessage()));
@@ -440,7 +442,7 @@ public class BoletinController {
         try {
             return ResponseEntity.ok(boletinService.listSignaturesDetailed());
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Error inesperado", e);
             return ResponseEntity.ok(new ArrayList<>());
         }
     }
@@ -555,7 +557,7 @@ public class BoletinController {
             });
             return ResponseEntity.ok(result);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Error inesperado", e);
             return ResponseEntity.ok(new ArrayList<>());
         }
     }
@@ -572,7 +574,7 @@ public class BoletinController {
         try {
             return ResponseEntity.ok(boletinService.calcularMateriasPerdidasPorSalon(grade, classroom, period));
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Error inesperado", e);
             return ResponseEntity.ok(new ArrayList<>());
         }
     }
