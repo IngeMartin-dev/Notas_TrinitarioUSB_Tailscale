@@ -1917,8 +1917,7 @@ public class BoletinService {
 
     private static final java.util.Set<String> EXT_IMAGEN = java.util.Set.of(
             ".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp");
-    private static final String FIRMAS_META = "firmas.json";
-    private final com.fasterxml.jackson.databind.ObjectMapper metaMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+    private static final String FIRMAS_META = "firmas.properties";
 
     private static boolean esImagen(Path p) {
         String n = p.getFileName().toString().toLowerCase();
@@ -1928,21 +1927,38 @@ public class BoletinService {
 
     /** Nombre y cargo (Director/Directora) asociados a cada imagen de firma. */
     private synchronized Map<String, Map<String, String>> leerMetaFirmas() {
+        Map<String, Map<String, String>> out = new LinkedHashMap<>();
         try {
             Path meta = resolveFirmaDir().resolve(FIRMAS_META);
             if (!Files.exists(meta))
-                return new LinkedHashMap<>();
-            return metaMapper.readValue(meta.toFile(),
-                    new com.fasterxml.jackson.core.type.TypeReference<LinkedHashMap<String, Map<String, String>>>() {
-                    });
+                return out;
+            Properties props = new Properties();
+            try (var r = Files.newBufferedReader(meta, java.nio.charset.StandardCharsets.UTF_8)) {
+                props.load(r);
+            }
+            for (String key : props.stringPropertyNames()) {
+                int i = key.lastIndexOf('#');
+                if (i <= 0)
+                    continue;
+                out.computeIfAbsent(key.substring(0, i), k -> new LinkedHashMap<>())
+                        .put(key.substring(i + 1), props.getProperty(key));
+            }
         } catch (Exception e) {
-            return new LinkedHashMap<>();
+            // sin metadatos legibles: se tratan como vacíos
         }
+        return out;
     }
 
     private synchronized void escribirMetaFirmas(Map<String, Map<String, String>> meta) throws IOException {
-        metaMapper.writerWithDefaultPrettyPrinter()
-                .writeValue(resolveFirmaDir().resolve(FIRMAS_META).toFile(), meta);
+        Properties props = new Properties();
+        meta.forEach((file, campos) -> campos.forEach((k, v) -> {
+            if (v != null)
+                props.setProperty(file + "#" + k, v);
+        }));
+        try (var w = Files.newBufferedWriter(resolveFirmaDir().resolve(FIRMAS_META),
+                java.nio.charset.StandardCharsets.UTF_8)) {
+            props.store(w, "Nombre y cargo de cada firma");
+        }
     }
 
     /** Normaliza el cargo: "Director" o "Directora" (por defecto Director). */
