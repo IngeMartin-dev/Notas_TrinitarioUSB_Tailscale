@@ -27,6 +27,9 @@ public class BoletinService {
     @org.springframework.beans.factory.annotation.Autowired
     private com.notastrinitario.app.service.NotificationService notificationService;
 
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.notastrinitario.app.repository.PeriodRepository periodRepository;
+
     /**
      * Materia virtual que aparece como fila editable (IH/FA/FAA/objetivo) en
      * el formulario de boletines. Luego se renderiza como bloque "Valoracion
@@ -619,23 +622,42 @@ public class BoletinService {
     // CIERRE DE AÑO (4° periodo / FINAL)
     // ─────────────────────────────────────────────────────────────────
 
-    /** Número del periodo que cierra el año (usa la plantilla "FINAL"). */
-    public static final int PERIODO_FINAL = 4;
+    /** Periodos por defecto si todavía no hay ninguno creado. */
+    private static final int PERIODOS_POR_DEFECTO = 4;
+
+    /**
+     * Número del periodo que cierra el año: el MAYOR periodo existente en
+     * Gestión de Períodos. Ese periodo usa la plantilla "FINAL"; los demás
+     * usan la plantilla normal.
+     */
+    public int ultimoPeriodo() {
+        int max = 0;
+        try {
+            for (var p : periodRepository.findAll()) {
+                if (p.getPeriodNumber() != null && p.getPeriodNumber() > max)
+                    max = p.getPeriodNumber();
+            }
+        } catch (Exception ignored) {
+            // sin acceso a la tabla: se usa el valor por defecto
+        }
+        return max > 0 ? max : PERIODOS_POR_DEFECTO;
+    }
     /** Más de este número de áreas perdidas: se muestran y no se promueve. */
     public static final int MAX_AREAS_PERDIDAS_PROMOVIDO = 3;
 
     /**
      * Nota anual de cada materia del estudiante = promedio de la nota final
-     * (N.FINAL) de los 4 periodos. Solo cuentan los periodos con nota.
+     * (N.FINAL) de todos los periodos existentes. Solo cuentan los periodos con nota.
      */
     private Map<String, Double> notasAnualesPorMateria(Long studentId, List<String> subjects) {
         Map<String, Double> out = new LinkedHashMap<>();
+        final int ultimo = ultimoPeriodo();
         for (String subject : subjects) {
             if (isReservedSubjectName(subject))
                 continue;
             double suma = 0.0;
             int n = 0;
-            for (int p = 1; p <= PERIODO_FINAL; p++) {
+            for (int p = 1; p <= ultimo; p++) {
                 Double nf = notaFinalDePeriodo(studentId, p, subject);
                 if (nf != null && nf > 0) {
                     suma += nf;
@@ -710,7 +732,7 @@ public class BoletinService {
     private static final int MATERIA_FIJA_BASE = 16;
 
     private String buildBoletinHtml(BoletinData data) throws IOException {
-        boolean esFinal = data.getPeriod() != null && data.getPeriod() == PERIODO_FINAL;
+        boolean esFinal = data.getPeriod() != null && data.getPeriod() == ultimoPeriodo();
         String template = readResource("Plantillas" + File.separator
                 + (esFinal ? "BoletinBaseS++_P4.html" : "BoletinBaseS++.html"));
 
@@ -773,7 +795,7 @@ public class BoletinService {
             List<String> perdidasAnual = data.getAnnualLostAreas() != null ? data.getAnnualLostAreas()
                     : new ArrayList<>();
             boolean muestraPerdidas = perdidasAnual.size() > MAX_AREAS_PERDIDAS_PROMOVIDO;
-            r.put("{{PERIODO_FINAL}}", "(" + PERIODO_FINAL + ") FINAL");
+            r.put("{{PERIODO_FINAL}}", "(" + data.getPeriod() + ") FINAL");
             r.put("{{PROMEDIO_PERIODO}}", num2Coma(data.getAverage()));
             r.put("{{PROMEDIO_ANUAL}}", num2Coma(data.getAnnualAverage()));
             r.put("{{PUESTO_ANUAL}}", data.getAnnualRank() != null ? String.valueOf(data.getAnnualRank()) : "");
@@ -1608,7 +1630,7 @@ public class BoletinService {
         bd.setLostAreas(lostAreas);
 
         // ── Cierre de año (solo 4° periodo / FINAL) ───────────────────
-        if (period != null && period == PERIODO_FINAL) {
+        if (period != null && period == ultimoPeriodo()) {
             Map<String, Double> anualesPropias = notasAnualesPorMateria(studentId, subjects);
             Double promedioAnual = promedioDe(anualesPropias.values());
             bd.setAnnualAverage(promedioAnual);
