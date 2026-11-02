@@ -5,6 +5,7 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { GlobalRealtimeService } from '../services/global-realtime.service';
+import { DialogService } from '../services/dialog.service';
 import { Subscription } from 'rxjs';
 
 interface Period {
@@ -29,6 +30,7 @@ export class Periods implements OnInit, OnDestroy {
   private router = inject(Router);
   private authService = inject(AuthService);
   private realtimeService = inject(GlobalRealtimeService);
+  private dialogService = inject(DialogService);
   private periodsSubscription: Subscription | null = null;
   private tickHandle: any = null;
   private lastScheduleSync = 0;
@@ -51,7 +53,7 @@ export class Periods implements OnInit, OnDestroy {
     
     // Subscribe to global realtime updates
     this.periodsSubscription = this.realtimeService.periods$.subscribe(periods => {
-      if (periods.length > 0) {
+      if (periods.length > 0 || this.periods().length > 0) {
         // Eliminar duplicados por periodNumber
         const uniquePeriods = periods.filter((p, index, self) => 
           index === self.findIndex((t) => t.periodNumber === p.periodNumber)
@@ -171,6 +173,48 @@ export class Periods implements OnInit, OnDestroy {
           this.errorMessage.set('Error al actualizar el período');
         }
       });
+  }
+
+  addPeriod() {
+    this.saving.set(true);
+    this.errorMessage.set('');
+    this.http.post<Period>(this.apiUrl, {}).subscribe({
+      next: (created) => {
+        this.periods.update(list => [...list, created].sort((a, b) => a.periodNumber - b.periodNumber));
+        this.saving.set(false);
+        this.successMessage.set(`Período ${created.periodNumber} agregado`);
+        setTimeout(() => this.successMessage.set(''), 3000);
+        this.realtimeService.notifyPeriodsChanged();
+      },
+      error: (err) => {
+        this.saving.set(false);
+        this.errorMessage.set(err?.error?.error || 'Error al agregar el período');
+      }
+    });
+  }
+
+  async removePeriod(period: Period) {
+    const ok = await this.dialogService.confirm(
+      `¿Quitar el Período ${period.periodNumber}? Las notas ya registradas en él no se borran.`,
+      'Quitar período',
+      { confirmText: 'Quitar', danger: true }
+    );
+    if (!ok) return;
+    this.saving.set(true);
+    this.errorMessage.set('');
+    this.http.delete<any>(`${this.apiUrl}/${period.periodNumber}`).subscribe({
+      next: () => {
+        this.periods.update(list => list.filter(p => p.periodNumber !== period.periodNumber));
+        this.saving.set(false);
+        this.successMessage.set(`Período ${period.periodNumber} eliminado`);
+        setTimeout(() => this.successMessage.set(''), 3000);
+        this.realtimeService.notifyPeriodsChanged();
+      },
+      error: (err) => {
+        this.saving.set(false);
+        this.errorMessage.set(err?.error?.error || 'Error al quitar el período');
+      }
+    });
   }
 
   openScheduleModal(period: Period) {

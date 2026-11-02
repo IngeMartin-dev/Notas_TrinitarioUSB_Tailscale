@@ -1239,3 +1239,11 @@
 }
 .preset-option { text-align: left; background: transparent; border: 0; padding: 10px 14px; cursor: pointer; color: #111827; }
 .preset-option:hover { background: #f3f4f6; }
+.sig-card { position: relative; }
+.sig-card .sig-delete {
+  position: absolute; top: 4px; right: 4px; width: 26px; height: 26px;
+  border: none; border-radius: 50%; background: rgba(198, 40, 40, .92); color: #fff;
+  font-size: 13px; line-height: 26px; cursor: pointer; padding: 0;
+}
+.sig-card .sig-delete:hover { background: #b71c1c; }
+.sig-person { font-weight: 600; margin: 0 8px; }

@@ -20,7 +20,12 @@ interface Student {
 
 interface Signature {
   path: string;
+  /** Nombre del archivo en el servidor. */
+  file?: string;
+  /** Nombre de la persona que firma (el que se imprime bajo la firma). */
   name: string;
+  /** "Director" o "Directora". */
+  title?: string;
 }
 
 /** Materia virtual que el backend trata como una "materia" más en el paso 1
@@ -691,6 +696,7 @@ export class Boletines implements OnInit, OnDestroy {
     this.currentJobId = null;
 
     const directorSignature = this.selectedDirectorSignature;
+    const sigInfo = this.selectedSignatureInfo;
     const schoolYear = new Date().getFullYear().toString();
 
     // Arma el payload de TODOS los estudiantes de una vez (misma forma que
@@ -733,6 +739,8 @@ export class Boletines implements OnInit, OnDestroy {
         compSocialFa: this.studentCompSocialIndicators[student.id]?.fa ?? 0,
         compSocialFaa: this.studentCompSocialIndicators[student.id]?.faa ?? 0,
         directorSignature: directorSignature,
+        directorName: sigInfo?.name || '',
+        directorTitle: sigInfo?.title || 'Director',
         leftSignature: null
       };
     });
@@ -820,24 +828,14 @@ export class Boletines implements OnInit, OnDestroy {
       });
   }
 
-  onSignatureUpload(event: Event) {
+  async onSignatureUpload(event: Event) {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
-      Array.from(input.files).forEach(file => {
-        const formData = new FormData();
-        formData.append('file', file);
-        this.http.post<Signature>('http://localhost:8080/api/boletines/firmas/upload', formData)
-          .subscribe({
-            next: (sig) => {
-              this.signatures.push(sig);
-              this.cargarImagenFirma(sig.path);
-            },
-            error: () => {
-              this.dialogService.alert('Error al subir la firma', 'Error');
-            }
-          });
-      });
+      const files = Array.from(input.files);
       input.value = '';
+      for (const file of files) {
+        await this.uploadSignatureFile(file);
+      }
     }
   }
 
@@ -856,28 +854,74 @@ export class Boletines implements OnInit, OnDestroy {
 
     const files = event.dataTransfer?.files;
     if (files && files.length > 0) {
-      Array.from(files).forEach(file => {
-        if (file.type.startsWith('image/')) {
-          this.uploadSignatureFile(file);
-        }
-      });
+      const imagenes = Array.from(files).filter(f => f.type.startsWith('image/'));
+      (async () => { for (const f of imagenes) await this.uploadSignatureFile(f); })();
     }
   }
 
-  private uploadSignatureFile(file: File) {
+  /** Al agregar una imagen de firma se pide el nombre de quien firma y si es
+   *  Director o Directora: es lo que se imprime bajo la firma en el boletín. */
+  private async uploadSignatureFile(file: File): Promise<void> {
+    const name = await this.dialogService.input(
+      `Nombre de quien firma (aparecerá bajo la firma en el boletín).\nArchivo: ${file.name}`,
+      'Nombre de la firma',
+      'Ej: Flor Delis Giraldo'
+    );
+    if (!name || !name.trim()) return;
+
+    const esDirectora = await this.dialogService.confirm(
+      `¿${name.trim()} es Director o Directora?`,
+      'Cargo de la firma',
+      { confirmText: 'Directora', cancelText: 'Director' }
+    );
+
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('name', name.trim());
+    formData.append('title', esDirectora ? 'Directora' : 'Director');
 
-    this.http.post<Signature>('http://localhost:8080/api/boletines/firmas/upload', formData)
-      .subscribe({
-        next: (sig) => {
-          this.signatures.push(sig);
-              this.cargarImagenFirma(sig.path);
-        },
+    await new Promise<void>(resolve => {
+      this.http.post<Signature>('http://localhost:8080/api/boletines/firmas/upload', formData)
+        .subscribe({
+          next: (sig) => {
+            this.signatures.push(sig);
+            this.cargarImagenFirma(sig.path);
+            this.cdr.detectChanges();
+            resolve();
+          },
           error: () => {
             this.dialogService.alert('Error al subir la firma', 'Error');
+            resolve();
           }
+        });
+    });
+  }
+
+  /** Quita una imagen de firma (y su nombre/cargo) del servidor. */
+  async deleteSignature(sig: Signature, event?: Event) {
+    event?.stopPropagation();
+    const ok = await this.dialogService.confirm(
+      `¿Eliminar la firma${sig.name ? ' de ' + sig.name : ''}? Esta acción no se puede deshacer.`,
+      'Eliminar firma',
+      { confirmText: 'Eliminar', danger: true }
+    );
+    if (!ok) return;
+    this.http.delete(`http://localhost:8080/api/boletines/firmas`, { params: { path: sig.path } })
+      .subscribe({
+        next: () => {
+          this.signatures = this.signatures.filter(s => s.path !== sig.path);
+          if (this.selectedDirectorSignature === sig.path) this.selectedDirectorSignature = undefined;
+          const url = this.sigBlobUrls[sig.path];
+          if (url) { URL.revokeObjectURL(url); delete this.sigBlobUrls[sig.path]; }
+          this.cdr.detectChanges();
+        },
+        error: () => this.dialogService.alert('No se pudo eliminar la firma', 'Error')
       });
+  }
+
+  /** Datos de la firma seleccionada (nombre y cargo) para mostrar y enviar. */
+  get selectedSignatureInfo(): Signature | undefined {
+    return this.signatures.find(s => s.path === this.selectedDirectorSignature);
   }
 
   onImageError(event: Event) {

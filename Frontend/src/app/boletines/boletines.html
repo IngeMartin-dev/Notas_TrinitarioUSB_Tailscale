@@ -283,6 +283,9 @@
                 @if (sigSrc(selectedDirectorSignature)) {
                   <img [src]="sigSrc(selectedDirectorSignature)" [alt]="'Firma director'" class="sig-thumb">
                 }
+                @if (selectedSignatureInfo; as info) {
+                  <span class="sig-person">{{ info.name }} · {{ info.title }}</span>
+                }
                 <button class="btn-clear-sig" (click)="selectedDirectorSignature = undefined">✕</button>
               </div>
             }
@@ -387,7 +390,8 @@
                     <img [src]="sigSrc(sig.path)" [alt]="sig.name">
                   }
  </div>
-                <div class="sig-name">{{ sig.name }}</div>
+                <div class="sig-name">{{ sig.name || sig.file }}<br><small>{{ sig.title || 'Director' }}</small></div>
+                <button class="sig-delete" type="button" title="Quitar esta firma" aria-label="Quitar firma" (click)="deleteSignature(sig, $event)">🗑</button>
               </div>
             }
           </div>

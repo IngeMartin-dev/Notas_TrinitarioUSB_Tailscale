@@ -198,6 +198,9 @@ public class BoletinController {
                 data.setRightSignaturePath(sigPath);
             }
 
+            if (request.get("directorName") != null) data.setDirectorName(str(request.get("directorName")));
+            if (request.get("directorTitle") != null) data.setDirectorTitle(str(request.get("directorTitle")));
+
             // Firma profesor(a) grupo
             if (request.get("leftSignature") != null) {
                 String sigPath = str(request.get("leftSignature"));
@@ -435,15 +438,7 @@ public class BoletinController {
     @GetMapping("/firmas")
     public ResponseEntity<List<Map<String, String>>> getSignatures() {
         try {
-            List<String> signatures = boletinService.listSignatures();
-            List<Map<String, String>> result = new ArrayList<>();
-            for (String sig : signatures) {
-                Map<String, String> map = new HashMap<>();
-                map.put("path", sig);
-                map.put("name", sig.substring(sig.lastIndexOf('/') + 1));
-                result.add(map);
-            }
-            return ResponseEntity.ok(result);
+            return ResponseEntity.ok(boletinService.listSignaturesDetailed());
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.ok(new ArrayList<>());
@@ -455,7 +450,9 @@ public class BoletinController {
     // ─────────────────────────────────────────────────────────────────
     @PreAuthorize("hasAnyRole('ADMIN','TEACHER','DIRECTOR_DE_GRUPO')")
     @PostMapping("/firmas/upload")
-    public ResponseEntity<?> uploadSignature(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<?> uploadSignature(@RequestParam("file") MultipartFile file,
+            @RequestParam(value = "name", required = false) String name,
+            @RequestParam(value = "title", required = false) String title) {
         try {
             if (file.isEmpty())
                 return ResponseEntity.badRequest().body(Map.of("error", "Archivo vacío"));
@@ -464,16 +461,38 @@ public class BoletinController {
             if (!contentType.startsWith("image/"))
                 return ResponseEntity.badRequest().body(Map.of("error", "Solo se permiten imágenes"));
 
+            if (name == null || name.isBlank())
+                return ResponseEntity.badRequest().body(Map.of("error", "Falta el nombre de la firma"));
+
             String savedPath = boletinService.saveSignature(
                     file.getBytes(),
-                    nvl(file.getOriginalFilename(), "signature.png"));
+                    nvl(file.getOriginalFilename(), "signature.png"),
+                    name, title);
 
             return ResponseEntity.ok(Map.of(
                     "path", savedPath,
-                    "name", savedPath.substring(savedPath.lastIndexOf('/') + 1)));
+                    "file", savedPath.substring(savedPath.lastIndexOf('/') + 1),
+                    "name", name.trim(),
+                    "title", nvl(boletinService.cargoDeFirma(savedPath), "Director")));
         } catch (IOException e) {
             return ResponseEntity.badRequest()
                     .body(Map.of("error", "Error al guardar la firma: " + e.getMessage()));
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    // DELETE /api/boletines/firmas?path=/Firmas/archivo.png
+    // ─────────────────────────────────────────────────────────────────
+    @PreAuthorize("hasAnyRole('ADMIN','TEACHER','DIRECTOR_DE_GRUPO')")
+    @DeleteMapping("/firmas")
+    public ResponseEntity<?> deleteSignature(@RequestParam("path") String path) {
+        try {
+            boolean ok = boletinService.deleteSignature(path);
+            return ok ? ResponseEntity.ok(Map.of("deleted", path))
+                      : ResponseEntity.status(404).body(Map.of("error", "La firma no existe"));
+        } catch (IOException e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Error al eliminar la firma: " + e.getMessage()));
         }
     }
 

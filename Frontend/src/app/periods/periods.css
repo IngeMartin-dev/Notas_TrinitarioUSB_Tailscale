@@ -582,3 +582,12 @@
     justify-content: center;
   }
 }
+
+.btn-remove { color: #c62828; border-color: #c62828; }
+.add-period-row { display: flex; justify-content: center; margin: 20px 0; }
+.btn-add-period {
+  display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px;
+  border: none; border-radius: 8px; background: #1565c0; color: #fff;
+  font-size: 15px; font-weight: 600; cursor: pointer;
+}
+.btn-add-period:disabled { opacity: .6; cursor: not-allowed; }

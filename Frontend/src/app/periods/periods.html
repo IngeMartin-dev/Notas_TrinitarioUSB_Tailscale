@@ -76,6 +76,12 @@
               <span class="material-icons">schedule</span>
               Programar
             </button>
+            @if (isAdmin()) {
+              <button class="btn-schedule btn-remove" (click)="removePeriod(period)" [disabled]="saving()" title="Quitar período">
+                <span class="material-icons">delete</span>
+                Quitar
+              </button>
+            }
           </div>
 
           <div class="period-description">
@@ -84,6 +90,15 @@
         </div>
       }
     </div>
+
+    @if (isAdmin()) {
+      <div class="add-period-row">
+        <button class="btn-add-period" (click)="addPeriod()" [disabled]="saving()">
+          <span class="material-icons">add</span>
+          Agregar período
+        </button>
+      </div>
+    }
 
     @if (!isAdmin()) {
       <div class="admin-notice">

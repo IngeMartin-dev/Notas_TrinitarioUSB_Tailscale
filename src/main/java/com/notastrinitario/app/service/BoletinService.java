@@ -321,6 +321,9 @@ public class BoletinService {
             if (request.get("directorName") != null) {
                 data.setDirectorName(str(request.get("directorName")));
             }
+            if (request.get("directorTitle") != null) {
+                data.setDirectorTitle(str(request.get("directorTitle")));
+            }
             if (request.get("leftSignature") != null) {
                 String sigPath = str(request.get("leftSignature"));
                 if (sigPath.startsWith("/Firmas/")) {
@@ -611,6 +614,83 @@ public class BoletinService {
         return Files.readString(Paths.get(System.getProperty("user.dir") + File.separator + name));
     }
 
+
+    // ─────────────────────────────────────────────────────────────────
+    // CIERRE DE AÑO (4° periodo / FINAL)
+    // ─────────────────────────────────────────────────────────────────
+
+    /** Número del periodo que cierra el año (usa la plantilla "FINAL"). */
+    public static final int PERIODO_FINAL = 4;
+    /** Más de este número de áreas perdidas: se muestran y no se promueve. */
+    public static final int MAX_AREAS_PERDIDAS_PROMOVIDO = 3;
+
+    /**
+     * Nota anual de cada materia del estudiante = promedio de la nota final
+     * (N.FINAL) de los 4 periodos. Solo cuentan los periodos con nota.
+     */
+    private Map<String, Double> notasAnualesPorMateria(Long studentId, List<String> subjects) {
+        Map<String, Double> out = new LinkedHashMap<>();
+        for (String subject : subjects) {
+            if (isReservedSubjectName(subject))
+                continue;
+            double suma = 0.0;
+            int n = 0;
+            for (int p = 1; p <= PERIODO_FINAL; p++) {
+                Double nf = notaFinalDePeriodo(studentId, p, subject);
+                if (nf != null && nf > 0) {
+                    suma += nf;
+                    n++;
+                }
+            }
+            if (n > 0)
+                out.put(subject, suma / n);
+        }
+        return out;
+    }
+
+    /** N.FINAL guardada de una materia en un periodo, o la calculada si no está guardada. */
+    private Double notaFinalDePeriodo(Long studentId, int period, String subject) {
+        List<SubjectGrade> guardadas = subjectGradeRepository
+                .findByStudent_IdAndPeriodAndSubjectNameAndGradeName(studentId, period, subject, "nFinal");
+        if (!guardadas.isEmpty() && guardadas.get(0).getGradeValue() != null)
+            return guardadas.get(0).getGradeValue();
+        return calcularNFinalFallback(studentId, period, subject);
+    }
+
+    private static Double promedioDe(Collection<Double> valores) {
+        if (valores == null || valores.isEmpty())
+            return null;
+        double s = 0.0;
+        for (Double v : valores)
+            s += v;
+        return s / valores.size();
+    }
+
+    /**
+     * Puesto anual dentro del salón: se compara el promedio anual (promedio de
+     * las notas anuales de todas las materias) de cada estudiante. Empates
+     * (mismo promedio a 2 decimales) comparten puesto.
+     */
+    private Integer calcularPuestoAnual(Long studentId, Double promedioPropio, String grade, String classroom) {
+        if (promedioPropio == null)
+            return null;
+        List<String> subjects = getSubjectsFilteredByGradeAndClassroom(grade, classroom);
+        double propio = Math.round(promedioPropio * 100.0) / 100.0;
+        int mejores = 0;
+        for (Student s : getStudentsByGradeAndClassroom(grade, classroom)) {
+            if (s.getId().equals(studentId))
+                continue;
+            Double otro = promedioDe(notasAnualesPorMateria(s.getId(), subjects).values());
+            if (otro != null && Math.round(otro * 100.0) / 100.0 > propio)
+                mejores++;
+        }
+        return mejores + 1;
+    }
+
+    private static String num2Coma(Double v) {
+        return v == null ? "0,00" : String.format(Locale.US, "%.2f", v).replace('.', ',');
+    }
+
     // ─────────────────────────────────────────────────────────────────
     // CONSTRUCCIÓN DEL HTML DEL BOLETÍN
     // ─────────────────────────────────────────────────────────────────
@@ -630,7 +710,9 @@ public class BoletinService {
     private static final int MATERIA_FIJA_BASE = 16;
 
     private String buildBoletinHtml(BoletinData data) throws IOException {
-        String template = readResource("Plantillas" + File.separator + "BoletinBaseS++.html");
+        boolean esFinal = data.getPeriod() != null && data.getPeriod() == PERIODO_FINAL;
+        String template = readResource("Plantillas" + File.separator
+                + (esFinal ? "BoletinBaseS++_P4.html" : "BoletinBaseS++.html"));
 
         List<SubjectData> subjects = data.getSubjects() != null ? data.getSubjects() : new ArrayList<>();
 
@@ -673,7 +755,36 @@ public class BoletinService {
                 escapeHtml(data.getAverage() != null ? String.format("%.2f", data.getAverage()) : "0.00"));
         r.put("{{DESEMPENO_GENERAL}}", escapeHtml(data.getAverage() != null ? valorLabel(data.getAverage()) : "N.A"));
         r.put("{{AREAS_PERDIDAS}}", escapeHtml(areasPerdidas));
-        r.put("{{DIRECTOR_NOMBRE}}", escapeHtml(nvl(data.getDirectorName(), "")));
+        // Nombre y cargo bajo la firma del rector: lo escrito en la generación o,
+        // si no viene, lo guardado junto a la imagen de la firma.
+        String dirNombre = data.getDirectorName();
+        String dirCargo = data.getDirectorTitle();
+        if (data.getRightSignaturePath() != null && !data.getRightSignaturePath().isBlank()) {
+            if (dirNombre == null || dirNombre.isBlank())
+                dirNombre = nombreDeFirma(data.getRightSignaturePath());
+            if (dirCargo == null || dirCargo.isBlank())
+                dirCargo = cargoDeFirma(data.getRightSignaturePath());
+        }
+        r.put("{{DIRECTOR_NOMBRE}}", escapeHtml(nvl(dirNombre, "").toUpperCase()));
+        r.put("{{DIRECTOR_CARGO}}", escapeHtml(normalizarCargo(dirCargo)));
+
+        // ── Encabezado y cierre de la plantilla FINAL (4° periodo) ────
+        if (esFinal) {
+            List<String> perdidasAnual = data.getAnnualLostAreas() != null ? data.getAnnualLostAreas()
+                    : new ArrayList<>();
+            boolean muestraPerdidas = perdidasAnual.size() > MAX_AREAS_PERDIDAS_PROMOVIDO;
+            r.put("{{PERIODO_FINAL}}", "(" + PERIODO_FINAL + ") FINAL");
+            r.put("{{PROMEDIO_PERIODO}}", num2Coma(data.getAverage()));
+            r.put("{{PROMEDIO_ANUAL}}", num2Coma(data.getAnnualAverage()));
+            r.put("{{PUESTO_ANUAL}}", data.getAnnualRank() != null ? String.valueOf(data.getAnnualRank()) : "");
+            r.put("{{DESEMPENO_ANUAL}}",
+                    data.getAnnualAverage() != null ? valorLabel(data.getAnnualAverage()) : "N.A");
+            r.put("{{AREAS_PERDIDAS_LABEL}}", muestraPerdidas ? "AREAS PERDIDAS:" : "");
+            r.put("{{DEFINICION_ANIO}}", muestraPerdidas ? "NO PROMOVIDO" : "PROMOVIDO");
+            // En FINAL "áreas perdidas" son las del año (nota anual < mínima).
+            areasPerdidas = muestraPerdidas ? String.join(", ", perdidasAnual).toUpperCase() : "";
+            r.put("{{AREAS_PERDIDAS}}", escapeHtml(areasPerdidas));
+        }
         r.put("{{LOGO_PATH}}", logoUri);
         r.put("{{FIRMA_IMAGEN}}", firmaUri);
 
@@ -1490,6 +1601,22 @@ public class BoletinService {
         bd.setRank(rank);
         bd.setLostAreas(lostAreas);
 
+        // ── Cierre de año (solo 4° periodo / FINAL) ───────────────────
+        if (period != null && period == PERIODO_FINAL) {
+            Map<String, Double> anualesPropias = notasAnualesPorMateria(studentId, subjects);
+            Double promedioAnual = promedioDe(anualesPropias.values());
+            bd.setAnnualAverage(promedioAnual);
+
+            double minima = notaMinimaAprobar();
+            List<String> perdidasAnual = new ArrayList<>();
+            anualesPropias.forEach((materia, nota) -> {
+                if (nota < minima)
+                    perdidasAnual.add(materia);
+            });
+            bd.setAnnualLostAreas(perdidasAnual);
+            bd.setAnnualRank(calcularPuestoAnual(studentId, promedioAnual, grade, classroom));
+        }
+
         return bd;
     }
 
@@ -1788,21 +1915,100 @@ public class BoletinService {
     // FIRMAS
     // ─────────────────────────────────────────────────────────────────
 
+    private static final java.util.Set<String> EXT_IMAGEN = java.util.Set.of(
+            ".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp");
+    private static final String FIRMAS_META = "firmas.json";
+    private final com.fasterxml.jackson.databind.ObjectMapper metaMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+
+    private static boolean esImagen(Path p) {
+        String n = p.getFileName().toString().toLowerCase();
+        int dot = n.lastIndexOf('.');
+        return dot >= 0 && EXT_IMAGEN.contains(n.substring(dot));
+    }
+
+    /** Nombre y cargo (Director/Directora) asociados a cada imagen de firma. */
+    private synchronized Map<String, Map<String, String>> leerMetaFirmas() {
+        try {
+            Path meta = resolveFirmaDir().resolve(FIRMAS_META);
+            if (!Files.exists(meta))
+                return new LinkedHashMap<>();
+            return metaMapper.readValue(meta.toFile(),
+                    new com.fasterxml.jackson.core.type.TypeReference<LinkedHashMap<String, Map<String, String>>>() {
+                    });
+        } catch (Exception e) {
+            return new LinkedHashMap<>();
+        }
+    }
+
+    private synchronized void escribirMetaFirmas(Map<String, Map<String, String>> meta) throws IOException {
+        metaMapper.writerWithDefaultPrettyPrinter()
+                .writeValue(resolveFirmaDir().resolve(FIRMAS_META).toFile(), meta);
+    }
+
+    /** Normaliza el cargo: "Director" o "Directora" (por defecto Director). */
+    private static String normalizarCargo(String title) {
+        return title != null && title.trim().equalsIgnoreCase("directora") ? "Directora" : "Director";
+    }
+
+    /** Nombre guardado para una firma ("/Firmas/archivo.png"), o null. */
+    public String nombreDeFirma(String sigPath) {
+        Map<String, String> m = leerMetaFirmas().get(nombreArchivoDeRuta(sigPath));
+        return m != null ? m.get("name") : null;
+    }
+
+    /** Cargo guardado para una firma ("Director"/"Directora"), o null. */
+    public String cargoDeFirma(String sigPath) {
+        Map<String, String> m = leerMetaFirmas().get(nombreArchivoDeRuta(sigPath));
+        return m != null ? m.get("title") : null;
+    }
+
+    private static String nombreArchivoDeRuta(String sigPath) {
+        if (sigPath == null)
+            return "";
+        String s = sigPath.replace("\\", "/");
+        return s.substring(s.lastIndexOf('/') + 1);
+    }
+
     public List<String> listSignatures() {
         try {
             Path dir = resolveFirmaDir();
             if (!Files.exists(dir))
                 return new ArrayList<>();
-            return Files.list(dir)
-                    .filter(Files::isRegularFile)
-                    .map(p -> "/Firmas/" + p.getFileName().toString())
-                    .collect(Collectors.toList());
+            try (var files = Files.list(dir)) {
+                return files
+                        .filter(Files::isRegularFile)
+                        .filter(BoletinService::esImagen)
+                        .sorted()
+                        .map(p -> "/Firmas/" + p.getFileName().toString())
+                        .collect(Collectors.toList());
+            }
         } catch (IOException e) {
             return new ArrayList<>();
         }
     }
 
+    /** Datos (ruta, archivo, nombre, cargo) de todas las firmas, para el panel. */
+    public List<Map<String, String>> listSignaturesDetailed() {
+        Map<String, Map<String, String>> meta = leerMetaFirmas();
+        List<Map<String, String>> out = new ArrayList<>();
+        for (String path : listSignatures()) {
+            String file = nombreArchivoDeRuta(path);
+            Map<String, String> m = meta.get(file);
+            Map<String, String> item = new LinkedHashMap<>();
+            item.put("path", path);
+            item.put("file", file);
+            item.put("name", m != null && m.get("name") != null ? m.get("name") : "");
+            item.put("title", m != null && m.get("title") != null ? m.get("title") : "Director");
+            out.add(item);
+        }
+        return out;
+    }
+
     public String saveSignature(byte[] bytes, String originalFilename) throws IOException {
+        return saveSignature(bytes, originalFilename, null, null);
+    }
+
+    public String saveSignature(byte[] bytes, String originalFilename, String name, String title) throws IOException {
         Path dir = resolveFirmaDir();
         String ext = "";
         if (originalFilename != null) {
@@ -1813,7 +2019,29 @@ public class BoletinService {
         String filename = "signature_" + System.currentTimeMillis() + ext;
         Path target = dir.resolve(filename);
         Files.write(target, bytes);
+
+        Map<String, Map<String, String>> meta = leerMetaFirmas();
+        Map<String, String> m = new LinkedHashMap<>();
+        m.put("name", name != null ? name.trim() : "");
+        m.put("title", normalizarCargo(title));
+        meta.put(filename, m);
+        escribirMetaFirmas(meta);
         return "/Firmas/" + filename;
+    }
+
+    /** Elimina la imagen de una firma y su nombre/cargo. true si existía. */
+    public boolean deleteSignature(String sigPath) throws IOException {
+        String file = nombreArchivoDeRuta(sigPath);
+        if (file.isBlank() || file.equals(FIRMAS_META))
+            return false;
+        Path target = resolveFirmaDir().resolve(file).normalize();
+        if (!target.getParent().equals(resolveFirmaDir().normalize()))
+            return false; // evita rutas fuera de la carpeta de firmas
+        boolean borrada = Files.deleteIfExists(target);
+        Map<String, Map<String, String>> meta = leerMetaFirmas();
+        if (meta.remove(file) != null)
+            escribirMetaFirmas(meta);
+        return borrada;
     }
 
     // ─────────────────────────────────────────────────────────────────
@@ -1980,6 +2208,45 @@ public class BoletinService {
          * adjuntar/seleccionar la imagen de la firma.
          */
         private String directorName;
+        /** "Director" o "Directora" (se pide al adjuntar la firma). */
+        private String directorTitle;
+
+        // ── Cierre de año (solo 4° periodo / FINAL) ───────────────────
+        private Double annualAverage;
+        private Integer annualRank;
+        private List<String> annualLostAreas = new ArrayList<>();
+
+        public String getDirectorTitle() {
+            return directorTitle;
+        }
+
+        public void setDirectorTitle(String dt) {
+            this.directorTitle = dt;
+        }
+
+        public Double getAnnualAverage() {
+            return annualAverage;
+        }
+
+        public void setAnnualAverage(Double v) {
+            this.annualAverage = v;
+        }
+
+        public Integer getAnnualRank() {
+            return annualRank;
+        }
+
+        public void setAnnualRank(Integer v) {
+            this.annualRank = v;
+        }
+
+        public List<String> getAnnualLostAreas() {
+            return annualLostAreas;
+        }
+
+        public void setAnnualLostAreas(List<String> v) {
+            this.annualLostAreas = v;
+        }
 
         // ── Getters y setters ─────────────────────────────────────────
         public Student getStudent() {

@@ -15,6 +15,9 @@ import java.util.ArrayList;
 @RequestMapping("/api/periods")
 public class PeriodController {
 
+    /** Máximo de períodos que se pueden tener creados a la vez. */
+    private static final int MAX_PERIODS = 12;
+
     private final PeriodRepository periodRepository;
     private final PeriodScheduler periodScheduler;
 
@@ -29,7 +32,7 @@ public class PeriodController {
         
         // Deduplicate: keep first occurrence by periodNumber
         periods = periods.stream()
-            .filter(p -> p.getPeriodNumber() != null && p.getPeriodNumber() >= 1 && p.getPeriodNumber() <= 4)
+            .filter(p -> p.getPeriodNumber() != null && p.getPeriodNumber() >= 1)
             .collect(java.util.stream.Collectors.toMap(
                 Period::getPeriodNumber,
                 p -> p,
@@ -56,8 +59,8 @@ public class PeriodController {
     @PutMapping("/{periodNumber}/unlock")
     public ResponseEntity<?> unlockPeriod(@PathVariable Integer periodNumber, @RequestBody Map<String, Object> body) {
         try {
-            if (periodNumber < 1 || periodNumber > 4) {
-                return ResponseEntity.badRequest().body(Map.of("error", "El período debe estar entre 1 y 4"));
+            if (periodNumber < 1 || periodNumber > MAX_PERIODS) {
+                return ResponseEntity.badRequest().body(Map.of("error", "El período debe estar entre 1 y " + MAX_PERIODS));
             }
             
             Boolean isUnlocked = Boolean.TRUE.equals(body.get("unlocked"));
@@ -182,22 +185,10 @@ public class PeriodController {
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/initialize")
     public ResponseEntity<?> initializePeriods() {
-        // Clean up duplicates first: keep only the lowest id for each period_number
-        List<Integer> periodNumbers = List.of(1, 2, 3, 4);
-        for (Integer pn : periodNumbers) {
-            List<Period> duplicates = periodRepository.findAllByPeriodNumber(pn);
-            if (duplicates.size() > 1) {
-                // Sort by id ascending, keep first, delete rest
-                duplicates.stream()
-                    .sorted((a, b) -> a.getId().compareTo(b.getId()))
-                    .skip(1)
-                    .forEach(periodRepository::delete);
-                System.out.println("Cleaned " + (duplicates.size() - 1) + " duplicates for period " + pn);
-            }
-        }
-        
-        for (int i = 1; i <= 4; i++) {
-            if (periodRepository.findByPeriodNumber(i).isEmpty()) {
+        // Solo si no hay ningún período (instalación nueva): se crean los 4 por
+        // defecto. Si el administrador quitó o agregó períodos, no se tocan.
+        if (periodRepository.count() == 0) {
+            for (int i = 1; i <= 4; i++) {
                 Period period = new Period();
                 period.setPeriodNumber(i);
                 period.setIsUnlocked(i == 1);
@@ -206,16 +197,45 @@ public class PeriodController {
                 periodRepository.save(period);
             }
         }
-        
-        // Limpiar períodos mayores a 4 si existen
-        List<Period> allPeriods = new ArrayList<>();
-        periodRepository.findAll().forEach(allPeriods::add);
-        for (Period p : allPeriods) {
-            if (p.getPeriodNumber() == null || p.getPeriodNumber() > 4) {
-                periodRepository.delete(p);
+        return ResponseEntity.ok(Map.of("message", "Periodos inicializados correctamente"));
+    }
+
+    /** Agrega un período nuevo: el siguiente número libre después del mayor existente. */
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping
+    public ResponseEntity<?> addPeriod() {
+        int next = 1;
+        for (Period p : periodRepository.findAll()) {
+            if (p.getPeriodNumber() != null && p.getPeriodNumber() >= next) {
+                next = p.getPeriodNumber() + 1;
             }
         }
-        
-        return ResponseEntity.ok(Map.of("message", "Periodos inicializados correctamente"));
+        if (next > MAX_PERIODS) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "No se pueden crear más de " + MAX_PERIODS + " períodos"));
+        }
+        Period period = new Period();
+        period.setPeriodNumber(next);
+        period.setIsUnlocked(false);
+        period.setIsAutomatic(false);
+        period.setDescription("Período " + next + " del año académico");
+        Period saved = periodRepository.save(period);
+        return ResponseEntity.ok(saved);
+    }
+
+    /** Quita un período (no borra las notas ya registradas en él). */
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/{periodNumber}")
+    public ResponseEntity<?> removePeriod(@PathVariable Integer periodNumber) {
+        List<Period> found = periodRepository.findAllByPeriodNumber(periodNumber);
+        if (found.isEmpty()) {
+            return ResponseEntity.status(404).body(Map.of("error", "El período " + periodNumber + " no existe"));
+        }
+        if (periodRepository.count() <= 1) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Debe quedar al menos un período"));
+        }
+        periodRepository.deleteAll(found);
+        return ResponseEntity.ok(Map.of("removed", periodNumber));
     }
 }
