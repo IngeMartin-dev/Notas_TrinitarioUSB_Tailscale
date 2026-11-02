@@ -244,12 +244,19 @@ def try_split_and_merge(html_text, out_path):
         if "materia-block--vacio" not in (b.get("class") or [])
     ]
 
+    # Los <script> de la plantilla (parten en varias lineas los textos largos
+    # -objetivos, Comportamiento Social, Valoracion Acudiente- y comprimen los
+    # que no caben) deben viajar con cada parte: sin ellos el texto largo se
+    # sale de su recuadro en una sola linea.
+    scripts_html = "".join(str(s) for s in soup.find_all("script"))
+
     def wrap(body_inner):
         return (
             "<!DOCTYPE html><html><head><meta charset=\"utf-8\">"
             + style_html
             + "<style>body{margin:0;padding:0;}</style></head><body>"
             + body_inner
+            + scripts_html
             + "</body></html>"
         )
 

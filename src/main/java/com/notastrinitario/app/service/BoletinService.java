@@ -1374,8 +1374,14 @@ public class BoletinService {
             // mostrara materias duplicadas/ajenas al nivel. Ahora se filtra
             // siempre por el nivel exacto del grado, sin excepciones.
             String levelFinal = level;
+            // Excepción para 10°/11°: también cuentan las materias exclusivas de
+            // esos grados (gradeMin >= 10) aunque se hayan creado con nivel
+            // "bachillerato" (como en la pantalla de Materias, pestaña Media).
+            // Las materias de bachillerato que arrancan en 6° NO se mezclan.
+            final boolean esMedia = gradeNum >= 10;
             List<Subject> subjects = subjectRepository.findByGradeRange(gradeNum).stream()
-                    .filter(subject -> levelFinal.equalsIgnoreCase(subject.getLevel()))
+                    .filter(subject -> levelFinal.equalsIgnoreCase(subject.getLevel())
+                            || (esMedia && subject.getGradeMin() != null && subject.getGradeMin() >= 10))
                     .collect(Collectors.toCollection(ArrayList::new));
 
             if (!subjects.isEmpty()) {
