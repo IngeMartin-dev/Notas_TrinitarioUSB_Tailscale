@@ -583,7 +583,6 @@
   }
 }
 
-.btn-remove { color: #c62828; border-color: #c62828; }
 .add-period-row { display: flex; justify-content: center; margin: 20px 0; }
 .btn-add-period {
   display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px;
@@ -591,3 +590,14 @@
   font-size: 15px; font-weight: 600; cursor: pointer;
 }
 .btn-add-period:disabled { opacity: .6; cursor: not-allowed; }
+
+.period-card { position: relative; }
+.btn-close-period {
+  position: absolute; top: 8px; right: 8px; width: 28px; height: 28px; padding: 0;
+  border: none; border-radius: 50%; background: rgba(198, 40, 40, .12); color: #c62828;
+  display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 2;
+}
+.btn-close-period .material-icons { font-size: 18px; }
+.btn-close-period:hover { background: #c62828; color: #fff; }
+.btn-close-period:disabled { opacity: .5; cursor: not-allowed; }
+.period-card .period-header { padding-right: 34px; }

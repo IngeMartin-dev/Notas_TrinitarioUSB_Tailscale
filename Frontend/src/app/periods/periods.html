@@ -34,6 +34,11 @@
     <div class="periods-grid">
       @for (period of periods(); track period.id) {
         <div class="period-card" [class.locked]="!period.isUnlocked" [class.unlocked]="period.isUnlocked">
+          @if (isAdmin()) {
+            <button class="btn-close-period" (click)="removePeriod(period)" [disabled]="saving()" title="Quitar período" aria-label="Quitar período">
+              <span class="material-icons">close</span>
+            </button>
+          }
           <div class="period-header">
             <span class="period-number">Período {{ period.periodNumber }}</span>
             <span class="status-icon">
@@ -76,12 +81,6 @@
               <span class="material-icons">schedule</span>
               Programar
             </button>
-            @if (isAdmin()) {
-              <button class="btn-schedule btn-remove" (click)="removePeriod(period)" [disabled]="saving()" title="Quitar período">
-                <span class="material-icons">delete</span>
-                Quitar
-              </button>
-            }
           </div>
 
           <div class="period-description">
