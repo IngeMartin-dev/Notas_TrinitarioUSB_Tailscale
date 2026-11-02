@@ -50,11 +50,9 @@ public class DigitalSignatureService {
         return digitalSignatureRepository.countByReportCard(reportCard);
     }
 
+    // No se confía en X-Forwarded-For: lo puede escribir cualquier cliente y
+    // falsificaría la IP guardada como evidencia de la firma.
     private String getClientIpAddress(HttpServletRequest request) {
-        String xfHeader = request.getHeader("X-Forwarded-For");
-        if (xfHeader != null) {
-            return xfHeader.split(",")[0];
-        }
         return request.getRemoteAddr();
     }
 

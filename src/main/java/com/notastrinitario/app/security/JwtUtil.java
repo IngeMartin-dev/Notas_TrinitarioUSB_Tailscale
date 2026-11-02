@@ -49,7 +49,7 @@ public class JwtUtil {
                 "Config inválida: APP_JWT_SECRET es el valor que estuvo expuesto en el repositorio público. "
                 + "Genera un secreto nuevo con: openssl rand -hex 64");
         }
-        this.key = Keys.hmacShaKeyFor(secret.getBytes());
+        this.key = Keys.hmacShaKeyFor(secret.getBytes(java.nio.charset.StandardCharsets.UTF_8));
         this.validity = appProperties.getJwt().getExpiration();
         this.refreshValidity = appProperties.getJwt().getRefreshExpiration();
     }

@@ -236,7 +236,7 @@ public class UserServiceImpl implements UserService{
 	private String generateCode(String secret, long timeWindow) {
 		try {
 			String data = secret + ":" + timeWindow;
-			byte[] hash = data.getBytes();
+			byte[] hash = data.getBytes(java.nio.charset.StandardCharsets.UTF_8);
 			
 			int hashCode = 0;
 			for (byte b : hash) {
