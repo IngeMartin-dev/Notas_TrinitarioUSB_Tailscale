@@ -39,7 +39,7 @@ public class User implements UserDetails {
     @Size(min = 3, max = 100, message = "El usuario debe tener entre 3 y 100 caracteres")
     private String username;
 
-    @Column(name = "mail", nullable = false, length = 100, unique = true)
+    @Column(name = "mail", nullable = false, length = 100)
     @NotBlank(message = "El correo es obligatorio")
     @Email(message = "Formato de correo inválido")
     @Size(max = 200, message = "El correo no puede superar 200 caracteres")

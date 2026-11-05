@@ -95,9 +95,6 @@ public class TeacherController {
         if (userRepository.findByUsername(username).isPresent()) {
             return ResponseEntity.badRequest().body(Map.of("error", "username already in use"));
         }
-        if (userRepository.findByEmail(email).isPresent()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "email already in use"));
-        }
 
         User teacher = new User();
         teacher.setName(name.trim());

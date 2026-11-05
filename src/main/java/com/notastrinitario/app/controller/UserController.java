@@ -71,9 +71,6 @@ public class UserController {
 		if (username != null && !username.isBlank()) {
 			existing = userService.findByUsername(username.trim()).orElse(null);
 		}
-		if (existing == null && email != null && !email.isBlank()) {
-			existing = userService.findByEmail(email.trim()).orElse(null);
-		}
 
 		if (existing != null) {
 			existing.setName(user.getName());
@@ -123,11 +120,6 @@ public class UserController {
 		String nuevoEmail = dto.email().trim();
 		String nuevoUsername = dto.username().trim();
 
-		Optional<User> conEseCorreo = userRepository.findByEmail(nuevoEmail);
-		if (conEseCorreo.isPresent() && !conEseCorreo.get().getId().equals(userId)) {
-			return ResponseEntity.status(HttpStatus.CONFLICT)
-					.body(Map.of("error", "Ese correo ya está en uso por otra cuenta"));
-		}
 		Optional<User> conEseUsuario = userRepository.findByUsername(nuevoUsername);
 		if (conEseUsuario.isPresent() && !conEseUsuario.get().getId().equals(userId)) {
 			return ResponseEntity.status(HttpStatus.CONFLICT)
@@ -476,9 +468,6 @@ public class UserController {
 
         if (userRepository.findByUsername(username).isPresent()) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", "Ese nombre de usuario ya existe"));
-        }
-        if (userRepository.findByEmail(email).isPresent()) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", "Ese correo ya está registrado"));
         }
         var adminRole = roleRepository.findByName("ADMIN");
         if (adminRole == null) {
