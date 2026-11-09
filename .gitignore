@@ -48,6 +48,7 @@ venv/
 .env
 *.env
 application-local.properties
+profile-pictures
 
 # Secretos locales (nunca subir)
 .env
