@@ -210,9 +210,6 @@ public class ParentController {
             int maxBaseLength = Math.max(1, 100 - suffix.length());
             username = username.substring(0, maxBaseLength) + suffix;
         }
-        if (userRepository.findByEmail(email).isPresent()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "El correo ya está registrado"));
-        }
 
         User parent = new User();
         parent.setName(name.trim());

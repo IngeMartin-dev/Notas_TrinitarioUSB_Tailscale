@@ -727,7 +727,7 @@ public class BoletinService {
     // ─────────────────────────────────────────────────────────────────
 
     /** Cantidad de cupos de materia fijos que trae el diseño del PDF/SVG. */
-    private static final int MAX_MATERIAS_FIJAS = 35;
+    private static final int MAX_MATERIAS_FIJAS = 40;
     /** Cupos 1-16 = página 1 y 2 del diseño original (SVG fijo). */
     private static final int MATERIA_FIJA_BASE = 16;
 
@@ -839,22 +839,15 @@ public class BoletinService {
     }
 
     /**
-     * Oculta (display:none, vía clase CSS) los bloques de materia del 17
-     * al 35 que no tengan materia asignada, y la página contenedora
-     * completa si ninguno de sus cupos quedó lleno.
+     * Las hojas adicionales (cupos 17-28 y 29-40) se imprimen siempre completas,
+     * con sus 12 recuadros: los que no tienen materia quedan en blanco, igual que
+     * en la hoja 1. Solo se omite la hoja entera si ninguno de sus cupos tiene materia.
      */
     private String collapseCuposVacios(String html, int totalMaterias) {
-        // Página A = cupos 17-28, página B = cupos 29-35.
+        // Página A = cupos 17-28, página B = cupos 29-40.
         boolean paginaALlena = totalMaterias > MATERIA_FIJA_BASE;
         boolean paginaBLlena = totalMaterias > MATERIA_FIJA_BASE + 12;
 
-        for (int n = MATERIA_FIJA_BASE + 1; n <= MAX_MATERIAS_FIJAS; n++) {
-            if (n > totalMaterias) {
-                html = html.replace(
-                        "<div class=\"materia-block\" data-slot=\"" + n + "\">",
-                        "<div class=\"materia-block materia-block--vacio\" data-slot=\"" + n + "\">");
-            }
-        }
         if (!paginaALlena) {
             html = html.replace(
                     "<div class=\"materia-ext-page\" data-ext-page=\"A\">",

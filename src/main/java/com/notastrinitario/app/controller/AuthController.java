@@ -16,6 +16,7 @@ import jakarta.validation.Valid;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -147,7 +148,25 @@ public class AuthController {
         Optional<User> userOpt = userRepository.findByUsername(username);
 
         if (userOpt.isEmpty()) {
-            userOpt = userRepository.findByEmail(username);
+            // Un correo puede ser de varias cuentas: entra la que coincida con la contraseña.
+            // Si coinciden varias (misma contraseña), se pide iniciar sesión con el nombre de usuario.
+            List<User> conEseCorreo = userRepository.findAllByEmail(username);
+            if (conEseCorreo.size() == 1) {
+                userOpt = Optional.of(conEseCorreo.get(0));
+            } else if (conEseCorreo.size() > 1) {
+                List<User> coinciden = new ArrayList<>();
+                for (User c : conEseCorreo) {
+                    if (com.notastrinitario.app.security.PasswordSecurity.matches(password, c.getPassword())) {
+                        coinciden.add(c);
+                    }
+                }
+                if (coinciden.size() == 1) {
+                    userOpt = Optional.of(coinciden.get(0));
+                } else if (coinciden.size() > 1) {
+                    return ResponseEntity.status(409).body(Map.of("error",
+                        "Este correo lo comparten varias cuentas con la misma contraseña. Inicia sesión con tu nombre de usuario."));
+                }
+            }
         }
 
         if (userOpt.isPresent()) {
@@ -251,9 +270,6 @@ public class AuthController {
     public ResponseEntity<?> register(@Valid @RequestBody com.notastrinitario.app.dto.RegisterRequest req, HttpServletRequest request) {
         if (userRepository.findByUsername(req.username()).isPresent()) {
             return ResponseEntity.badRequest().body(Map.of("error", "username already in use"));
-        }
-        if (userRepository.findByEmail(req.email()).isPresent()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "email already in use"));
         }
         // El rol público de auto-registro es SIEMPRE PARENT; nunca lo elige el cliente.
         com.notastrinitario.app.entity.Role parentRole = roleRepository.findByName("PARENT");

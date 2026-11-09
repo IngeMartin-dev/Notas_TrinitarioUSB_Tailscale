@@ -9,7 +9,14 @@ import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByUsername(String username);
-    Optional<User> findByEmail(String email);
+    /** Todas las cuentas que comparten un correo (el correo ya no es único). */
+    List<User> findAllByEmail(String email);
+
+    /** La cuenta de ese correo, solo si es de UNA única persona; vacío si no existe o si lo comparten varias. */
+    default Optional<User> findByEmail(String email) {
+        List<User> todas = findAllByEmail(email);
+        return todas.size() == 1 ? Optional.of(todas.get(0)) : Optional.empty();
+    }
     @Query("SELECT u FROM User u JOIN u.role r WHERE UPPER(r.name) = UPPER(:roleName)")
     List<User> findByRoleName(@Param("roleName") String roleName);
     Optional<User> findByTemp2faCodeAndTemp2faExpiryGreaterThan(String temp2faCode, Long expiryTime);

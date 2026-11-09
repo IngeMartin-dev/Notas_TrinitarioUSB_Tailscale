@@ -239,9 +239,12 @@ def try_split_and_merge(html_text, out_path):
 
     # Todos los bloques de materia VISIBLES (no colapsados), en el
     # mismo orden en que aparecen en el documento.
+    # Solo los de hojas adicionales usadas: cada hoja sale siempre con sus 12
+    # recuadros (los sobrantes quedan en blanco, igual que en la hoja 1).
     visible_blocks = [
         b for b in soup.select(".materia-block")
         if "materia-block--vacio" not in (b.get("class") or [])
+        and b.find_parent(class_="materia-ext-page--vacia") is None
     ]
 
     # Los <script> de la plantilla (parten en varias lineas los textos largos
