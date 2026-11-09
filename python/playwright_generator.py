@@ -277,8 +277,6 @@ def try_split_and_merge(html_text, out_path):
     # altura exacta que necesita (sin dejar una pagina a medias).
     for i in range(0, len(visible_blocks), BLOCKS_POR_HOJA):
         chunk = visible_blocks[i:i + BLOCKS_POR_HOJA]
-        alto_contenido = len(chunk) * ALTO_BLOQUE_PX
-        alto_pagina_px = EXT_PAGE_PAD_TOP + alto_contenido + EXT_PAGE_PAD_BOTTOM
         bloques_html = "".join(str(b) for b in chunk)
         estilo_pagina = (
             "width:816px;box-sizing:border-box;"
@@ -288,7 +286,8 @@ def try_split_and_merge(html_text, out_path):
         )
         body_inner = f'<div style="{estilo_pagina}">{bloques_html}</div>'
         part_path = os.path.join(tmp_dir, f"_part_mid_{i}.pdf")
-        render_html_string(browser, wrap(body_inner), part_path, height_px=alto_pagina_px)
+        # Misma altura de pagina que la hoja 1: el PDF las escala igual (mismo tamano de letra y recuadros).
+        render_html_string(browser, wrap(body_inner), part_path)
         part_paths.append(part_path)
 
     # Pagina 2 (tamano fijo, sin cambios).
