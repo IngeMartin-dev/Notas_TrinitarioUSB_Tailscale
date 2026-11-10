@@ -1126,7 +1126,7 @@ public class BoletinService {
 
             String letra = escalaConductualLetra(valor);
             // 2 decimales exactos (no se trunca a 1 decimal).
-            String notaTexto = valor != null ? String.format("%.2f", valor) : "0";
+            String notaTexto = valor != null ? String.format("%.2f", valor) : "";
 
             r.put("{{P" + p + "_ACUDIENTE}}", notaTexto);
             r.put("{{ESCALA_P" + p + "_ACUDIENTE}}", letra);
@@ -1146,7 +1146,7 @@ public class BoletinService {
         r.put("{{ESCALA_FINAL_ACUDIENTE}}", escalaConductualLabel(letraFinalAcudiente));
         r.put("{{NOTA_ACUDIENTE}}", notaPeriodoActualAcudiente != null
                 ? String.format("%.2f", notaPeriodoActualAcudiente)
-                : "0");
+                : "");
         r.put("{{ACUMULADO_ACUDIENTE}}", periodoActual != null
                 ? String.format("%.2f", acumuladoAcudiente) + "%"
                 : "");
