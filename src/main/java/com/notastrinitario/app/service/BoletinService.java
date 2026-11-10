@@ -745,8 +745,9 @@ public class BoletinService {
         List<SubjectData> subjects = data.getSubjects() != null ? data.getSubjects() : new ArrayList<>();
 
         // ── Áreas perdidas (en mayúsculas) ──────────────────────────────
+        // Solo las áreas perdidas del periodo generado; sin ninguna queda únicamente el título "AREAS PERDIDAS:".
         String areasPerdidas = (data.getLostAreas() == null || data.getLostAreas().isEmpty())
-                ? "NINGUNA"
+                ? ""
                 : String.join(", ", data.getLostAreas()).toUpperCase();
 
         // ── Logo institucional (archivo fijo, no cambia por estudiante) ──
@@ -807,11 +808,9 @@ public class BoletinService {
             r.put("{{PUESTO_ANUAL}}", data.getAnnualRank() != null ? String.valueOf(data.getAnnualRank()) : "");
             r.put("{{DESEMPENO_ANUAL}}",
                     data.getAnnualAverage() != null ? valorLabel(data.getAnnualAverage()) : "N.A");
-            r.put("{{AREAS_PERDIDAS_LABEL}}", muestraPerdidas ? "AREAS PERDIDAS:" : "");
+            r.put("{{AREAS_PERDIDAS_LABEL}}", "AREAS PERDIDAS:");
             r.put("{{DEFINICION_ANIO}}", muestraPerdidas ? "NO PROMOVIDO" : "PROMOVIDO");
-            // En FINAL "áreas perdidas" son las del año (nota anual < mínima).
-            areasPerdidas = muestraPerdidas ? String.join(", ", perdidasAnual).toUpperCase() : "";
-            r.put("{{AREAS_PERDIDAS}}", escapeHtml(areasPerdidas));
+            // Las áreas perdidas mostradas son las del periodo generado (ya cargadas en {{AREAS_PERDIDAS}}).
         }
         r.put("{{LOGO_PATH}}", logoUri);
         r.put("{{FIRMA_IMAGEN}}", firmaUri);
