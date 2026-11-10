@@ -727,6 +727,12 @@ public class BoletinService {
     // ─────────────────────────────────────────────────────────────────
 
     /** Cantidad de cupos de materia fijos que trae el diseño del PDF/SVG. */
+    private static final java.text.Collator SUBJECT_COLLATOR = buildCollator();
+    private static java.text.Collator buildCollator() {
+        java.text.Collator c = java.text.Collator.getInstance(new java.util.Locale("es"));
+        c.setStrength(java.text.Collator.PRIMARY);
+        return c;
+    }
     private static final int MAX_MATERIAS_FIJAS = 40;
     /** Cupos 1-16 = página 1 y 2 del diseño original (SVG fijo). */
     private static final int MATERIA_FIJA_BASE = 16;
@@ -814,9 +820,21 @@ public class BoletinService {
         // para Comportamiento Social y Valoración Acudiente) — todos pasan
         // por el mismo fillMateriaSlot(), sin distinción entre "cupos
         // originales" y "cupos nuevos": el mismo mecanismo de siempre.
-        for (int i = 0; i < MAX_MATERIAS_FIJAS; i++) {
-            SubjectData sd = i < subjects.size() ? subjects.get(i) : null;
-            fillMateriaSlot(r, i + 1, sd, data.getPeriod());
+        // Orden de impresión: hoja 1 (1-12) → hojas adicionales (17..) → hoja final (13-16).
+        // Con más de 16 materias, las últimas 4 van a la hoja final para conservar el orden alfabético.
+        final int total = subjects.size();
+        SubjectData[] bySlot = new SubjectData[MAX_MATERIAS_FIJAS + 1];
+        for (int i = 0; i < Math.min(total, MAX_MATERIAS_FIJAS); i++) {
+            int slot = i + 1;
+            if (total > MATERIA_FIJA_BASE) {
+                if (i < 12) slot = i + 1;
+                else if (i >= total - 4) slot = 13 + (i - (total - 4));
+                else slot = 17 + (i - 12);
+            }
+            bySlot[slot] = subjects.get(i);
+        }
+        for (int n = 1; n <= MAX_MATERIAS_FIJAS; n++) {
+            fillMateriaSlot(r, n, bySlot[n], data.getPeriod());
         }
 
         // ── Comportamiento Social + Valoración Acudiente ───────────────
@@ -1388,16 +1406,10 @@ public class BoletinService {
             // el boletín (y su consolidado, que reutiliza este mismo listado)
             // mostrara materias duplicadas/ajenas al nivel. Ahora se filtra
             // siempre por el nivel exacto del grado, sin excepciones.
-            String levelFinal = level;
-            // Excepción para 10°/11°: también cuentan las materias exclusivas de
-            // esos grados (gradeMin >= 10) aunque se hayan creado con nivel
-            // "bachillerato" (como en la pantalla de Materias, pestaña Media).
-            // Las materias de bachillerato que arrancan en 6° NO se mezclan.
-            final boolean esMedia = gradeNum >= 10;
-            List<Subject> subjects = subjectRepository.findByGradeRange(gradeNum).stream()
-                    .filter(subject -> levelFinal.equalsIgnoreCase(subject.getLevel())
-                            || (esMedia && subject.getGradeMin() != null && subject.getGradeMin() >= 10))
-                    .collect(Collectors.toCollection(ArrayList::new));
+            // Cuentan todas las materias cuyo rango cubra el grado, sin exigir que el
+            // "nivel" coincida (una materia de relleno creada con otro nivel debe salir).
+            // Los duplicados por nombre se eliminan más abajo.
+            List<Subject> subjects = new ArrayList<>(subjectRepository.findByGradeRange(gradeNum));
 
             if (!subjects.isEmpty()) {
                 // Deduplicado por nombre (sin distinguir mayúsculas/minúsculas
@@ -1413,7 +1425,7 @@ public class BoletinService {
                 return uniqueByName.values().stream()
                         .map(Subject::getName)
                         .filter(n -> !isReservedSubjectName(n))
-                        .sorted()
+                        .sorted(SUBJECT_COLLATOR)
                         .collect(Collectors.toList());
             }
         }
@@ -1433,7 +1445,7 @@ public class BoletinService {
             return uniqueByName.values().stream()
                     .map(Subject::getName)
                     .filter(n -> !isReservedSubjectName(n))
-                    .sorted()
+                    .sorted(SUBJECT_COLLATOR)
                     .collect(Collectors.toList());
         }
 
