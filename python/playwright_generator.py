@@ -55,8 +55,8 @@ PAGE_HEIGHT_IN = 11.0
 # horizontal, ver CONSOLIDADO_WIDTH_IN/CONSOLIDADO_HEIGHT_IN más abajo).
 
 BLOCKS_POR_HOJA = 12
-ALTO_BLOQUE_PX = 92.16
-EXT_PAGE_PAD_TOP = 20
+ALTO_BLOQUE_PX = 91.84
+EXT_PAGE_PAD_TOP = 57  # = margen superior de la hoja 1
 EXT_PAGE_PAD_BOTTOM = 4
 EXT_PAGE_PAD_LEFT = 53.44
 EXT_PAGE_PAD_RIGHT = 30.4
@@ -226,7 +226,7 @@ def render_cierre(browser, html_str, out_path):
           bottom = Math.max(bottom, r.bottom - base);
         });
         if (top === null) return 0;
-        top = Math.max(0, top - 3);
+        top = Math.max(0, top - 1);
         bottom = bottom + 6;
         const alto = Math.ceil(bottom - top);
         const wrap = document.createElement('div');
