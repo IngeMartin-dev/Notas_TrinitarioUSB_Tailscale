@@ -851,15 +851,21 @@ public class BoletinService {
         // (subjects.size() no llega hasta ahí), simplemente se oculta ese
         // bloque (y la página completa si quedó sin ningún cupo lleno),
         // igual que "no aparece" cuando no se usa.
+        // Hojas adicionales: se ocultan los cupos sin materia (sin recuadros "fantasma").
+        for (int n = MATERIA_FIJA_BASE + 1; n <= MAX_MATERIAS_FIJAS; n++) {
+            if (bySlot[n] == null) {
+                result = result.replace("<div class=\"materia-block\" data-slot=\"" + n + "\">",
+                        "<div class=\"materia-block materia-block--vacio\" data-slot=\"" + n + "\">");
+            }
+        }
         result = collapseCuposVacios(result, subjects.size());
 
         return result;
     }
 
     /**
-     * Las hojas adicionales (cupos 17-28 y 29-40) se imprimen siempre completas,
-     * con sus 12 recuadros: los que no tienen materia quedan en blanco, igual que
-     * en la hoja 1. Solo se omite la hoja entera si ninguno de sus cupos tiene materia.
+     * Las hojas adicionales (cupos 17-28 y 29-40) solo imprimen los cupos con materia.
+     * Se omite la hoja entera si ninguno de sus cupos tiene materia.
      */
     private String collapseCuposVacios(String html, int totalMaterias) {
         // Página A = cupos 17-28, página B = cupos 29-40.
