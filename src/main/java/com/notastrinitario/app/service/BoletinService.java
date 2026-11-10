@@ -851,6 +851,10 @@ public class BoletinService {
         // (subjects.size() no llega hasta ahí), simplemente se oculta ese
         // bloque (y la página completa si quedó sin ningún cupo lleno),
         // igual que "no aparece" cuando no se usa.
+        // Con >16 y <=36 materias la hoja final solo lleva el cierre: el generador de PDF lo sube bajo la última materia.
+        if (total > MATERIA_FIJA_BASE && total <= 36) {
+            result = result.replace("</body>", "<!--cierre-solo--></body>");
+        }
         result = collapseCuposVacios(result, subjects.size());
 
         return result;

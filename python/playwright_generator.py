@@ -206,6 +206,42 @@ def render_html_string(browser, html_str, out_path, height_px=None):
     page.close()
 
 
+def render_cierre(browser, html_str, out_path):
+    """Renderiza SOLO el bloque de cierre de la hoja final (Comportamiento Social, Valoracion Acudiente,
+    Areas Perdidas, firmas y escala), recortado desde el titulo "COMPORTAMIENTO SOCIAL" hasta la ultima
+    linea de texto. Devuelve la altura en px de diseno del recorte (para saber si cabe en la hoja anterior)."""
+    page = browser.new_page()
+    page.set_content(html_str, wait_until="load")
+    page.emulate_media(media="print")
+    alto = page.evaluate("""() => {
+        const pg = document.querySelector('div.page');
+        if (!pg) return 0;
+        const base = pg.getBoundingClientRect().top;
+        let top = null, bottom = 0;
+        pg.querySelectorAll('text').forEach(function (el) {
+          const r = el.getBoundingClientRect();
+          if (r.width === 0 && r.height === 0) return;
+          const t = (el.textContent || '').trim();
+          if (top === null && t.indexOf('COMPORTAMIENTO SOCIAL') === 0) top = r.top - base;
+          bottom = Math.max(bottom, r.bottom - base);
+        });
+        if (top === null) return 0;
+        top = Math.max(0, top - 3);
+        bottom = bottom + 6;
+        const alto = Math.ceil(bottom - top);
+        const wrap = document.createElement('div');
+        wrap.style.cssText = 'width:816px;height:' + alto + 'px;overflow:hidden;position:relative;';
+        pg.parentNode.insertBefore(wrap, pg);
+        wrap.appendChild(pg);
+        pg.style.marginTop = (-top) + 'px';
+        return alto;
+    }""")
+    if alto:
+        page.pdf(path=out_path, width=f"{ORIG_WIDTH_IN}in", height=f"{alto}px", print_background=True)
+    page.close()
+    return alto
+
+
 def try_split_and_merge(html_text, out_path):
     """
     Si el HTML es un boletin con bloques de materias adicionales
@@ -273,10 +309,29 @@ def try_split_and_merge(html_text, out_path):
     render_html_string(browser, wrap(page1_html), p1_path)
     part_paths.append(p1_path)
 
-    # Materias adicionales: en grupos de hasta 12, cada hoja con la
-    # altura exacta que necesita (sin dejar una pagina a medias).
-    for i in range(0, len(visible_blocks), BLOCKS_POR_HOJA):
-        chunk = visible_blocks[i:i + BLOCKS_POR_HOJA]
+    # Si la hoja final no lleva materias (marca <!--cierre-solo-->), solo se imprime su bloque de cierre:
+    # se pega bajo la ultima materia de la ultima hoja adicional (o en hoja nueva si no cabe).
+    cierre_solo = "<!--cierre-solo-->" in html_text
+    def tiene_nombre(b):
+        n = b.select_one(".mb-materia-name")
+        return bool(n and n.get_text().strip())
+    hojas = [visible_blocks[i:i + BLOCKS_POR_HOJA] for i in range(0, len(visible_blocks), BLOCKS_POR_HOJA)]
+    cierre_path = None
+    cierre_alto = 0
+    cierre_en_ultima = False
+    if cierre_solo and hojas:
+        cierre_path = os.path.join(tmp_dir, "_part_cierre.pdf")
+        cierre_alto = render_cierre(browser, wrap(page2_html), cierre_path)
+        if cierre_alto:
+            reales = [b for b in hojas[-1] if tiene_nombre(b)]
+            if EXT_PAGE_PAD_TOP + len(reales) * ALTO_BLOQUE_PX + cierre_alto <= ORIG_HEIGHT_IN * 96 - 4:
+                hojas[-1] = reales
+                cierre_en_ultima = True
+        else:
+            cierre_solo = False
+
+    # Materias adicionales: en grupos de hasta 12 (misma altura que la hoja 1).
+    for i, chunk in enumerate(hojas):
         bloques_html = "".join(str(b) for b in chunk)
         estilo_pagina = (
             "width:816px;box-sizing:border-box;"
@@ -286,21 +341,36 @@ def try_split_and_merge(html_text, out_path):
         )
         body_inner = f'<div style="{estilo_pagina}">{bloques_html}</div>'
         part_path = os.path.join(tmp_dir, f"_part_mid_{i}.pdf")
-        # Misma altura de pagina que la hoja 1: el PDF las escala igual (mismo tamano de letra y recuadros).
         render_html_string(browser, wrap(body_inner), part_path)
         part_paths.append(part_path)
 
-    # Pagina 2 (tamano fijo, sin cambios).
-    p2_path = os.path.join(tmp_dir, "_part_p2.pdf")
-    render_html_string(browser, wrap(page2_html), p2_path)
-    part_paths.append(p2_path)
+    # Pagina 2 (tamano fijo, sin cambios) -- salvo que solo se imprima el cierre.
+    if not cierre_solo:
+        p2_path = os.path.join(tmp_dir, "_part_p2.pdf")
+        render_html_string(browser, wrap(page2_html), p2_path)
+        part_paths.append(p2_path)
 
-
-    # Combinar todas las partes en un solo PDF final, convirtiendo cada
-    # pagina a tamano CARTA (8.5in x 11in) en el proceso.
     writer = PdfWriter()
     for pp in part_paths:
         _append_pdf_as_letter(pp, writer)
+
+    if cierre_solo:
+        cierre_page = PdfReader(cierre_path).pages[0]
+        target_w = PAGE_WIDTH_IN * 72.0
+        target_h = PAGE_HEIGHT_IN * 72.0
+        escala = min(target_w / (ORIG_WIDTH_IN * 72.0), target_h / (ORIG_HEIGHT_IN * 72.0), 1.0)
+        ox = (target_w - ORIG_WIDTH_IN * 72.0 * escala) / 2.0
+        oy = (target_h - ORIG_HEIGHT_IN * 72.0 * escala) / 2.0
+        if cierre_en_ultima:
+            destino = writer.pages[-1]
+            y_top_px = EXT_PAGE_PAD_TOP + len(hojas[-1]) * ALTO_BLOQUE_PX
+        else:
+            destino = writer.add_blank_page(width=target_w, height=target_h)
+            y_top_px = EXT_PAGE_PAD_TOP
+        y = target_h - oy - (y_top_px + cierre_alto) * 0.75 * escala
+        destino.merge_transformed_page(cierre_page, Transformation().scale(escala, escala).translate(ox, y))
+        part_paths.append(cierre_path)
+
     with open(out_path, "wb") as f:
         writer.write(f)
 
