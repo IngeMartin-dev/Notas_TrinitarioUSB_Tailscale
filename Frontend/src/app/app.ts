@@ -155,6 +155,7 @@ export class App implements OnInit, OnDestroy {
       console.log('✅ User is authenticated, loading user data...');
       this.authService.getCurrentUser().subscribe({
         next: (user) => {
+          this.signalAppReady();
           console.log('✅ App - User loaded successfully:', user);
           // The auth service will update the currentUser through the subscription
           // Show sidebar immediately
@@ -176,17 +177,26 @@ export class App implements OnInit, OnDestroy {
           }
         },
         error: (err) => {
+          this.signalAppReady();
           console.error('❌ Failed to load user in app:', err);
           // Set user data to null instead of generic defaults
           this.currentUser.set(null);
         }
       });
     } else {
+      this.signalAppReady();
       console.log('❌ User not authenticated in app');
       // Set user data to null if not authenticated
       this.currentUser.set(null);
     }
 
+  }
+
+  /** Avisa a index.html que ya se validó la sesión: se quita la pantalla de carga. */
+  private signalAppReady() {
+    if (typeof window !== 'undefined') {
+      setTimeout(() => window.dispatchEvent(new Event('appReady')), 0);
+    }
   }
 
   startSidebarAnimation() {

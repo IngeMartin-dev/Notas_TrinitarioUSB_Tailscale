@@ -11,14 +11,5 @@ console.debug = () => {};
 console.info = () => {};
 
 bootstrapApplication(App, appConfig)
-  .then(() => {
-    // Hide the loading screen once the app is ready
-    const loadingElement = document.getElementById('loading');
-    if (loadingElement) {
-      loadingElement.classList.add('hidden');
-      setTimeout(() => {
-        loadingElement.style.display = 'none';
-      }, 300);
-    }
-  })
+  // La pantalla de carga (index.html) se oculta cuando la app emite "appReady" (sesión ya validada).
   .catch((err) => console.error(err));
