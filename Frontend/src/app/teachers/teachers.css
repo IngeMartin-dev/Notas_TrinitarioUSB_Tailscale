@@ -28,7 +28,7 @@
 
 .two-columns {
   display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--sp-4);
 }
 
@@ -41,6 +41,46 @@
 
 .column:first-child { padding: var(--sp-5); }
 .column:last-child { padding: var(--sp-4); }
+
+/* Escritorio: ambos paneles comparten altura y cada lista se desplaza
+   dentro de su propio espacio, sin mover toda la página. */
+@media (min-width: 901px) {
+  .two-columns {
+    height: clamp(360px, calc(100dvh - 270px), 760px);
+    min-height: 0;
+    align-items: stretch;
+  }
+
+  .two-columns > .column {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .two-columns > .column:first-child .teachers-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 2px 4px 4px 2px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .two-columns > .column:last-child .subjects-list {
+    flex: 1;
+    min-height: 0;
+    grid-template-columns: minmax(0, 1fr);
+    grid-auto-rows: max-content;
+    align-content: start;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .materia-columna { min-height: max-content; }
+}
 
 .column > h3 {
   margin: 0 0 var(--sp-4);
@@ -349,6 +389,7 @@
 
 .columna-header.primaria { background: var(--success); }
 .columna-header.bachillerato { background: var(--brand); }
+.columna-header.media { background: #0f766e; }
 
 .columna-header .icono { font-size: 1.3rem; }
 
@@ -480,6 +521,7 @@
   color: var(--brand);
   border: 1px solid var(--brand-100);
 }
+.subject-badge.media { background: #ccfbf1; color: #115e59; }
 
 /* ---------- Empty states ---------- */
 .empty-state {
@@ -1001,6 +1043,13 @@
   .teachers-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
+@media (min-width: 901px) {
+  /* Las secciones de nivel van apiladas dentro del panel de materias. */
+  .two-columns > .column:last-child .subjects-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 @media (max-width: 900px) {
   .two-columns { grid-template-columns: 1fr; }
   .subjects-list { grid-template-columns: 1fr; }
@@ -1010,6 +1059,38 @@
   .teachers-container { padding: var(--sp-4); }
   .column { padding: var(--sp-4); }
   .teachers-list { grid-template-columns: 1fr; }
+  /* Mantiene accesible el panel de materias sin tener que recorrer toda la lista. */
+  .two-columns > .column:first-child .teachers-list {
+    max-height: min(24vh, 210px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 2px 4px 4px 2px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .teacher-item {
+    min-height: 0;
+    padding: 0.65rem 2.8rem 0.65rem 0.7rem;
+  }
+  .teacher-info {
+    flex-direction: row;
+    align-items: center;
+    text-align: left;
+    gap: 0.65rem;
+  }
+  .teacher-avatar,
+  .teacher-photo { width: 2rem; height: 2rem; }
+  .teacher-name-row { justify-content: flex-start; margin: 0; }
+  .teacher-email,
+  .teacher-username,
+  .assigned-subjects-label { display: none; }
+  .assigned-subjects { align-items: flex-start; margin-top: 0.2rem; }
+  .teacher-subject-chips { justify-content: flex-start; flex-wrap: nowrap; overflow: hidden; }
+  .two-columns > .column:last-child .subjects-list {
+    max-height: min(48vh, 420px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
   .columna-body { grid-template-columns: 1fr; }
   .modal-content.large-modal { width: 100%; max-width: 100%; }
   .form-row { grid-template-columns: 1fr; }
