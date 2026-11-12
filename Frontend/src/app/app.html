@@ -222,6 +222,11 @@
               }
             </div>
           <div class="top-bar-actions">
+            @if (pwa.canInstall()) {
+              <button class="message-btn install-btn" (click)="pwa.install()" title="Instalar app" aria-label="Instalar app">
+                <span class="material-icons">get_app</span>
+              </button>
+            }
             <div class="message-container">
               <button class="message-btn" (click)="toggleMessagesDropdown()">
                 <span class="material-icons">mail</span>
@@ -346,6 +351,19 @@
 <!-- Diálogo global (alert/confirm) con pantalla propia de la app, en vez
      de los cuadros nativos del navegador ("localhost:4200 dice..."). -->
 <app-dialog></app-dialog>
+
+<!-- PWA: aviso de versión nueva. No recarga sola para no perder notas que se
+     estén digitando; el usuario decide cuándo actualizar. -->
+@if (pwa.updateReady()) {
+  <div class="pwa-update-toast" role="status" aria-live="polite">
+    <span class="material-icons">system_update_alt</span>
+    <span class="pwa-update-text">Hay una versión nueva de la app.</span>
+    <button type="button" class="pwa-update-btn" (click)="pwa.applyUpdate()">Actualizar</button>
+    <button type="button" class="pwa-update-close" (click)="pwa.updateReady.set(false)" aria-label="Más tarde">
+      <span class="material-icons">close</span>
+    </button>
+  </div>
+}
 
 <!-- Bloqueo obligatorio de consentimiento: se monta siempre, pero solo se
      renderiza a sí mismo (ver consent-gate.html) cuando hay un usuario

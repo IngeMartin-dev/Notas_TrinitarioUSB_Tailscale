@@ -1105,3 +1105,51 @@ input:checked + .slider:before {
     animation: none;
   }
 }
+
+/* ===== PWA: aviso de versión nueva ===== */
+.pwa-update-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 20px;
+  transform: translateX(-50%);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: calc(100vw - 24px);
+  padding: 10px 12px 10px 16px;
+  background: var(--surface, #ffffff);
+  color: var(--text, #1e293b);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.25);
+  font-size: 14px;
+}
+
+.pwa-update-toast .material-icons { font-size: 20px; color: var(--brand, #1b6aeb); }
+
+.pwa-update-btn {
+  border: none;
+  border-radius: 10px;
+  padding: 7px 14px;
+  background: var(--brand, #1b6aeb);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pwa-update-close {
+  display: inline-flex;
+  border: none;
+  background: none;
+  padding: 4px;
+  border-radius: 50%;
+  cursor: pointer;
+  color: var(--text-3, #64748b);
+}
+.pwa-update-close .material-icons { font-size: 18px; color: inherit; }
+
+/* Por encima de la barra de navegación inferior en móvil */
+@media (max-width: 768px) {
+  .pwa-update-toast { bottom: 84px; }
+}

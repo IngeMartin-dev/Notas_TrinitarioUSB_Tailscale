@@ -29,10 +29,17 @@ if (firebaseConfig.apiKey) {
   void messaging;
 }
 
+// Este service worker vive en su propio alcance (/firebase-cloud-messaging-push-scope)
+// para no chocar con el de Angular (PWA). Se activa de inmediato al actualizarse.
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()));
+
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   event.waitUntil(
-    self.clients.matchAll({ type: 'window' }).then((clientsArr) => {
+    // includeUncontrolled: las pestañas de la app las controla el service worker de
+    // Angular, no este; sin esta opción matchAll no las vería y siempre abriría otra ventana.
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientsArr) => {
       const hadWindowToFocus = clientsArr.some((client) => {
         if (client.url.includes(self.location.origin)) {
           client.focus();

@@ -6,6 +6,15 @@ import { initializeApp, FirebaseApp } from 'firebase/app';
 import { getMessaging, getToken, onMessage, Messaging } from 'firebase/messaging';
 import { FIREBASE_CONFIG, FIREBASE_VAPID_KEY, isFirebaseConfigured } from '../firebase-config';
 
+/**
+ * Alcance propio del service worker de Firebase.
+ * El service worker de Angular (PWA, ngsw-worker.js) ocupa el alcance "/", y solo
+ * puede haber UN service worker por alcance: si Firebase también se registrara en
+ * "/", cada uno reemplazaría al otro. Es el mismo alcance que usa Firebase por
+ * defecto. Las notificaciones push llegan igual (no dependen del alcance).
+ */
+const FCM_SW_SCOPE = '/firebase-cloud-messaging-push-scope';
+
 export interface PushNotificationPayload {
   title: string;
   body: string;
@@ -90,7 +99,9 @@ export class FirebasePushService {
       messagingSenderId: FIREBASE_CONFIG.messagingSenderId,
       appId: FIREBASE_CONFIG.appId
     });
-    return navigator.serviceWorker.register(`/firebase-messaging-sw.js?${params.toString()}`);
+    return navigator.serviceWorker.register(`/firebase-messaging-sw.js?${params.toString()}`, {
+      scope: FCM_SW_SCOPE
+    });
   }
 
   /**
@@ -196,8 +207,11 @@ export class FirebasePushService {
       } catch { /* sin soporte */ }
     };
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js')
-        .then(reg => reg ? reg.showNotification(title, options) : navigator.serviceWorker.ready.then(r => r.showNotification(title, options)))
+      // Se prefiere el service worker de Firebase: su "notificationclick" enfoca/abre la app.
+      navigator.serviceWorker.getRegistration(FCM_SW_SCOPE)
+        .then(reg => reg && reg.scope.endsWith(FCM_SW_SCOPE)
+          ? reg.showNotification(title, options)
+          : navigator.serviceWorker.ready.then(r => r.showNotification(title, options)))
         .catch(respaldo);
     } else {
       respaldo();

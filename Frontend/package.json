@@ -5,6 +5,7 @@
     "ng": "ng",
     "start": "ng serve",
     "start:clean": "rimraf .angular/cache && ng serve",
+    "start:pwa": "ng build && node serve-prod.mjs",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"

@@ -20,6 +20,7 @@ import { ConsentGate } from './legal/consent-gate/consent-gate';
 import { API_BASE_URL } from './config/api-base';
 import { ConnectionService } from './services/connection.service';
 import { ConnectionLost } from './connection-lost/connection-lost';
+import { PwaService } from './services/pwa.service';
 
 @Component({
   selector: 'app-root',
@@ -65,6 +66,7 @@ export class App implements OnInit, OnDestroy {
   private generationService = inject(GenerationService);
   private schoolYearService = inject(SchoolYearService);
   connection = inject(ConnectionService);
+  pwa = inject(PwaService);
 
   constructor() {
     // El ThemeService aplica el tema guardado automáticamente al iniciar.
