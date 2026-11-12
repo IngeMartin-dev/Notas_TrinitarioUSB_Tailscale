@@ -7,6 +7,7 @@ export interface MiBoletinDto {
   studentName: string;
   grade: string;
   classroom: string;
+  inactive?: boolean;
   period: number;
   fileName: string;
   sizeBytes: number;

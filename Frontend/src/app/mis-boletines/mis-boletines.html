@@ -24,7 +24,6 @@
       <h3>Todavía no hay boletines disponibles</h3>
       <p>
         Cuando el colegio genere el boletín de tu hijo(a), aparecerá aquí automáticamente.
-        Si tu hijo(a) está marcado como inactivo, sus boletines no se mostrarán hasta que sea reactivado.
       </p>
     </div>
   }
@@ -39,6 +38,14 @@
             <span class="student-meta">{{ grupo.grade }} · {{ grupo.classroom }}</span>
           </div>
         </div>
+
+        @if (grupo.inactive) {
+          <div class="empty-state">
+            <span class="material-icons">lock</span>
+            <h3>Boletines no disponibles</h3>
+            <p>Por favor, comunícate con el colegio y ponte a paz y salvo para poder ver los boletines de {{ grupo.studentName }}.</p>
+          </div>
+        }
 
         <div class="boletines-grid">
           @for (b of grupo.boletines; track trackByPeriod($index, b)) {

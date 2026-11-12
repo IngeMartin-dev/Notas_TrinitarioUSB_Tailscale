@@ -769,6 +769,21 @@ public class BoletinController {
         }
 
         List<Map<String, Object>> resultado = new ArrayList<>();
+        // Estudiantes inactivos: sin boletines; se devuelve un aviso para que el padre se ponga a paz y salvo.
+        User padre = currentUser();
+        if (padre != null) {
+            for (Student h : studentRepository.findByParentId(padre.getId())) {
+                if (h.isActive()) continue;
+                Map<String, Object> aviso = new java.util.LinkedHashMap<>();
+                aviso.put("inactive", true);
+                aviso.put("studentId", h.getId());
+                aviso.put("studentName", (h.getName() + " " + h.getSurname()).trim());
+                aviso.put("grade", h.getGrade());
+                aviso.put("classroom", h.getClassGroup());
+                aviso.put("generatedAt", "");
+                resultado.add(aviso);
+            }
+        }
         for (Student hijo : childrenResp.getBody()) {
             List<Map<String, Object>> generados = boletinService.listGeneratedForStudent(hijo);
             for (Map<String, Object> item : generados) {

@@ -10,6 +10,7 @@ interface StudentGroup {
   grade: string;
   classroom: string;
   boletines: MiBoletinDto[];
+  inactive?: boolean;
 }
 
 /**
@@ -71,7 +72,7 @@ export class MisBoletines implements OnInit, OnDestroy {
         g = { studentId: b.studentId, studentName: b.studentName, grade: b.grade, classroom: b.classroom, boletines: [] };
         mapa.set(b.studentId, g);
       }
-      g.boletines.push(b);
+      if (b.inactive) { g.inactive = true; } else { g.boletines.push(b); }
     }
     for (const g of mapa.values()) {
       g.boletines.sort((a, b) => a.period - b.period);

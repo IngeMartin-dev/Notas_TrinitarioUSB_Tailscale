@@ -26,6 +26,7 @@ export interface MisNotasHijo {
   grade: string;
   classroom: string;
   minPassingGrade: number;
+  active?: boolean;
   periods: MiPeriodo[];
 }
 

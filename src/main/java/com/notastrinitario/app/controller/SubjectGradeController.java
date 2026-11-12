@@ -339,9 +339,8 @@ public class SubjectGradeController {
 
         Double minPassingGrade = schoolYearService.getConfig().getMinPassingGrade();
 
-        List<Student> hijosActivos = studentRepository.findByParentId(user.getId()).stream()
-                .filter(Student::isActive)
-                .collect(Collectors.toList());
+        // Se incluyen también los inactivos: no se les envían notas, solo el aviso de paz y salvo.
+        List<Student> hijosActivos = studentRepository.findByParentId(user.getId());
 
         List<Map<String, Object>> resultado = new ArrayList<>();
         for (Student hijo : hijosActivos) {
@@ -351,6 +350,12 @@ public class SubjectGradeController {
             childData.put("grade", hijo.getGrade());
             childData.put("classroom", hijo.getClassGroup());
             childData.put("minPassingGrade", minPassingGrade);
+            childData.put("active", hijo.isActive());
+            if (!hijo.isActive()) {
+                childData.put("periods", new ArrayList<Map<String, Object>>());
+                resultado.add(childData);
+                continue;
+            }
 
             List<Map<String, Object>> periodosOut = new ArrayList<>();
             for (int period = 1; period <= 4; period++) {
