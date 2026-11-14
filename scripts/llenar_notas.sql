@@ -13,6 +13,7 @@
 -- * Requiere MySQL 8+.
 -- ============================================================================
 USE db_notastrinitario;
+SET SQL_SAFE_UPDATES = 0;   -- Workbench bloquea DELETE sin clave (error 1175); esto lo permite en esta sesión
 
 -- ---- AJUSTA ESTOS 3 VALORES --------------------------------------------------
 SET @nota_min = 3.5;
@@ -63,3 +64,5 @@ SELECT id, name, level, grade_min, grade_max FROM subjects WHERE teacher_id IS N
 
 -- ---- DESHACER (descomenta para borrar lo que puso este script) ----------------
 -- DELETE FROM subject_grades WHERE LOWER(grade_name) IN ('act1','act2','act3','eval.period','nfinal');
+
+SET SQL_SAFE_UPDATES = 1;
