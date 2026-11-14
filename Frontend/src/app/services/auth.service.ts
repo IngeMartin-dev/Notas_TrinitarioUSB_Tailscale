@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError, BehaviorSubject } from 'rxjs';
+import { API_BASE_URL } from '../config/api-base';
 import { catchError, tap } from 'rxjs/operators';
 
 export interface LoginRequest {
@@ -36,10 +37,28 @@ export class AuthService {
   private readonly API_URL = 'http://localhost:8080/api/auth';
   private readonly API_BASE = 'http://localhost:8080/api';
   public readonly API_BASE_URL = 'http://localhost:8080/api';
-  private currentUserSubject = new BehaviorSubject<any>(null);
+  private currentUserSubject = new BehaviorSubject<any>(AuthService.readStoredUser());
   public currentUser$ = this.currentUserSubject.asObservable();
+  /** true solo cuando el servidor entregó el usuario en esta carga (no el guardado). */
+  public serverUserLoaded = false;
 
   constructor(private http: HttpClient) {}
+
+  /**
+   * Último usuario que entregó el servidor, si todavía hay sesión. Con él el menú y los
+   * guards de rutas funcionan al instante aunque /me tarde o falle un momento (si el
+   * servidor dice que la sesión ya no vale, el interceptor la cierra igual).
+   */
+  private static readStoredUser(): any | null {
+    try {
+      if (!localStorage.getItem('token')) return null;
+      const raw = localStorage.getItem('currentUser');
+      const user = raw ? JSON.parse(raw) : null;
+      return user && typeof user === 'object' && user.role ? user : null;
+    } catch {
+      return null;
+    }
+  }
 
   login(credentials: LoginRequest): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${this.API_URL}/login`, credentials)
@@ -76,10 +95,27 @@ export class AuthService {
   }
 
   logout(): void {
+    // Cierra también la sesión en el servidor. Antes solo se borraban los datos del
+    // navegador: la sesión seguía viva en la base y "Sesiones activas" se llenaba de
+    // dispositivos que ya no estaban conectados. Es "dispara y olvida": si no hay red,
+    // igual se cierra aquí. Se usa fetch (no HttpClient) para no pasar por el
+    // interceptor, que ante un 401 intentaría refrescar la sesión.
+    const refreshToken = localStorage.getItem('refreshToken');
+    if (refreshToken && typeof fetch === 'function') {
+      try {
+        fetch(`${API_BASE_URL}/api/auth/logout`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refreshToken }),
+          keepalive: true
+        }).catch(() => { /* sin conexión: no importa */ });
+      } catch { /* no importa */ }
+    }
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('role');
     localStorage.removeItem('currentUser');
+    this.serverUserLoaded = false;
     this.currentUserSubject.next(null);
   }
 
@@ -103,6 +139,7 @@ export class AuthService {
     return this.http.get<any>(`${this.API_URL}/me`)
       .pipe(
         tap(user => {
+          this.serverUserLoaded = true;
           this.currentUserSubject.next(user);
           localStorage.setItem('currentUser', JSON.stringify(user));
         }),

@@ -76,6 +76,46 @@ public class RefreshTokenService {
         return true;
     }
 
+    /** ¿La sesión con este id sigue existiendo y sin vencer? Lo consulta el filtro JWT. */
+    public boolean isSessionActive(Long sessionId) {
+        return refreshTokenRepository.findById(sessionId)
+                .map(rt -> rt.getExpiresAt().isAfter(LocalDateTime.now()))
+                .orElse(false);
+    }
+
+    /** Cierra la sesión dueña de este refresh token (cerrar sesión). true si existía. */
+    @Transactional
+    public boolean revokeByToken(String token) {
+        Optional<RefreshToken> found = refreshTokenRepository.findByToken(token);
+        if (found.isEmpty()) {
+            return false;
+        }
+        refreshTokenRepository.delete(found.get());
+        return true;
+    }
+
+    /**
+     * Cierra todas las sesiones del usuario MENOS la que se está usando.
+     * Devuelve cuántas cerró, o -1 si el token "actual" no pertenece a este usuario
+     * (en ese caso no se borra nada, para no cerrarle también su propia sesión).
+     */
+    @Transactional
+    public int revokeOthers(Long userId, String currentToken) {
+        Optional<RefreshToken> current = refreshTokenRepository.findByToken(currentToken);
+        if (current.isEmpty() || !current.get().getUser().getId().equals(userId)) {
+            return -1;
+        }
+        Long currentId = current.get().getId();
+        int closed = 0;
+        for (RefreshToken rt : refreshTokenRepository.findByUserIdOrderByLastUsedAtDesc(userId)) {
+            if (!rt.getId().equals(currentId)) {
+                refreshTokenRepository.delete(rt);
+                closed++;
+            }
+        }
+        return closed;
+    }
+
     /** Reemplaza UNA sesión puntual por otra nueva (usado en /api/auth/refresh):
      *  borra solo el refresh token viejo que se está canjeando, sin tocar
      *  las sesiones de otros dispositivos del mismo usuario. */

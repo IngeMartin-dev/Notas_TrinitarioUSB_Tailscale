@@ -1,0 +1,6 @@
+Fuentes alojadas en el propio proyecto (antes se descargaban de Google Fonts en cada dispositivo).
+
+- material-icons.woff2            Material Icons (Google) - Apache License 2.0
+                                  https://github.com/google/material-design-icons  (paquete npm "material-icons" 1.13.14)
+- plus-jakarta-sans-*.woff2       Plus Jakarta Sans (Tokotype) - SIL Open Font License 1.1
+                                  https://github.com/tokotype/PlusJakartaSans  (paquete npm "@fontsource-variable/plus-jakarta-sans" 5.3.0)

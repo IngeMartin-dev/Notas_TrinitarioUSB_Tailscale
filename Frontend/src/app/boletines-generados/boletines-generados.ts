@@ -4,6 +4,8 @@ import { PeriodOptionsService } from '../services/period-options.service';
 import { FormsModule } from '@angular/forms';
 import { BoletinesGeneradosService, BoletinGeneradoDto } from '../services/boletines-generados.service';
 import { DialogService } from '../services/dialog.service';
+import { PdfViewer } from '../pdf-viewer/pdf-viewer';
+import { downloadBlob, pdfFileName } from '../pdf-viewer/pdf-download';
 
 interface BoletinCard extends BoletinGeneradoDto {
   displayName: string;
@@ -12,7 +14,7 @@ interface BoletinCard extends BoletinGeneradoDto {
 @Component({
   selector: 'app-boletines-generados',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PdfViewer],
   templateUrl: './boletines-generados.html',
   styleUrls: ['./boletines-generados.css']
 })
@@ -95,18 +97,46 @@ export class BoletinesGenerados implements OnInit {
 
   descargando: { [key: string]: boolean } = {};
 
+  /** Vista previa abierta (null = cerrada). */
+  preview: { blob: Blob; fileName: string; title: string } | null = null;
+  /** Evita pedir el PDF dos veces si se toca la tarjeta varias veces seguidas. */
+  private pidiendo = new Set<string>();
+
+  /** Botón "Descargar": guarda el archivo en el dispositivo (NO abre la vista previa). */
   descargar(b: BoletinGeneradoDto) {
+    this.obtenerPdf(b, (blob) => downloadBlob(blob, pdfFileName(b.fileName)));
+  }
+
+  /** Tocar el boletín (el PDF): abre la vista previa. */
+  verVistaPrevia(b: BoletinGeneradoDto) {
+    this.obtenerPdf(b, (blob) => {
+      this.preview = { blob, fileName: pdfFileName(b.fileName), title: this.nombreLegible(b) };
+    });
+  }
+
+  cerrarVistaPrevia() {
+    this.preview = null;
+  }
+
+  private nombreLegible(b: BoletinGeneradoDto): string {
+    return b.fileName.replace(/\.pdf$/i, '').replace(/_/g, ' ');
+  }
+
+  private obtenerPdf(b: BoletinGeneradoDto, alTerminar: (blob: Blob) => void) {
     const key = b.fileName + b.period;
+    if (this.pidiendo.has(key)) return;
+    this.pidiendo.add(key);
     this.descargando[key] = true;
     this.service.descargarPdf(b).subscribe({
       next: (blob) => {
-        const url = URL.createObjectURL(blob);
-        window.open(url, '_blank');
+        this.pidiendo.delete(key);
         this.descargando[key] = false;
+        alTerminar(blob);
       },
       error: () => {
+        this.pidiendo.delete(key);
         this.descargando[key] = false;
-        this.dialogService.alert('No se pudo descargar el boletín. Verifica que tu sesión siga activa.', 'Error al descargar');
+        this.dialogService.alert('No se pudo obtener el boletín. Verifica que tu sesión siga activa.', 'Error al abrir el boletín');
       }
     });
   }

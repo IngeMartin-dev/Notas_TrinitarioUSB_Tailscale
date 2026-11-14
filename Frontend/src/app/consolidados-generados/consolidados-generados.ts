@@ -5,6 +5,8 @@ import { Router } from '@angular/router';
 import { ConsolidadosGeneradosService, ConsolidadoGeneradoDto } from '../services/consolidados-generados.service';
 import { DialogService } from '../services/dialog.service';
 import { PeriodOptionsService } from '../services/period-options.service';
+import { PdfViewer } from '../pdf-viewer/pdf-viewer';
+import { downloadBlob, pdfFileName } from '../pdf-viewer/pdf-download';
 
 interface ConsolidadoCard extends ConsolidadoGeneradoDto {
   displayName: string;
@@ -23,7 +25,7 @@ interface ConsolidadoCard extends ConsolidadoGeneradoDto {
 @Component({
   selector: 'app-consolidados-generados',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PdfViewer],
   templateUrl: './consolidados-generados.html',
   styleUrls: ['./consolidados-generados.css']
 })
@@ -110,18 +112,41 @@ export class ConsolidadosGenerados implements OnInit {
       }));
   }
 
+  /** Vista previa abierta (null = cerrada). */
+  preview: { blob: Blob; fileName: string; title: string } | null = null;
+  private pidiendo = new Set<string>();
+
+  /** Botón "Descargar": guarda el archivo en el dispositivo (NO abre la vista previa). */
   descargar(c: ConsolidadoGeneradoDto) {
+    this.obtenerPdf(c, (blob) => downloadBlob(blob, pdfFileName(c.fileName)));
+  }
+
+  /** Tocar el consolidado (el PDF): abre la vista previa. */
+  verVistaPrevia(c: ConsolidadoGeneradoDto) {
+    this.obtenerPdf(c, (blob) => {
+      this.preview = { blob, fileName: pdfFileName(c.fileName), title: c.fileName.replace(/\.pdf$/i, '').replace(/_/g, ' ') };
+    });
+  }
+
+  cerrarVistaPrevia() {
+    this.preview = null;
+  }
+
+  private obtenerPdf(c: ConsolidadoGeneradoDto, alTerminar: (blob: Blob) => void) {
     const key = c.fileName + c.period;
+    if (this.pidiendo.has(key)) return;
+    this.pidiendo.add(key);
     this.descargando[key] = true;
     this.service.descargarPdf(c).subscribe({
       next: (blob) => {
-        const url = URL.createObjectURL(blob);
-        window.open(url, '_blank');
+        this.pidiendo.delete(key);
         this.descargando[key] = false;
+        alTerminar(blob);
       },
       error: () => {
+        this.pidiendo.delete(key);
         this.descargando[key] = false;
-        this.dialogService.alert('No se pudo descargar el consolidado. Verifica que tu sesión siga activa.', 'Error al descargar');
+        this.dialogService.alert('No se pudo obtener el consolidado. Verifica que tu sesión siga activa.', 'Error al abrir el consolidado');
       }
     });
   }

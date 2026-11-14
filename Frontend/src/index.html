@@ -24,10 +24,11 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Sistema de Gestión de Calificaciones - Notas Trinitario">
-   <link rel="preconnect" href="https://fonts.googleapis.com">
-   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+   <!-- Fuentes e iconos alojados en el proyecto (ver src/fonts.css): ya no se
+        descargan de Google, así que no fallan en redes lentas o bloqueadas.
+        El preload las pide desde el primer instante, junto con el HTML. -->
+   <link rel="preload" href="fonts/material-icons.woff2" as="font" type="font/woff2" crossorigin>
+   <link rel="preload" href="fonts/plus-jakarta-sans-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
    <!-- KaTeX CSS -->
    <link href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" rel="stylesheet">
    <!-- KaTeX Core (required for auto-render) -->
@@ -115,7 +116,15 @@
         el.classList.add('hidden');
         setTimeout(function () { el.style.display = 'none'; }, 300);
       }
-      window.addEventListener('appReady', hide);
+      // Antes de quitar la pantalla de carga se espera a que los iconos estén listos
+      // (tope 3 s), para que nunca se vean como palabras ("dashboard", "school"...).
+      function hideWhenIconsReady() {
+        var fonts = document.fonts;
+        if (!fonts || !fonts.load) { hide(); return; }
+        var timeout = new Promise(function (r) { setTimeout(r, 3000); });
+        Promise.race([fonts.load('24px "Material Icons"', 'menu'), timeout]).then(hide, hide);
+      }
+      window.addEventListener('appReady', hideWhenIconsReady);
       setTimeout(hide, 20000);
     })();
   </script>

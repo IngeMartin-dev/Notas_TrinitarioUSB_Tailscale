@@ -1187,3 +1187,26 @@
 /* El correo/enlace de contacto se parte en vez de salirse de la pantalla. */
 .about-contact { min-width: 0; }
 .about-contact-text { min-width: 0; overflow-wrap: anywhere; }
+
+/* Botón "Cerrar las demás sesiones" del modal de Sesiones activas */
+.sessions-revoke-others {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 14px;
+  padding: 11px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(229, 57, 53, 0.4);
+  background: rgba(229, 57, 53, 0.08);
+  color: #e53935;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.sessions-revoke-others:hover:not(:disabled) { background: rgba(229, 57, 53, 0.15); }
+.sessions-revoke-others:disabled { opacity: 0.55; cursor: not-allowed; }
+.sessions-revoke-others .material-icons { font-size: 20px; }

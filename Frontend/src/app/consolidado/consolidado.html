@@ -65,17 +65,13 @@
           </div>
         }
 
-        @if (pdfPreviewUrl) {
-          <div class="pdf-preview-toolbar">
-            <span>Vista previa del consolidado</span>
-            <button class="download-btn" (click)="descargarPdf()">
-              <span class="material-icons">download</span> Descargar
-            </button>
-          </div>
-          <iframe class="pdf-preview" [src]="pdfPreviewUrl" title="Vista previa del consolidado"></iframe>
+        @if (pdfBlob) {
+          <!-- El visor trae su propia barra con zoom y el botón Descargar. -->
+          <app-pdf-viewer [blob]="pdfBlob" [fileName]="pdfFileName"
+                          [title]="'Consolidado · ' + selectedGrade + ' ' + selectedClassroom + ' · Período ' + selectedPeriod"></app-pdf-viewer>
         }
 
-        @if (!pdfPreviewUrl && !errorMessage && !isGenerating) {
+        @if (!pdfBlob && !errorMessage && !isGenerating) {
           <div class="empty-state">
             <span class="material-icons">picture_as_pdf</span>
             <h3>Listo para generar</h3>

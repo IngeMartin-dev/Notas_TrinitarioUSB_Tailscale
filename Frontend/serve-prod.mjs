@@ -62,7 +62,13 @@ function proxy(req, res) {
       port: BACKEND.port || 80,
       path: req.url,
       method: req.method,
-      headers: { ...req.headers, host: BACKEND.host }, // equivale a changeOrigin: true
+      headers: {
+        ...req.headers,
+        host: BACKEND.host, // equivale a changeOrigin: true
+        // IP real de quien se conecta (el backend la muestra en "Sesiones activas"). Si Tailscale
+        // Funnel ya mandó la suya, esa va primero; si no, se usa la de esta conexión.
+        'x-forwarded-for': [req.headers['x-forwarded-for'], req.socket.remoteAddress].filter(Boolean).join(', '),
+      },
     },
     (up) => {
       res.writeHead(up.statusCode || 502, up.headers);

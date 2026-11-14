@@ -14,7 +14,8 @@
           "/manifest.webmanifest",
           "/*.css",
           "/*.js",
-          "!/firebase-messaging-sw.js"
+          "!/firebase-messaging-sw.js",
+          "/fonts/*.woff2"
         ]
       }
     },

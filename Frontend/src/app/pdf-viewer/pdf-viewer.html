@@ -1,0 +1,66 @@
+<div class="pdf-overlay" [class.is-modal]="modal" (click)="onBackdrop($event)">
+  <section class="pdf-panel" [attr.role]="modal ? 'dialog' : 'region'" [attr.aria-modal]="modal ? 'true' : null"
+           aria-label="Vista previa del PDF">
+
+    <header class="pdf-toolbar">
+      <div class="pdf-title">
+        <span class="material-icons pdf-title-icon" aria-hidden="true">picture_as_pdf</span>
+        <div class="pdf-title-text">
+          <strong>{{ title || fileName }}</strong>
+          @if (pageCount() > 0) {
+            <span class="pdf-pageinfo">Página {{ currentPage() }} de {{ pageCount() }}</span>
+          }
+        </div>
+      </div>
+
+      <div class="pdf-actions">
+        <div class="pdf-zoom" role="group" aria-label="Zoom">
+          <button type="button" class="pdf-icon-btn" (click)="zoomOut()" [disabled]="status() !== 'ready' || zoom() <= 0.5"
+                  title="Alejar" aria-label="Alejar">
+            <span class="material-icons">remove</span>
+          </button>
+          <button type="button" class="pdf-zoom-value" (click)="zoomFit()" [disabled]="status() !== 'ready'"
+                  title="Ajustar al ancho" aria-label="Ajustar al ancho">{{ zoomPercent() }}</button>
+          <button type="button" class="pdf-icon-btn" (click)="zoomIn()" [disabled]="status() !== 'ready' || zoom() >= 4"
+                  title="Acercar" aria-label="Acercar">
+            <span class="material-icons">add</span>
+          </button>
+        </div>
+
+        <button type="button" class="pdf-download-btn" (click)="download()" [disabled]="!blob"
+                title="Descargar PDF" aria-label="Descargar PDF">
+          <span class="material-icons">download</span>
+          <span class="pdf-btn-text">Descargar</span>
+        </button>
+
+        @if (modal) {
+          <button type="button" class="pdf-icon-btn pdf-close-btn" (click)="close()" title="Cerrar" aria-label="Cerrar vista previa">
+            <span class="material-icons">close</span>
+          </button>
+        }
+      </div>
+    </header>
+
+    <div class="pdf-scroller" #scroller (scroll)="onScroll()">
+      <div class="pdf-pages" #pages></div>
+
+      @if (status() === 'loading') {
+        <div class="pdf-state" role="status" aria-live="polite">
+          <div class="pdf-spinner"></div>
+          <p>Cargando vista previa…</p>
+        </div>
+      }
+
+      @if (status() === 'error') {
+        <div class="pdf-state pdf-state-error" role="alert">
+          <span class="material-icons">error_outline</span>
+          <p>No se pudo mostrar la vista previa en este dispositivo.</p>
+          <button type="button" class="pdf-download-btn" (click)="download()">
+            <span class="material-icons">download</span>
+            <span>Descargar el PDF</span>
+          </button>
+        </div>
+      }
+    </div>
+  </section>
+</div>

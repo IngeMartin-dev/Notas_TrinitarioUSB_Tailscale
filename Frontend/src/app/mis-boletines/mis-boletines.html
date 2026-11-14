@@ -49,7 +49,7 @@
 
         <div class="boletines-grid">
           @for (b of grupo.boletines; track trackByPeriod($index, b)) {
-            <div class="boletin-card a11y-clickable" role="button" tabindex="0" aria-label="Descargar boletín" (click)="descargar(b)" (keydown.enter)="descargar(b)" (keydown.space)="descargar(b); $event.preventDefault()">
+            <div class="boletin-card a11y-clickable" role="button" tabindex="0" aria-label="Ver vista previa del boletín" (click)="verVistaPrevia(b)" (keydown.enter)="verVistaPrevia(b)" (keydown.space)="verVistaPrevia(b); $event.preventDefault()">
               <div class="boletin-icon">
                 <span class="material-icons">picture_as_pdf</span>
               </div>
@@ -57,7 +57,9 @@
                 <h4>Período {{ b.period }}</h4>
                 <p class="boletin-meta">{{ formatearFecha(b.generatedAt) }}</p>
               </div>
-              <button class="download-btn" title="Descargar" aria-label="Descargar boletín" [disabled]="descargando[grupo.studentId + '-' + b.period]">
+              <button type="button" class="download-btn" title="Descargar" aria-label="Descargar boletín" [disabled]="descargando[grupo.studentId + '-' + b.period]"
+                      (click)="$event.stopPropagation(); descargar(b)"
+                      (keydown.enter)="$event.stopPropagation()" (keydown.space)="$event.stopPropagation()">
                 <span class="material-icons">{{ descargando[grupo.studentId + '-' + b.period] ? 'hourglass_empty' : 'download' }}</span>
               </button>
             </div>
@@ -67,3 +69,8 @@
     }
   }
 </div>
+
+@if (preview) {
+  <app-pdf-viewer [blob]="preview.blob" [fileName]="preview.fileName" [title]="preview.title"
+                  [modal]="true" (closed)="cerrarVistaPrevia()"></app-pdf-viewer>
+}

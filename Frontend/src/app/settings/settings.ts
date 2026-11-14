@@ -116,6 +116,7 @@ export class Settings implements OnInit, OnDestroy {
     createdAt: string; lastUsedAt: string; current: boolean;
   }>>([]);
   revokingSessionId = signal<number | null>(null);
+  revokingOthers = signal(false);
   
   // Edit profile fields
   isEditingProfile = signal(false);
@@ -550,6 +551,41 @@ export class Settings implements OnInit, OnDestroy {
         console.error('Error revoking session:', err);
         this.revokingSessionId.set(null);
         this.sessionsError.set('No se pudo cerrar esa sesión. Intenta de nuevo.');
+      }
+    });
+  }
+
+  /** "13 nov 2026, 10:00 p. m." (en español; antes la plantilla usaba el pipe date, que no estaba importado y rompía la lista). */
+  formatSessionDate(iso: string | null | undefined): string {
+    if (!iso) return 'sin datos';
+    try {
+      return new Date(iso).toLocaleString('es-CO', {
+        day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+      });
+    } catch {
+      return String(iso);
+    }
+  }
+
+  /** Cierra la sesión de todos los demás dispositivos y deja solo este. */
+  async revokeOtherSessions() {
+    const confirmed = await this.dialogService.confirm(
+      'Se cerrará tu sesión en todos los demás dispositivos. Este dispositivo seguirá con la sesión iniciada. ¿Deseas continuar?',
+      'Cerrar las demás sesiones'
+    );
+    if (!confirmed) return;
+    const current = localStorage.getItem('refreshToken') || '';
+    this.revokingOthers.set(true);
+    this.sessionsError.set(null);
+    this.http.post<any>(`${this.authService.API_BASE_URL}/auth/sessions/revoke-others`, { currentRefreshToken: current }).subscribe({
+      next: () => {
+        this.revokingOthers.set(false);
+        this.loadActiveSessions();
+      },
+      error: (err) => {
+        console.error('Error revoking other sessions:', err);
+        this.revokingOthers.set(false);
+        this.sessionsError.set(err?.error?.error || 'No se pudieron cerrar las demás sesiones. Intenta de nuevo.');
       }
     });
   }

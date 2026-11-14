@@ -81,3 +81,8 @@
     }
   }
 </div>
+
+@if (preview) {
+  <app-pdf-viewer [blob]="preview.blob" [fileName]="preview.fileName" [title]="preview.title"
+                  [modal]="true" (closed)="cerrarVistaPrevia()"></app-pdf-viewer>
+}

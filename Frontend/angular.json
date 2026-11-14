@@ -22,9 +22,15 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "pdf.worker.min.mjs",
+                "input": "node_modules/pdfjs-dist/legacy/build",
+                "output": "/pdfjs"
               }
             ],
             "styles": [
+              "src/fonts.css",
               "src/styles.css",
               "src/styles-ui.css",
               "src/styles-dark.css"
@@ -68,7 +74,9 @@
             "development": {
               "buildTarget": "Frontend:build:development",
               "proxyConfig": "proxy.conf.json",
-              "allowedHosts": [".ts.net"]
+              "allowedHosts": [
+                ".ts.net"
+              ]
             }
           },
           "defaultConfiguration": "development"
@@ -91,6 +99,7 @@
               }
             ],
             "styles": [
+              "src/fonts.css",
               "src/styles.css",
               "src/styles-ui.css",
               "src/styles-dark.css"

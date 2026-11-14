@@ -64,6 +64,22 @@ public class JwtUtil {
                 .compact();
     }
 
+    /**
+     * Igual que generateToken(subject), pero el token queda amarrado a UNA sesión
+     * (la fila de refresh_tokens, claim "sid"). Así, al cerrar esa sesión desde
+     * "Sesiones activas", el token deja de servir enseguida y no al vencer (7 días).
+     */
+    public String generateToken(String subject, Long sessionId) {
+        Date now = new Date();
+        return Jwts.builder()
+                .subject(subject)
+                .claim("sid", sessionId)
+                .issuedAt(now)
+                .expiration(new Date(now.getTime() + validity))
+                .signWith(key)
+                .compact();
+    }
+
     public String generateRefreshToken(String subject) {
         Date now = new Date();
         return Jwts.builder()

@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { Subscription, interval, startWith, switchMap, catchError, of } from 'rxjs';
 import { MisBoletinesService, MiBoletinDto } from '../services/mis-boletines.service';
 import { DialogService } from '../services/dialog.service';
+import { PdfViewer } from '../pdf-viewer/pdf-viewer';
+import { downloadBlob, pdfFileName } from '../pdf-viewer/pdf-download';
 
 interface StudentGroup {
   studentId: number;
@@ -25,7 +27,7 @@ interface StudentGroup {
 @Component({
   selector: 'app-mis-boletines',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, PdfViewer],
   templateUrl: './mis-boletines.html',
   styleUrl: './mis-boletines.css'
 })
@@ -80,18 +82,46 @@ export class MisBoletines implements OnInit, OnDestroy {
     return Array.from(mapa.values());
   }
 
+  /** Vista previa abierta (null = cerrada). */
+  preview: { blob: Blob; fileName: string; title: string } | null = null;
+  private pidiendo = new Set<string>();
+
+  /** Botón "Descargar": guarda el archivo en el dispositivo (NO abre la vista previa). */
   descargar(b: MiBoletinDto) {
+    this.obtenerPdf(b, (blob) => downloadBlob(blob, this.nombreArchivo(b)));
+  }
+
+  /** Tocar el boletín (el PDF): abre la vista previa. */
+  verVistaPrevia(b: MiBoletinDto) {
+    this.obtenerPdf(b, (blob) => {
+      this.preview = { blob, fileName: this.nombreArchivo(b), title: `Boletín · ${b.studentName} · Período ${b.period}` };
+    });
+  }
+
+  cerrarVistaPrevia() {
+    this.preview = null;
+  }
+
+  private nombreArchivo(b: MiBoletinDto): string {
+    const base = `Boletin_${b.studentName}_Periodo${b.period}`.replace(/[\\/:*?"<>|\s]+/g, '_');
+    return pdfFileName(base);
+  }
+
+  private obtenerPdf(b: MiBoletinDto, alTerminar: (blob: Blob) => void) {
     const key = b.studentId + '-' + b.period;
+    if (this.pidiendo.has(key)) return;
+    this.pidiendo.add(key);
     this.descargando[key] = true;
     this.service.descargarPdf(b).subscribe({
       next: (blob) => {
-        const url = URL.createObjectURL(blob);
-        window.open(url, '_blank');
+        this.pidiendo.delete(key);
         this.descargando[key] = false;
+        alTerminar(blob);
       },
       error: () => {
+        this.pidiendo.delete(key);
         this.descargando[key] = false;
-        this.dialogService.alert('No se pudo descargar el boletín. Verifica que tu sesión siga activa.', 'Error al descargar');
+        this.dialogService.alert('No se pudo obtener el boletín. Verifica que tu sesión siga activa.', 'Error al abrir el boletín');
       }
     });
   }

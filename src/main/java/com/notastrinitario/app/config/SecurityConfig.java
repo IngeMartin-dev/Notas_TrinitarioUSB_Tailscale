@@ -17,6 +17,7 @@ import java.util.Arrays;
 import com.notastrinitario.app.security.JwtAuthenticationFilter;
 import com.notastrinitario.app.security.JwtUtil;
 import com.notastrinitario.app.repository.UserRepository;
+import com.notastrinitario.app.service.RefreshTokenService;
 
 @Configuration
 @EnableWebSecurity
@@ -27,8 +28,9 @@ import com.notastrinitario.app.repository.UserRepository;
 public class SecurityConfig {
 
         @Bean
-        public JwtAuthenticationFilter jwtAuthenticationFilter(JwtUtil jwtUtil, UserRepository userRepository) {
-                return new JwtAuthenticationFilter(jwtUtil, userRepository);
+        public JwtAuthenticationFilter jwtAuthenticationFilter(JwtUtil jwtUtil, UserRepository userRepository,
+                        RefreshTokenService refreshTokenService) {
+                return new JwtAuthenticationFilter(jwtUtil, userRepository, refreshTokenService);
         }
 
         // RateLimitFilter está anotado @Component, así que Spring Boot lo
@@ -84,7 +86,7 @@ public class SecurityConfig {
                                                 // API pública: solo lo estrictamente necesario ANTES de
                                                 // iniciar sesión. Todo lo demás exige JWT válido.
                                                 .requestMatchers("/api/auth/login", "/api/auth/register",
-                                                        "/api/auth/me", "/api/auth/refresh", "/api/auth/verify-2fa")
+                                                        "/api/auth/me", "/api/auth/refresh", "/api/auth/verify-2fa", "/api/auth/logout")
                                                 .permitAll()
                                                 .requestMatchers("/api/health").permitAll()
                                                 // El resto del API (estudiantes, notas, boletines, padres,

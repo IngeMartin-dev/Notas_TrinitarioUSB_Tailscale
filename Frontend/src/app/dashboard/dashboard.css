@@ -1666,3 +1666,95 @@
 .quick-card {
   overflow-wrap: anywhere;
 }
+
+/* ==========================================================================
+   Perfil + cronómetro: responsive para cualquier celular (Xiaomi, iPhone,
+   pantallas de 320 px en adelante).
+
+   Antes la tarjeta del cronómetro tenía min-width: 280px y margin-left: auto
+   en la misma fila de la foto y el nombre. En un celular (~270 px útiles) no
+   cabía: bajaba de línea, se pegaba a la derecha y se salía de la pantalla
+   (se veía "en diagonal"). Ahora ocupa su propia fila, debajo, y se ajusta
+   al ancho disponible.
+   ========================================================================== */
+.profile-card,
+.profile-main-content,
+.profile-main-content .countdown-timer-card {
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+.profile-main-content { min-width: 0; }
+
+@media (max-width: 768px) {
+  .profile-card {
+    padding: 20px 16px;
+    gap: 14px;
+  }
+
+  .profile-main-content {
+    gap: 14px;
+    justify-content: center;
+  }
+
+  .profile-info {
+    min-width: 0;
+    flex: 1 1 140px;
+  }
+
+  .profile-info h2 {
+    font-size: clamp(20px, 6vw, 26px);
+    overflow-wrap: anywhere;
+  }
+
+  /* La tarjeta ocupa toda la fila: queda ABAJO de la foto y el nombre, centrada. */
+  .profile-main-content .countdown-timer-card,
+  .profile-card .countdown-timer-card {
+    flex: 1 1 100%;
+    width: 100%;
+    min-width: 0;
+    margin-left: 0;
+    padding: 12px;
+  }
+
+  .countdown-timer-card .countdown-header h3 {
+    overflow-wrap: anywhere;
+  }
+
+  .countdown-timer-card .countdown-display {
+    gap: 4px;
+  }
+
+  /* Las 4 unidades (Días : Horas : Min : Seg) se reparten el ancho, sin desbordar. */
+  .countdown-timer-card .countdown-unit {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 8px 2px;
+  }
+
+  .countdown-timer-card .countdown-value {
+    font-size: clamp(18px, 6vw, 24px);
+  }
+
+  .countdown-timer-card .countdown-label {
+    font-size: 10px;
+  }
+
+  .countdown-timer-card .countdown-separator {
+    font-size: 16px;
+  }
+
+  .countdown-timer-card .countdown-end-date {
+    text-align: center;
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (max-width: 360px) {
+  .profile-avatar,
+  .profile-avatar img,
+  .profile-initials {
+    width: 64px;
+    height: 64px;
+  }
+}

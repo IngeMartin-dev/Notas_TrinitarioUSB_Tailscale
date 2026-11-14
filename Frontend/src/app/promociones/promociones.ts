@@ -3,11 +3,13 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PromocionesService, PromocionDto } from '../services/promociones.service';
 import { DialogService } from '../services/dialog.service';
+import { PdfViewer } from '../pdf-viewer/pdf-viewer';
+import { pdfFileName } from '../pdf-viewer/pdf-download';
 
 @Component({
   selector: 'app-promociones',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PdfViewer],
   templateUrl: './promociones.html',
   styleUrls: ['./promociones.css']
 })
@@ -22,6 +24,12 @@ export class Promociones implements OnInit {
   isLoading = false;
   errorMessage = '';
   abriendo: { [key: string]: boolean } = {};
+  /** Vista previa abierta (null = cerrada). El visor trae su propio botón Descargar. */
+  preview: { blob: Blob; fileName: string; title: string } | null = null;
+
+  cerrarVistaPrevia() {
+    this.preview = null;
+  }
 
   ngOnInit(): void {
     this.cargar();
@@ -78,9 +86,12 @@ export class Promociones implements OnInit {
     this.abriendo[key] = true;
     this.service.boletin(p.id, periodo).subscribe({
       next: (blob) => {
-        const url = URL.createObjectURL(blob);
-        window.open(url, '_blank');
         this.abriendo[key] = false;
+        this.preview = {
+          blob,
+          fileName: pdfFileName(`Boletin_${p.name}_${p.surname}_Periodo${periodo}`.replace(/\s+/g, '_')),
+          title: `Boletín · ${p.name} ${p.surname} · Período ${periodo}`
+        };
       },
       error: () => {
         this.abriendo[key] = false;

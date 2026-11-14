@@ -67,6 +67,8 @@ export class App implements OnInit, OnDestroy {
   private schoolYearService = inject(SchoolYearService);
   connection = inject(ConnectionService);
   pwa = inject(PwaService);
+  /** El servidor ya entregó al usuario en esta sesión (para saber si hay que reintentar /me). */
+  private userRetryTimer: any = null;
 
   constructor() {
     // El ThemeService aplica el tema guardado automáticamente al iniciar.
@@ -91,13 +93,27 @@ export class App implements OnInit, OnDestroy {
       const routeName = path.split('/')[1] || 'dashboard';
       console.log('Setting active route to:', routeName);
       this.activeRoute.set(routeName);
+
+      // Dentro de la app con sesión pero sin usuario cargado (la petición /me
+      // del login falló o tardó): se reintenta en vez de dejar el menú vacío.
+      if (!this.isLoginRoute() && this.authService.isAuthenticated() && !this.authService.serverUserLoaded) {
+        this.scheduleUserRetry(1);
+      }
     });
+
+    // Al volver la conexión (o la pestaña), si el usuario aún no cargó, se reintenta.
+    if (typeof window !== 'undefined') {
+      window.addEventListener('online', () => {
+        if (this.authService.isAuthenticated() && !this.authService.serverUserLoaded) this.scheduleUserRetry(1);
+      });
+    }
 
     // Subscribe to auth service user changes to stay in sync
     this.authService.currentUser$.subscribe(user => {
       console.log('App - Auth service user updated:', user);
       this.currentUser.set(user);
-      
+      // true solo cuando el servidor respondió con el usuario (no con el guardado).
+
       // If we have a user and are authenticated, ensure sidebar is visible and load notifications
       if (user && this.authService.isAuthenticated()) {
         console.log('👤 User authenticated, ensuring sidebar is visible...');
@@ -149,10 +165,18 @@ export class App implements OnInit, OnDestroy {
     // Generate greeting on init
     this.generateGreeting();
     
-    // Clear local state first and ensure sidebar stays hidden
-    this.currentUser.set(null);
-    this.sidebarAnimated.set(false); // Explicitly ensure sidebar starts hidden
-    
+    // Con sesión guardada se muestra YA el menú con el último usuario conocido
+    // (mientras llega /me), así la barra lateral no depende de que esa única
+    // petición responda bien. Sin sesión: todo limpio y la barra oculta.
+    const cachedUser = this.authService.isAuthenticated() ? this.readCachedUser() : null;
+    if (cachedUser) {
+      this.currentUser.set(cachedUser);
+      this.sidebarAnimated.set(true);
+    } else {
+      this.currentUser.set(null);
+      this.sidebarAnimated.set(false);
+    }
+
     if (this.authService.isAuthenticated()) {
       console.log('✅ User is authenticated, loading user data...');
       this.authService.getCurrentUser().subscribe({
@@ -181,8 +205,10 @@ export class App implements OnInit, OnDestroy {
         error: (err) => {
           this.signalAppReady();
           console.error('❌ Failed to load user in app:', err);
-          // Set user data to null instead of generic defaults
-          this.currentUser.set(null);
+          // Con el usuario guardado se conserva el menú; sin él, queda vacío.
+          if (!cachedUser) this.currentUser.set(null);
+          // 401: el interceptor ya cierra la sesión. Otro error (red, servidor): se reintenta.
+          if (err?.status !== 401) this.scheduleUserRetry(1);
         }
       });
     } else {
@@ -192,6 +218,33 @@ export class App implements OnInit, OnDestroy {
       this.currentUser.set(null);
     }
 
+  }
+
+  /** Último usuario que el servidor entregó (lo guarda AuthService.getCurrentUser). */
+  private readCachedUser(): any | null {
+    try {
+      const raw = localStorage.getItem('currentUser');
+      const user = raw ? JSON.parse(raw) : null;
+      return user && typeof user === 'object' && user.role ? user : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /** Reintenta cargar el usuario con espera creciente (1, 2, 4, 8 y 15 s) hasta 6 veces. */
+  private scheduleUserRetry(attempt: number): void {
+    if (attempt > 6 || this.userRetryTimer) return;
+    const wait = Math.min(1000 * 2 ** (attempt - 1), 15000);
+    this.userRetryTimer = setTimeout(() => {
+      this.userRetryTimer = null;
+      if (!this.authService.isAuthenticated() || this.authService.serverUserLoaded) return;
+      this.authService.getCurrentUser().subscribe({
+        next: () => this.sidebarAnimated.set(true),
+        error: (err) => {
+          if (err?.status !== 401) this.scheduleUserRetry(attempt + 1);
+        }
+      });
+    }, wait);
   }
 
   /** Avisa a index.html que ya se validó la sesión: se quita la pantalla de carga. */
@@ -254,6 +307,8 @@ export class App implements OnInit, OnDestroy {
 
   logout() {
     console.log('Logging out...');
+    clearTimeout(this.userRetryTimer);
+    this.userRetryTimer = null;
     this.currentUser.set(null);
     this.authService.logout();
     this.router.navigate(['/login']);

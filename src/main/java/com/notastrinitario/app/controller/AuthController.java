@@ -82,17 +82,26 @@ public class AuthController {
     private String describeDevice(HttpServletRequest request) {
         String ua = request.getHeader("User-Agent");
         if (ua == null || ua.isBlank()) return "Dispositivo desconocido";
-        String browser = "Navegador";
-        if (ua.contains("Edg/")) browser = "Edge";
-        else if (ua.contains("Chrome/") && !ua.contains("Edg/")) browser = "Chrome";
-        else if (ua.contains("Firefox/")) browser = "Firefox";
-        else if (ua.contains("Safari/") && !ua.contains("Chrome/")) browser = "Safari";
+        // El sistema se revisa en este orden a propósito: el User-Agent de un iPhone dice
+        // "like Mac OS X" y el de Android dice "Linux"; con el orden anterior un iPhone
+        // aparecía como "macOS" y un Xiaomi como "Linux".
         String os = "Desconocido";
-        if (ua.contains("Windows")) os = "Windows";
-        else if (ua.contains("Mac OS")) os = "macOS";
+        if (ua.contains("iPhone")) os = "iPhone";
+        else if (ua.contains("iPad")) os = "iPad";
         else if (ua.contains("Android")) os = "Android";
-        else if (ua.contains("iPhone") || ua.contains("iPad")) os = "iOS";
+        else if (ua.contains("Windows")) os = "Windows";
+        else if (ua.contains("CrOS")) os = "ChromeOS";
+        else if (ua.contains("Mac OS")) os = "macOS";
         else if (ua.contains("Linux")) os = "Linux";
+        // Los navegadores basados en Chrome también dicen "Chrome/" y "Safari/": se revisan primero.
+        String browser = "Navegador";
+        if (ua.contains("EdgA/") || ua.contains("EdgiOS/") || ua.contains("Edg/")) browser = "Edge";
+        else if (ua.contains("OPR/") || ua.contains("Opera")) browser = "Opera";
+        else if (ua.contains("SamsungBrowser/")) browser = "Samsung Internet";
+        else if (ua.contains("MiuiBrowser/")) browser = "Navegador Xiaomi";
+        else if (ua.contains("FxiOS/") || ua.contains("Firefox/")) browser = "Firefox";
+        else if (ua.contains("CriOS/") || ua.contains("Chrome/")) browser = "Chrome";
+        else if (ua.contains("Safari/")) browser = "Safari";
         return browser + " en " + os;
     }
 
@@ -209,10 +218,11 @@ public class AuthController {
                     return ResponseEntity.ok(response);
                 }
 
-                String token = jwtUtil.generateToken(user.getId().toString());
                 String role = user.getRole() != null ? user.getRole().getName() : "USER";
                 RefreshToken refreshToken = refreshTokenService.createRefreshToken(
                         user, describeDevice(request), clientIp(request));
+                // El token de acceso queda amarrado a esta sesión (para poder cerrarla desde Ajustes).
+                String token = jwtUtil.generateToken(user.getId().toString(), refreshToken.getId());
                 log.info("Login exitoso, token generado para rol: {}", role);
                 return ResponseEntity.ok(Map.of(
                     "token", token,
@@ -290,9 +300,9 @@ public class AuthController {
         user.setTwoFactorEnabled(false);
 
         User saved = userRepository.save(user);
-        String token = jwtUtil.generateToken(saved.getId().toString());
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(
                 saved, describeDevice(request), clientIp(request));
+        String token = jwtUtil.generateToken(saved.getId().toString(), refreshToken.getId());
         return ResponseEntity.ok(Map.of("token", token, "refreshToken", refreshToken.getToken(), "userId", saved.getId()));
     }
 
@@ -349,12 +359,13 @@ public class AuthController {
         }
 
         User user = refreshToken.getUser();
-        String newAccessToken = jwtUtil.generateToken(user.getId().toString());
         // IMPORTANTE: rotate() solo reemplaza ESTE refresh token puntual, no
         // borra los de otros dispositivos (antes deleteByUser() los borraba
         // TODOS, por lo que nunca podía haber más de una sesión activa a la
         // vez y "Sesiones Activas" no tenía sentido).
         RefreshToken rotated = refreshTokenService.rotate(refreshToken, describeDevice(request), clientIp(request));
+        // El nuevo token de acceso se amarra a la sesión NUEVA (rotate() crea una fila nueva).
+        String newAccessToken = jwtUtil.generateToken(user.getId().toString(), rotated.getId());
 
         String role = user.getRole() != null ? user.getRole().getName() : "USER";
         return ResponseEntity.ok(Map.of(
@@ -421,6 +432,44 @@ public class AuthController {
     }
 
     /**
+     * POST /api/auth/logout  {"refreshToken":"..."}
+     * Cierra la sesión de ESTE dispositivo también en el servidor. Antes "Cerrar sesión" solo
+     * borraba los datos del navegador: la sesión seguía viva en la base y "Sesiones activas"
+     * se llenaba de dispositivos que ya no estaban conectados. Siempre responde 200: si el
+     * token ya no existe, da igual.
+     */
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(@RequestBody(required = false) Map<String, String> body) {
+        String refreshTokenStr = body != null ? body.get("refreshToken") : null;
+        if (refreshTokenStr != null && !refreshTokenStr.isBlank()) {
+            refreshTokenService.revokeByToken(refreshTokenStr);
+        }
+        return ResponseEntity.ok(Map.of("success", true));
+    }
+
+    /**
+     * POST /api/auth/sessions/revoke-others  {"currentRefreshToken":"..."}
+     * Cierra todas las sesiones del usuario menos la de este dispositivo.
+     */
+    @PostMapping("/sessions/revoke-others")
+    public ResponseEntity<?> revokeOtherSessions(@RequestBody(required = false) Map<String, String> body) {
+        User user = currentUser();
+        if (user == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "No autenticado"));
+        }
+        String current = body != null ? body.get("currentRefreshToken") : null;
+        if (current == null || current.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Falta la sesión actual"));
+        }
+        int closed = refreshTokenService.revokeOthers(user.getId(), current);
+        if (closed < 0) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", "No se reconoce la sesión de este dispositivo. Inicia sesión de nuevo."));
+        }
+        return ResponseEntity.ok(Map.of("success", true, "closed", closed));
+    }
+
+    /**
      * POST /api/auth/accept-legal  {"type":"terms"} o {"type":"privacy"}
      * Registra, con fecha y hora, que el usuario autenticado aceptó los
      * Términos y Condiciones o la Política de Privacidad (botón "Aceptar"
@@ -478,10 +527,10 @@ public class AuthController {
             return ResponseEntity.status(401).body(Map.of("error", "Código incorrecto o vencido"));
         }
 
-        String token = jwtUtil.generateToken(user.getId().toString());
         String role = user.getRole() != null ? user.getRole().getName() : "USER";
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(
                 user, describeDevice(request), clientIp(request));
+        String token = jwtUtil.generateToken(user.getId().toString(), refreshToken.getId());
         return ResponseEntity.ok(Map.of(
             "token", token,
             "refreshToken", refreshToken.getToken(),

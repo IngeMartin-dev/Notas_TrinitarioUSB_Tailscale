@@ -1,0 +1,270 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+/* ===== Modo en la página (Consolidado) ===== */
+.pdf-overlay {
+  width: 100%;
+}
+
+.pdf-panel {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: 100%;
+  height: clamp(420px, 78vh, 900px);
+  height: clamp(420px, 78dvh, 900px);
+  background: var(--surface, #ffffff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 6px 24px rgba(15, 23, 42, 0.12);
+}
+
+/* ===== Modo ventana (Boletines): pantalla completa en celular ===== */
+.pdf-overlay.is-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
+  background: rgba(15, 23, 42, 0.72);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+}
+
+.pdf-overlay.is-modal .pdf-panel {
+  width: min(1000px, 100%);
+  height: min(94vh, 100%);
+  height: min(94dvh, 100%);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+}
+
+/* ===== Barra superior ===== */
+.pdf-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--surface, #ffffff);
+  border-bottom: 1px solid var(--border, #e2e8f0);
+  flex-shrink: 0;
+}
+
+.pdf-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.pdf-title-icon {
+  color: #e53935;
+  flex-shrink: 0;
+}
+
+.pdf-title-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.pdf-title-text strong {
+  font-size: 14px;
+  color: var(--text, #1e293b);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pdf-pageinfo {
+  font-size: 12px;
+  color: var(--text-3, #64748b);
+}
+
+.pdf-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.pdf-zoom {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--surface-2, #f1f5f9);
+  border-radius: 10px;
+  padding: 2px;
+}
+
+.pdf-icon-btn,
+.pdf-zoom-value,
+.pdf-download-btn {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pdf-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-2, #475569);
+}
+
+.pdf-icon-btn .material-icons { font-size: 20px; }
+.pdf-icon-btn:hover:not(:disabled) { background: rgba(100, 116, 139, 0.16); }
+
+.pdf-zoom-value {
+  min-width: 48px;
+  height: 34px;
+  padding: 0 6px;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text, #1e293b);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.pdf-zoom-value:hover:not(:disabled) { background: rgba(100, 116, 139, 0.16); }
+
+.pdf-download-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 14px;
+  border-radius: 10px;
+  background: var(--brand, #1b6aeb);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.pdf-download-btn .material-icons { font-size: 20px; }
+.pdf-download-btn:hover:not(:disabled) { filter: brightness(1.08); }
+
+.pdf-icon-btn:disabled,
+.pdf-zoom-value:disabled,
+.pdf-download-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.pdf-close-btn { background: var(--surface-2, #f1f5f9); }
+
+/* ===== Zona de páginas ===== */
+.pdf-scroller {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 14px;
+  box-sizing: border-box;
+  background: var(--surface-2, #e8ecf2);
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  /* El celular puede desplazar y hacer pellizco para acercar. */
+  touch-action: pan-x pan-y pinch-zoom;
+}
+
+.pdf-pages {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  /* Con zoom mayor a 100% la hoja es más ancha que la pantalla: se desplaza al lado. */
+  width: max-content;
+  min-width: 100%;
+}
+
+/* Las páginas se crean por código, por eso :host ::ng-deep. */
+:host ::ng-deep .pdf-page {
+  display: block;
+  margin: 0 auto;
+  max-width: none;
+  background: #ffffff;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.22);
+  border-radius: 2px;
+}
+
+/* ===== Cargando / error ===== */
+.pdf-state {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 20px;
+  text-align: center;
+  color: var(--text-2, #475569);
+  background: var(--surface-2, #e8ecf2);
+}
+
+.pdf-state p { margin: 0; font-size: 14px; }
+.pdf-state-error .material-icons { font-size: 44px; color: #e53935; }
+
+.pdf-spinner {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 4px solid rgba(100, 116, 139, 0.25);
+  border-top-color: var(--brand, #1b6aeb);
+  animation: pdf-spin 0.8s linear infinite;
+}
+
+@keyframes pdf-spin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .pdf-spinner { animation-duration: 2.4s; }
+}
+
+/* ===== Celulares ===== */
+@media (max-width: 640px) {
+  .pdf-overlay.is-modal {
+    padding: 0;
+  }
+
+  .pdf-overlay.is-modal .pdf-panel {
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+    border: none;
+  }
+
+  .pdf-panel {
+    height: clamp(380px, 72vh, 760px);
+    height: clamp(380px, 72dvh, 760px);
+  }
+
+  .pdf-toolbar {
+    flex-wrap: wrap;
+    padding: 8px 10px;
+    /* Respeta la zona segura (muesca / barra del sistema) en pantalla completa. */
+    padding-top: max(8px, env(safe-area-inset-top));
+  }
+
+  .pdf-title { flex: 1 1 100%; }
+  .pdf-actions { flex: 1 1 100%; justify-content: space-between; }
+
+  .pdf-scroller { padding: 8px; }
+}
+
+@media (max-width: 380px) {
+  .pdf-btn-text { display: none; }
+  .pdf-download-btn { padding: 0 12px; }
+}

@@ -258,38 +258,54 @@
           <span class="material-icons spin">autorenew</span>
           <p>Cargando tus sesiones...</p>
         </div>
-      } @else if (sessionsError()) {
-        <p class="error-message">{{ sessionsError() }}</p>
-      } @else if (activeSessions().length === 0) {
-        <p>No se encontraron sesiones activas.</p>
       } @else {
-        <ul class="sessions-list">
-          @for (session of activeSessions(); track session.id) {
-            <li class="session-item" [class.session-current]="session.current">
-              <span class="material-icons session-icon">devices</span>
-              <div class="session-info">
-                <strong>{{ session.device }}</strong>
-                @if (session.current) {
-                  <span class="session-badge">Este dispositivo</span>
-                }
-                <p class="session-meta">
-                  {{ session.ipAddress || 'IP no disponible' }} · última actividad: {{ session.lastUsedAt | date:'short' }}
-                </p>
-              </div>
-              <button
-                class="session-revoke-btn"
-                [disabled]="revokingSessionId() === session.id"
-                (click)="revokeSession(session.id, session.current)"
-                title="Cerrar esta sesión">
-                @if (revokingSessionId() === session.id) {
-                  <span class="material-icons spin">autorenew</span>
-                } @else {
-                  <span class="material-icons">logout</span>
-                }
-              </button>
-            </li>
+        <!-- El error va arriba y la lista sigue visible (antes el error reemplazaba toda la lista). -->
+        @if (sessionsError()) {
+          <p class="error-message">{{ sessionsError() }}</p>
+        }
+        @if (activeSessions().length === 0 && !sessionsError()) {
+          <p>No se encontraron sesiones activas.</p>
+        }
+        @if (activeSessions().length > 0) {
+          <ul class="sessions-list">
+            @for (session of activeSessions(); track session.id) {
+              <li class="session-item" [class.session-current]="session.current">
+                <span class="material-icons session-icon">devices</span>
+                <div class="session-info">
+                  <strong>{{ session.device }}</strong>
+                  @if (session.current) {
+                    <span class="session-badge">Este dispositivo</span>
+                  }
+                  <p class="session-meta">
+                    {{ session.ipAddress || 'IP no disponible' }} · última actividad: {{ formatSessionDate(session.lastUsedAt) }}
+                  </p>
+                </div>
+                <button
+                  class="session-revoke-btn"
+                  [disabled]="revokingSessionId() === session.id || revokingOthers()"
+                  (click)="revokeSession(session.id, session.current)"
+                  title="Cerrar esta sesión"
+                  aria-label="Cerrar esta sesión">
+                  @if (revokingSessionId() === session.id) {
+                    <span class="material-icons spin">autorenew</span>
+                  } @else {
+                    <span class="material-icons">logout</span>
+                  }
+                </button>
+              </li>
+            }
+          </ul>
+          @if (activeSessions().length > 1) {
+            <button type="button" class="sessions-revoke-others" [disabled]="revokingOthers()" (click)="revokeOtherSessions()">
+              @if (revokingOthers()) {
+                <span class="material-icons spin">autorenew</span>
+              } @else {
+                <span class="material-icons">phonelink_erase</span>
+              }
+              Cerrar las demás sesiones
+            </button>
           }
-        </ul>
+        }
       }
     </div>
     <div class="modal-actions">

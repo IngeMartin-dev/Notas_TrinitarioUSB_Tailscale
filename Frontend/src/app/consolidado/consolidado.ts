@@ -1,9 +1,10 @@
 import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { PeriodOptionsService } from '../services/period-options.service';
+import { PdfViewer } from '../pdf-viewer/pdf-viewer';
+import { downloadBlob, pdfFileName } from '../pdf-viewer/pdf-download';
 
 /**
  * Antes "Reports" (src/app/reports). Renombrado a "Consolidado":
@@ -15,7 +16,7 @@ import { PeriodOptionsService } from '../services/period-options.service';
 @Component({
   selector: 'app-consolidado',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, PdfViewer],
   templateUrl: './consolidado.html',
   styleUrl: './consolidado.css',
 })
@@ -33,12 +34,13 @@ export class Consolidado {
 
   isGenerating = false;
   errorMessage = '';
-  private rawPdfUrl: string | null = null;
-  pdfPreviewUrl: SafeResourceUrl | null = null;
+  /** PDF generado: lo dibuja el visor (funciona también en celular) y lo usa el botón Descargar. */
+  pdfBlob: Blob | null = null;
+  pdfFileName = '';
 
   private readonly API_BASE = 'http://localhost:8080/api/consolidado';
 
-  constructor(private http: HttpClient, private sanitizer: DomSanitizer, private router: Router) {}
+  constructor(private http: HttpClient, private router: Router) {}
 
   /** Abre el apartado "Consolidados Generados": lista de solo lectura de
    *  todos los consolidados ya generados y guardados en disco. */
@@ -49,8 +51,7 @@ export class Consolidado {
   selectGrade(grade: string, classroom: string) {
     this.selectedGrade = grade;
     this.selectedClassroom = classroom;
-    this.pdfPreviewUrl = null;
-    this.rawPdfUrl = null;
+    this.pdfBlob = null;
     this.errorMessage = '';
   }
 
@@ -63,7 +64,7 @@ export class Consolidado {
 
     this.isGenerating = true;
     this.errorMessage = '';
-    this.pdfPreviewUrl = null;
+    this.pdfBlob = null;
 
     // El backend consulta la tabla de estudiantes con el mismo formato
     // completo con el que se guardan ("Grado 1º", "Salon A"), no la forma
@@ -72,8 +73,8 @@ export class Consolidado {
 
     this.http.get(url, { responseType: 'blob' }).subscribe({
       next: (blob) => {
-        this.rawPdfUrl = URL.createObjectURL(blob);
-        this.pdfPreviewUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.rawPdfUrl);
+        this.pdfFileName = pdfFileName(`Consolidado_${this.selectedGrade}_${this.selectedClassroom}_Periodo${this.selectedPeriod}`.replace(/\s+/g, '_'));
+        this.pdfBlob = blob;
         this.isGenerating = false;
       },
       error: (err) => {
@@ -85,11 +86,8 @@ export class Consolidado {
     });
   }
 
+  /** Guarda el PDF en el dispositivo (el visor también tiene su propio botón Descargar). */
   descargarPdf() {
-    if (!this.rawPdfUrl || !this.selectedGrade || !this.selectedClassroom) return;
-    const a = document.createElement('a');
-    a.href = this.rawPdfUrl;
-    a.download = `Consolidado_${this.selectedGrade}_${this.selectedClassroom}_Periodo${this.selectedPeriod}.pdf`;
-    a.click();
+    if (this.pdfBlob) downloadBlob(this.pdfBlob, this.pdfFileName);
   }
 }
