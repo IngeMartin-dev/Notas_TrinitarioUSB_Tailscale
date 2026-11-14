@@ -18,6 +18,8 @@ export interface GradeColumn {
   cat?: string;
   /** true para ACT1..ACT7 (columnas fijas): solo guardan su porcentaje. */
   base?: boolean;
+  /** Solo en la entrada 'actlabels': nombre que se muestra en cada columna ACT1..ACT7 ('' = el de siempre). */
+  labels?: string[];
 }
 
 export interface GradeColumnConfigDto {

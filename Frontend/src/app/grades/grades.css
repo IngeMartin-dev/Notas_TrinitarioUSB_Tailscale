@@ -1646,3 +1646,7 @@
   .spm-score-badge.grade-red    { background: rgba(239,68,68,.25);  color: #fca5a5; }
   .spm-btn-ghost:hover { background: rgba(255,255,255,.06); }
 }
+/* Nombres individuales de ACT1..ACT7 (panel Porcentajes) */
+.pct-labels { margin-top: 10px; }
+.pct-labels summary { cursor: pointer; font-size: 13px; font-weight: 600; }
+.pct-labels-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 6px; margin-top: 8px; }

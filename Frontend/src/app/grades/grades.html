@@ -135,6 +135,16 @@
                       }
                     </div>
 
+                    <details class="pct-labels">
+                      <summary>Nombre de cada columna ({{ actName }}1 a {{ actName }}7)</summary>
+                      <div class="pct-labels-grid">
+                        @for (n of [1,2,3,4,5,6,7]; track n) {
+                          <input type="text" class="pct-name-input" [name]="'act-label-' + n" [value]="actHeader(n)" (input)="onActLabelInput(n, $event)" maxlength="14" autocomplete="off" [attr.aria-label]="'Nombre de la columna ' + n" />
+                        }
+                      </div>
+                      <p class="pct-hint">Solo cambia lo que se ve en el encabezado; por dentro siguen siendo {{ actName }}1 a {{ actName }}7 y los porcentajes no cambian.</p>
+                    </details>
+
                     @if (pctOver) {
                       <p class="pct-error" role="alert">
                         ⚠ Los porcentajes suman {{ totalPctSum }}% y no pueden pasar de 100%.
@@ -171,13 +181,13 @@
                   <tr>
                     <th class="no-col">No.</th>
                     <th class="student-col">ESTUDIANTE</th>
-                    <th id="th-act1" class="percent-col">{{ actHeader(1) }}</th>
-                    <th id="th-act2" class="percent-col">{{ actHeader(2) }}</th>
-                    <th id="th-act3" class="percent-col">{{ actHeader(3) }}</th>
-                    <th id="th-act4" class="percent-col">{{ actHeader(4) }}</th>
-                    <th id="th-act5" class="percent-col">{{ actHeader(5) }}</th>
-                    <th id="th-act6" class="percent-col">{{ actHeader(6) }}</th>
-                    <th id="th-act7" class="percent-col">{{ actHeader(7) }}</th>
+                    <th id="th-act1" class="percent-col" (dblclick)="showPctPanel = true" title="Doble clic para renombrar">{{ actHeader(1) }}</th>
+                    <th id="th-act2" class="percent-col" (dblclick)="showPctPanel = true" title="Doble clic para renombrar">{{ actHeader(2) }}</th>
+                    <th id="th-act3" class="percent-col" (dblclick)="showPctPanel = true" title="Doble clic para renombrar">{{ actHeader(3) }}</th>
+                    <th id="th-act4" class="percent-col" (dblclick)="showPctPanel = true" title="Doble clic para renombrar">{{ actHeader(4) }}</th>
+                    <th id="th-act5" class="percent-col" (dblclick)="showPctPanel = true" title="Doble clic para renombrar">{{ actHeader(5) }}</th>
+                    <th id="th-act6" class="percent-col" (dblclick)="showPctPanel = true" title="Doble clic para renombrar">{{ actHeader(6) }}</th>
+                    <th id="th-act7" class="percent-col" (dblclick)="showPctPanel = true" title="Doble clic para renombrar">{{ actHeader(7) }}</th>
                     @for (col of gradeColumns; track col.id) {
                       <th class="percent-col extra-col">
                         {{ colHeader(col) }}

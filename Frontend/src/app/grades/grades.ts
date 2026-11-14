@@ -115,6 +115,8 @@ gradesData: { [studentId: number]: { [noteIndex: number]: number | null } } = {}
 
   // Grupo ACT (ACT1..ACT7): un nombre y un porcentaje (1-100) para todas.
   actName = 'ACT';            // nombre editable del grupo ACT1..ACT7
+  /** Nombre que se muestra en cada columna ACT1..ACT7 ('' = ACT + número). Por dentro siguen siendo ACT1..ACT7. */
+  actLabels: string[] = ['', '', '', '', '', '', ''];
   actPct: number | null = 80;   // un solo porcentaje para todas las ACT (80% por defecto)
   evalPct = 20;                 // porcentaje de Eval.Period en la nota final (editable)
   // Nombres con porcentaje creados en el panel "Porcentajes" (Quiz, Taller...).
@@ -574,6 +576,7 @@ gradesData: { [studentId: number]: { [noteIndex: number]: number | null } } = {}
     this.gradeColumns = [];
     this.actPct = 80;
     this.actName = 'ACT';
+    this.actLabels = ['', '', '', '', '', '', ''];
     this.evalPct = 20;
     this.categories = [];
     this.quizzesPct = 0;
@@ -612,6 +615,7 @@ gradesData: { [studentId: number]: { [noteIndex: number]: number | null } } = {}
       this.gradeColumns = [];
       this.actPct = 80;
       this.actName = 'ACT';
+      this.actLabels = ['', '', '', '', '', '', ''];
       this.evalPct = 20;
       this.categories = [];
       this.weightsReady = true;
@@ -645,6 +649,9 @@ gradesData: { [studentId: number]: { [noteIndex: number]: number | null } } = {}
             this.actName = 'ACT';
             this.actPct = sum > 0 ? Math.min(100, sum) : 80;
           }
+          // Nombres individuales de ACT1..ACT7 (solo cambian lo que se ve).
+          const labelsEntry = all.find(c => c.id === 'actlabels');
+          this.actLabels = Array.from({ length: 7 }, (_, i) => String(labelsEntry?.labels?.[i] ?? ''));
           // Porcentaje de Eval.Period (por defecto 20).
           const evalEntry = all.find(c => c.id === 'eval');
           this.evalPct = evalEntry?.pct != null ? evalEntry.pct : 20;
@@ -652,7 +659,7 @@ gradesData: { [studentId: number]: { [noteIndex: number]: number | null } } = {}
           const cats: PctCategory[] = [];
           const cols: GradeColumn[] = [];
           for (const c of all) {
-            if (c.id === 'act' || c.id === 'eval' || /^act[1-7]$/.test(c.id)) continue;
+            if (c.id === 'act' || c.id === 'eval' || c.id === 'actlabels' || /^act[1-7]$/.test(c.id)) continue;
             if (c.kind === 'cat') {
               cats.push({ id: c.id, name: c.name, pct: c.pct ?? null });
             } else if (c.kind === 'col') {
@@ -728,7 +735,15 @@ gradesData: { [studentId: number]: { [noteIndex: number]: number | null } } = {}
 
   /** Encabezado de la columna ACT número n: "ACT1", o "Quiz1" si se renombró el grupo. */
   actHeader(n: number): string {
-    return `${this.actName}${n}`;
+    return this.actLabels[n - 1]?.trim() || `${this.actName}${n}`;
+  }
+
+  /** Cambia solo el nombre que se VE de la columna ACTn; sus notas siguen guardándose como ACTn. */
+  onActLabelInput(n: number, event: Event) {
+    // Sin llaves, comillas ni barras: el servidor lee este texto con una expresión regular.
+    const value = (event.target as HTMLInputElement).value.replace(/[{}"\\]/g, '').slice(0, 14);
+    this.actLabels[n - 1] = value.trim() === `${this.actName}${n}` ? '' : value;
+    this.onPctsChanged(false);
   }
 
   /** Encabezado de una columna agregada: nombre de su categoría + número ("Quiz1", "Quiz2"...). */
@@ -844,6 +859,7 @@ gradesData: { [studentId: number]: { [noteIndex: number]: number | null } } = {}
     const entries: GradeColumn[] = [
       { id: 'act', kind: 'cat', name: this.actName, type: 'ACTIVIDAD', pct: this.actPct ?? 80, base: true },
       { id: 'eval', name: 'Eval.Period', type: 'ACTIVIDAD', pct: this.evalPct, base: true },
+      ...(this.actLabels.some(l => l) ? [{ id: 'actlabels', name: 'actlabels', type: 'ACTIVIDAD' as GradeColumnType, base: true, labels: [...this.actLabels] }] : []),
       ...this.categories.map(c => ({
         id: c.id, kind: 'cat' as const, name: c.name, type: 'ACTIVIDAD' as GradeColumnType, pct: c.pct ?? null
       })),
