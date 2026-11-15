@@ -150,7 +150,15 @@ public class UserServiceImpl implements UserService{
 		recoveryDataRepository.clearTeacherFromRecoveryData(id);
 		subjectGradeRepository.clearTeacherFromSubjectGrades(id);
 
-		// 4) Finalmente eliminar el usuario
+		// 4) Finalmente eliminar el usuario.
+		// Los borrados anteriores son consultas directas (bulk): las entidades que ya
+		// estaban cargadas en la sesión (p. ej. los FcmToken que User trae con
+		// fetch EAGER en fcmTokens) seguían "vivas" apuntando al usuario, y al
+		// confirmar Hibernate fallaba con TransientPropertyValueException
+		// ("FcmToken references an unsaved transient instance of User"). Se vacía
+		// la sesión para que el usuario se vuelva a cargar ya sin esos hijos.
+		entityManager.flush();
+		entityManager.clear();
 		userRepository.deleteById(id);
 	}
 
