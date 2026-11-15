@@ -165,11 +165,16 @@ public class UserController {
 		
 		try {
 			userService.deleteById(userId);
-		} catch (org.springframework.dao.DataIntegrityViolationException e) {
-			log.error("No se pudo eliminar el usuario {}: {}", userId, e.getMostSpecificCause().getMessage());
+		} catch (Exception e) {
+			// Se devuelve la causa real (la de la base de datos, p. ej. la tabla/llave
+			// foránea que bloquea) en vez de un 500 sin detalle, y se deja en el log.
+			Throwable root = e;
+			while (root.getCause() != null && root.getCause() != root) root = root.getCause();
+			log.error("No se pudo eliminar el usuario {}", userId, e);
 			Map<String, String> body = new HashMap<>();
-			body.put("error", "No se puede eliminar: el usuario tiene registros asociados en el sistema.");
-			return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+			body.put("error", "No se pudo eliminar el usuario: " + root.getMessage());
+			boolean integridad = e instanceof org.springframework.dao.DataIntegrityViolationException;
+			return ResponseEntity.status(integridad ? HttpStatus.CONFLICT : HttpStatus.INTERNAL_SERVER_ERROR).body(body);
 		}
 		return ResponseEntity.ok().build();
 	}
