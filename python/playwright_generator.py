@@ -242,6 +242,33 @@ def render_cierre(browser, html_str, out_path):
     return alto
 
 
+def render_page1(browser, html_str, out_path, medir=False):
+    """Renderiza la hoja 1 (tamano fijo). Con medir=True devuelve ademas el borde
+    inferior (px de diseno) del contenido visible, una vez colapsadas las filas
+    de materia vacias; sirve para pegar el cierre justo debajo de la ultima materia."""
+    page = browser.new_page()
+    page.set_content(html_str, wait_until="load")
+    page.emulate_media(media="print")
+    bottom = 0
+    if medir:
+        bottom = page.evaluate("""() => {
+            const pg = document.querySelector('div.page');
+            if (!pg) return 0;
+            const base = pg.getBoundingClientRect().top;
+            let b = 0;
+            pg.querySelectorAll('svg text, svg [transform]').forEach(function (el) {
+              if (window.getComputedStyle(el).display === 'none') return;
+              const r = el.getBoundingClientRect();
+              if (r.width === 0 && r.height === 0) return;
+              b = Math.max(b, r.bottom - base);
+            });
+            return Math.ceil(b);
+        }""")
+    page.pdf(path=out_path, width=f"{ORIG_WIDTH_IN}in", height=f"{ORIG_HEIGHT_IN}in", print_background=True)
+    page.close()
+    return bottom
+
+
 def try_split_and_merge(html_text, out_path):
     """
     Si el HTML es un boletin con bloques de materias adicionales
@@ -304,9 +331,18 @@ def try_split_and_merge(html_text, out_path):
 
     browser = get_browser()
 
-    # Pagina 1 (tamano fijo, sin cambios).
+    # Cuantas materias reales trae el boletin en los cupos 1-16 (los vacios quedan al final).
+    n_real = 0
+    for k in range(1, 17):
+        el = soup.find(attrs={"data-field": "MATERIA_%d" % k})
+        if el is not None and el.get_text().strip():
+            n_real = k
+
+    # Pagina 1 (tamano fijo). Las filas de materia vacias se colapsan en la propia
+    # plantilla; si no hay hojas adicionales y caben <= 12 materias, se mide donde
+    # termina la ultima para pegar ahi el cierre y evitar una hoja 2 casi en blanco.
     p1_path = os.path.join(tmp_dir, "_part_p1.pdf")
-    render_html_string(browser, wrap(page1_html), p1_path)
+    p1_bottom = render_page1(browser, wrap(page1_html), p1_path, medir=(not visible_blocks and 0 < n_real <= 12))
     part_paths.append(p1_path)
 
     # Si la hoja final no lleva materias (marca <!--cierre-solo-->), solo se imprime su bloque de cierre:
@@ -329,6 +365,17 @@ def try_split_and_merge(html_text, out_path):
                 cierre_en_ultima = True
         else:
             cierre_solo = False
+
+    # Boletin de hasta 12 materias: el cierre sube bajo la ultima materia de la hoja 1.
+    cierre_en_p1 = False
+    if not hojas and 0 < n_real <= 12 and p1_bottom:
+        cierre_path = os.path.join(tmp_dir, "_part_cierre.pdf")
+        cierre_alto = render_cierre(browser, wrap(page2_html), cierre_path)
+        if cierre_alto and p1_bottom + cierre_alto <= ORIG_HEIGHT_IN * 96 - 4:
+            cierre_en_p1 = True
+            cierre_solo = True
+        else:
+            cierre_alto = 0
 
     # Materias adicionales: en grupos de hasta 12 (misma altura que la hoja 1).
     for i, chunk in enumerate(hojas):
@@ -361,7 +408,10 @@ def try_split_and_merge(html_text, out_path):
         escala = min(target_w / (ORIG_WIDTH_IN * 72.0), target_h / (ORIG_HEIGHT_IN * 72.0), 1.0)
         ox = (target_w - ORIG_WIDTH_IN * 72.0 * escala) / 2.0
         oy = (target_h - ORIG_HEIGHT_IN * 72.0 * escala) / 2.0
-        if cierre_en_ultima:
+        if cierre_en_p1:
+            destino = writer.pages[0]
+            y_top_px = p1_bottom
+        elif cierre_en_ultima:
             destino = writer.pages[-1]
             y_top_px = EXT_PAGE_PAD_TOP + len(hojas[-1]) * ALTO_BLOQUE_PX
         else:

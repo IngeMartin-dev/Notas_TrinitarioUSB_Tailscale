@@ -2534,8 +2534,16 @@ body {padding:0; margin:0; text-align:center; background-color:#777}
     if (window.__collapseEmptyMateriasRan) return; // evita doble-ejecución (DOMContentLoaded + load)
     window.__collapseEmptyMateriasRan = true;
 
-    var svgs = document.querySelectorAll('svg');
-    if (!(svgs.length >= 2)) return;
+    // Cada hoja se identifica por su contenido (no por su posición en el DOM):
+    // el generador de PDF renderiza la hoja 1 y la hoja 2 por separado (un solo
+    // <svg> por render) y las hojas adicionales de materias traen sus propios
+    // <svg>, así que el índice del svg no sirve para ubicarlas.
+    var svgP1 = null, svgP2 = null;
+    document.querySelectorAll('svg').forEach(function (sv) {
+      if (!svgP1 && sv.querySelector('[data-field="MATERIA_1"]')) { svgP1 = sv; }
+      else if (!svgP2 && sv.querySelector('[data-field="MATERIA_13"]')) { svgP2 = sv; }
+    });
+    if (!svgP1 && !svgP2) return;
 
     var rowTys1 = [198.66667, 290.66667, 382.66667, 474.66667, 566.66667,
                    658.66667, 750.66667, 842.66667, 934.66667, 1026.6667,
@@ -2566,7 +2574,8 @@ body {padding:0; margin:0; text-align:center; background-color:#777}
     // los rectángulos/líneas de fondo de cada fila usan una matriz con flip
     // vertical cuyo componente ty no es comparable con el de los <text>.
     if (trailing2 >= 4) {
-      var svg2Rect = svgs[1].getBoundingClientRect();
+      if (svgP2) {
+      var svg2Rect = svgP2.getBoundingClientRect();
       // Igual que CIERRE_TOLERANCE: el borde/fondo de una fila arranca varios
       // px por ENCIMA de la línea base de su propio texto (el texto no es lo
       // más alto del bloque). Con un margen chico, ese fondo/borde de la
@@ -2576,7 +2585,7 @@ body {padding:0; margin:0; text-align:center; background-color:#777}
       // amplio que CIERRE_TOLERANCE para capturarlo también aquí.
       var firstEmptyTy2 = rowTys2[0] - CIERRE_TOLERANCE;
 
-      svgs[1].querySelectorAll('[transform]').forEach(function (el) {
+      svgP2.querySelectorAll('[transform]').forEach(function (el) {
         var rect = el.getBoundingClientRect();
         if (rect.width === 0 && rect.height === 0) return;
         var relTop = rect.top - svg2Rect.top;
@@ -2588,7 +2597,7 @@ body {padding:0; margin:0; text-align:center; background-color:#777}
       var cierreDestinoTy = rowTys2[0];
       var shiftAmount = CIERRE_START_TY_PAGE2 - cierreDestinoTy;
 
-      svgs[1].querySelectorAll('[transform]').forEach(function (el) {
+      svgP2.querySelectorAll('[transform]').forEach(function (el) {
         var style = window.getComputedStyle(el);
         if (style.display === 'none') return; // ya ocultado arriba, no mover
         var rect = el.getBoundingClientRect();
@@ -2600,8 +2609,9 @@ body {padding:0; margin:0; text-align:center; background-color:#777}
         }
       });
 
-      if (trailing1 > 0) {
-        collapseSvgRows(svgs[0], rowTys1, ROW_HEIGHT, null, trailing1);
+      }
+      if (trailing1 > 0 && svgP1) {
+        collapseSvgRows(svgP1, rowTys1, ROW_HEIGHT, null, trailing1);
       }
       return;
     }
@@ -2609,11 +2619,11 @@ body {padding:0; margin:0; text-align:center; background-color:#777}
     // Caso normal: la página 2 SÍ tiene al menos una materia real (13-16
     // parcialmente llenas). La página 1 siempre está completamente llena
     // en este caso (12 materias), así que no hace falta tocarla.
-    if (trailing1 > 0) {
-      collapseSvgRows(svgs[0], rowTys1, ROW_HEIGHT, null, trailing1);
+    if (trailing1 > 0 && svgP1) {
+      collapseSvgRows(svgP1, rowTys1, ROW_HEIGHT, null, trailing1);
     }
-    if (trailing2 > 0) {
-      collapseSvgRows(svgs[1], rowTys2, ROW_HEIGHT, CIERRE_START_TY_PAGE2, trailing2);
+    if (trailing2 > 0 && svgP2) {
+      collapseSvgRows(svgP2, rowTys2, ROW_HEIGHT, CIERRE_START_TY_PAGE2, trailing2);
     }
   }
 
