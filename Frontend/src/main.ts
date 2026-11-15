@@ -1,3 +1,5 @@
+// Debe ir PRIMERO: separa la sesión por pestaña antes de que cualquier servicio lea localStorage.
+import './app/session-storage-shim';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { appConfig } from './app/app.config';
 import { App } from './app/app';

@@ -24,6 +24,13 @@ public interface FcmTokenRepository extends JpaRepository<FcmToken, Long> {
     // Find token by exact match
     Optional<FcmToken> findByToken(String token);
 
+    // Un mismo navegador (un solo token FCM) puede tener varias cuentas abiertas
+    // en pestañas distintas: el token se guarda por usuario, no uno solo global.
+    Optional<FcmToken> findFirstByUserIdAndToken(Long userId, String token);
+
+    // Todas las filas (de cualquier usuario) que comparten un mismo token
+    List<FcmToken> findAllByToken(String token);
+
     // Check if token exists
     boolean existsByToken(String token);
 

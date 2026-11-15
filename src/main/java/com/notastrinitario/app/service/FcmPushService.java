@@ -34,7 +34,9 @@ public class FcmPushService {
                     .orElseThrow(() -> new RuntimeException("Usuario no encontrado: " + userId));
 
             // Check if token already exists
-            var existingToken = fcmTokenRepository.findByToken(token);
+            // Se busca por (usuario, token): si otra cuenta ya registró este mismo
+            // navegador, esta cuenta igual queda registrada y recibe sus propias notificaciones.
+            var existingToken = fcmTokenRepository.findFirstByUserIdAndToken(userId, token);
 
             if (existingToken.isPresent()) {
                 // Update existing token
@@ -220,7 +222,8 @@ public class FcmPushService {
      */
     private void deactivateToken(String token) {
         try {
-            fcmTokenRepository.findByToken(token).ifPresent(fcmToken -> {
+            // Un token inválido lo es para todas las cuentas que lo comparten.
+            fcmTokenRepository.findAllByToken(token).forEach(fcmToken -> {
                 fcmToken.setActive(false);
                 fcmTokenRepository.save(fcmToken);
                 logger.info("Token FCM desactivado por ser inválido");
