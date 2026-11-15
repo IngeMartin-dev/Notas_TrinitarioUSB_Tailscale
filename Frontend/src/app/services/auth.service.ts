@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError, BehaviorSubject } from 'rxjs';
 import { API_BASE_URL } from '../config/api-base';
+import { publishLastSession } from '../session-storage-shim';
 import { catchError, tap } from 'rxjs/operators';
 
 export interface LoginRequest {
@@ -68,6 +69,7 @@ export class AuthService {
             localStorage.setItem('token', response.token);
             localStorage.setItem('refreshToken', response.refreshToken);
             localStorage.setItem('role', response.role);
+            publishLastSession();
             this.getCurrentUser().subscribe();
           }
           // Si response.twoFactorRequired es true, todavía NO hay sesión:
@@ -87,6 +89,7 @@ export class AuthService {
             localStorage.setItem('token', response.token);
             localStorage.setItem('refreshToken', response.refreshToken);
             localStorage.setItem('role', response.role);
+            publishLastSession();
             this.getCurrentUser().subscribe();
           }
         }),

@@ -3,6 +3,7 @@ import { inject } from '@angular/core';
 import { catchError, switchMap, throwError, of, Observable, EMPTY } from 'rxjs';
 import { AuthService } from './services/auth.service';
 import { ConnectionService } from './services/connection.service';
+import { adoptAlternateSession } from './session-storage-shim';
 
 let isRefreshing = false;
 let refreshTokenSubject: any = null;
@@ -37,6 +38,12 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
           return handleConnectionError(error);
         }
         if (error.status === 401 && !req.url.includes('/auth/login') && !req.url.includes('/auth/refresh')) {
+          // Otra pestaña con la MISMA cuenta pudo renovar la sesión (el servidor invalida el
+          // refresh token anterior): se toma esa sesión vigente en vez de cerrar esta pestaña.
+          const alt = adoptAlternateSession();
+          if (alt && alt.token !== token) {
+            return next(req.clone({ setHeaders: { Authorization: `Bearer ${alt.token}` } }));
+          }
           if (!isRefreshing) {
             isRefreshing = true;
             refreshTokenSubject = of(null);
@@ -61,6 +68,10 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
               }),
               catchError((refreshError) => {
                 isRefreshing = false;
+                const alt2 = adoptAlternateSession();
+                if (alt2) {
+                  return next(req.clone({ setHeaders: { Authorization: `Bearer ${alt2.token}` } }));
+                }
                 authService.logout();
                 window.location.href = '/login';
                 return throwError(() => refreshError);
