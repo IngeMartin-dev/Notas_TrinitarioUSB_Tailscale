@@ -132,6 +132,16 @@ public class UserServiceImpl implements UserService{
 		reportCardHistoryRepository.deleteByUserId(id);
 		digitalSignatureRepository.deleteByUserId(id);
 
+		// Otras tablas que también referencian al usuario y que antes no se limpiaban
+		// (provocaban error 500 por llave foránea al eliminar, p. ej., un padre que
+		// había usado el chat): mensajes de chat, comentarios y configuración de columnas.
+		entityManager.createNativeQuery("DELETE FROM chat_messages WHERE sender_id = :id OR receiver_id = :id")
+				.setParameter("id", id).executeUpdate();
+		entityManager.createNativeQuery("UPDATE feedback SET user_id = NULL WHERE user_id = :id")
+				.setParameter("id", id).executeUpdate();
+		entityManager.createNativeQuery("DELETE FROM grade_column_configs WHERE teacher_id = :id")
+				.setParameter("id", id).executeUpdate();
+
 		// 3) Desvincular referencias de docente/director (dejar registros intactos)
 		reportCardRepository.clearTeacherFromReportCards(id);
 		reportCardRepository.clearCreatedByFromReportCards(id);

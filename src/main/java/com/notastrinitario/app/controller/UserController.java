@@ -163,7 +163,14 @@ public class UserController {
 			return ResponseEntity.notFound().build();
 		}
 		
-		userService.deleteById(userId);
+		try {
+			userService.deleteById(userId);
+		} catch (org.springframework.dao.DataIntegrityViolationException e) {
+			log.error("No se pudo eliminar el usuario {}: {}", userId, e.getMostSpecificCause().getMessage());
+			Map<String, String> body = new HashMap<>();
+			body.put("error", "No se puede eliminar: el usuario tiene registros asociados en el sistema.");
+			return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+		}
 		return ResponseEntity.ok().build();
 	}
 	
