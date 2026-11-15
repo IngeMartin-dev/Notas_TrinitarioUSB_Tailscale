@@ -65,7 +65,6 @@ public class UserController {
 			user.setPassword(com.notastrinitario.app.security.PasswordSecurity.hash(user.getPassword()));
 		}
 		String username = user.getUsername();
-		String email = user.getEmail();
 
 		User existing = null;
 		if (username != null && !username.isBlank()) {

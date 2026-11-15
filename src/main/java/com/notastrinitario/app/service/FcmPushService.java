@@ -188,16 +188,27 @@ public class FcmPushService {
             logger.error("Error enviando notificación push (interrupted): {}", e.getMessage());
             Thread.currentThread().interrupt();
         } catch (ExecutionException e) {
-            logger.error("Error ejecutando envío de notificación push: {}", e.getMessage());
-
-            // Check if it's an invalid token error
-            if (e.getCause() instanceof FirebaseMessagingException) {
-                FirebaseMessagingException fme = (FirebaseMessagingException) e.getCause();
-                if (fme.getMessagingErrorCode() == MessagingErrorCode.INVALID_ARGUMENT ||
-                        fme.getMessagingErrorCode() == MessagingErrorCode.UNREGISTERED) {
-                    // Token inválido, desactivarlo
+            Throwable cause = e.getCause();
+            if (cause instanceof FirebaseMessagingException) {
+                FirebaseMessagingException fme = (FirebaseMessagingException) cause;
+                MessagingErrorCode code = fme.getMessagingErrorCode();
+                // FCM responde 404 cuando el token ya no existe (app desinstalada,
+                // navegador que revocó el permiso, token viejo/falso). En firebase-admin
+                // 9.5.0 ese 404 llega sin código de error porque el cuerpo de la
+                // respuesta no se logra leer ("Not in GZIP format"), así que además
+                // del código se revisa el estado HTTP y el mensaje.
+                boolean tokenInvalido = code == MessagingErrorCode.INVALID_ARGUMENT
+                        || code == MessagingErrorCode.UNREGISTERED
+                        || (fme.getHttpResponse() != null && fme.getHttpResponse().getStatusCode() == 404)
+                        || (fme.getMessage() != null && fme.getMessage().contains("status: 404"));
+                if (tokenInvalido) {
+                    logger.warn("Token FCM inválido o expirado, se desactiva (código: {})", code);
                     deactivateToken(token);
+                } else {
+                    logger.error("Error ejecutando envío de notificación push: {}", e.getMessage());
                 }
+            } else {
+                logger.error("Error ejecutando envío de notificación push: {}", e.getMessage());
             }
         } catch (Exception e) {
             logger.error("Error enviando notificación push: {}", e.getMessage());

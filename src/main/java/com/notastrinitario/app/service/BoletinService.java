@@ -729,7 +729,7 @@ public class BoletinService {
     /** Cantidad de cupos de materia fijos que trae el diseño del PDF/SVG. */
     private static final java.text.Collator SUBJECT_COLLATOR = buildCollator();
     private static java.text.Collator buildCollator() {
-        java.text.Collator c = java.text.Collator.getInstance(new java.util.Locale("es"));
+        java.text.Collator c = java.text.Collator.getInstance(java.util.Locale.forLanguageTag("es"));
         c.setStrength(java.text.Collator.PRIMARY);
         return c;
     }
