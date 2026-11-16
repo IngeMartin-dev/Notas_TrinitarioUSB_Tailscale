@@ -21,6 +21,7 @@ import { API_BASE_URL } from './config/api-base';
 import { ConnectionService } from './services/connection.service';
 import { ConnectionLost } from './connection-lost/connection-lost';
 import { PwaService } from './services/pwa.service';
+import { ChatService } from './services/chat.service';
 
 @Component({
   selector: 'app-root',
@@ -50,6 +51,7 @@ export class App implements OnInit, OnDestroy {
   // All communications state
   showMessagesDropdown = signal(false);
   unreadMessageCount = signal(0);
+  unreadChatCount = signal(0);
   unreadNotificationCount = signal(0);
   showNotificationDetailsModal = signal(false);
   notificationDetailsReadOnly = signal(false);
@@ -60,6 +62,7 @@ export class App implements OnInit, OnDestroy {
   private authService = inject(AuthService);
   private notificationService = inject(NotificationService);
   private messageService = inject(MessageService);
+  private chatService = inject(ChatService);
   private http = inject(HttpClient);
   private router = inject(Router);
   private realtimeService = inject(GlobalRealtimeService);
@@ -69,6 +72,7 @@ export class App implements OnInit, OnDestroy {
   pwa = inject(PwaService);
   /** El servidor ya entregó al usuario en esta sesión (para saber si hay que reintentar /me). */
   private userRetryTimer: any = null;
+  private unreadChatPollHandle: any = null;
 
   constructor() {
     // El ThemeService aplica el tema guardado automáticamente al iniciar.
@@ -118,6 +122,9 @@ export class App implements OnInit, OnDestroy {
       if (user && this.authService.isAuthenticated()) {
         console.log('👤 User authenticated, ensuring sidebar is visible...');
         this.sidebarAnimated.set(true);
+        this.refreshUnreadChatCount(user.id);
+        if (this.unreadChatPollHandle) clearInterval(this.unreadChatPollHandle);
+        this.unreadChatPollHandle = setInterval(() => this.refreshUnreadChatCount(user.id), 5000);
         
         // Load notifications for the authenticated user
         this.loadNotifications();
@@ -524,6 +531,15 @@ export class App implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.realtimeService.stopPolling();
     this.generationService.stopPolling();
+    if (this.unreadChatPollHandle) clearInterval(this.unreadChatPollHandle);
+  }
+
+  private refreshUnreadChatCount(userId: number) {
+    if (!userId) return;
+    this.chatService.getUnreadTotal(userId).subscribe({
+      next: result => this.unreadChatCount.set(result.total || 0),
+      error: () => { /* Se conserva el último total si la consulta falla. */ }
+    });
   }
 
 

@@ -65,6 +65,7 @@
                   <a routerLink="/chats" (click)="setActiveRoute('chats')">
                     <span class="material-icons">chat</span>
                     <span class="menu-text">Chats</span>
+                    @if (unreadChatCount() > 0) { <span class="chat-unread-dot" aria-label="Hay mensajes de chat sin leer" title="Mensajes sin leer"></span> }
                   </a>
                 </li>
               }
@@ -314,6 +315,7 @@
           >
             <span class="material-icons">chat</span>
             <span>Chats</span>
+            @if (unreadChatCount() > 0) { <span class="chat-unread-dot" aria-label="Hay mensajes de chat sin leer" title="Mensajes sin leer"></span> }
           </a>
         }
       </nav>
