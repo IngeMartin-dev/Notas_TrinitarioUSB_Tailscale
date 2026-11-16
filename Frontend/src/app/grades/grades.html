@@ -419,7 +419,7 @@
 
         @if (studyPlanContent && !isGeneratingPlan) {
           <div class="plan-content-fullscreen" [class.fade-in]="planGenerated">
-            <article class="plan-paper" id="study-plan-content">
+            <article class="plan-paper" id="study-plan-content" #planPaper>
               <header class="pp-head">
                 <img class="pp-logo" src="/Logo Colegio.png" alt="" />
                 <div class="pp-inst">

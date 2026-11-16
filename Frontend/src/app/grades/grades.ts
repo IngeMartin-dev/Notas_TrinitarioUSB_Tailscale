@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, inject, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, NgZone, HostListener } from '@angular/core';
+import { Component, OnInit, AfterViewInit, inject, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, NgZone, HostListener, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -44,6 +44,7 @@ interface PctCategory { id: string; name: string; pct: number | null; }
 
 import { renderPlanHtml, ensurePlanPaperStyles, hydratePlanImages, PLAN_PAPER_CSS } from './plan-render';
 
+import { apiUrl } from '../config/api-base';
 @Component({
   selector: 'app-grades',
   standalone: true,
@@ -143,6 +144,34 @@ gradesData: { [studentId: number]: { [noteIndex: number]: number | null } } = {}
 
   get totalConfigPct(): number {
     return (this.quizzesPct || 0) + (this.talleresPct || 0) + (this.actividadesPct || 0);
+  }
+
+  // Hoja del plan: en pantallas angostas se escala completa (zoom) para que se vea igual que en computador.
+  private planFitEl: HTMLElement | null = null;
+  private planFitObserver: ResizeObserver | null = null;
+  @ViewChild('planPaper') set planPaperRef(ref: ElementRef<HTMLElement> | undefined) {
+    const el = ref ? ref.nativeElement : null;
+    if (el === this.planFitEl) return;
+    this.planFitObserver?.disconnect();
+    this.planFitObserver = null;
+    this.planFitEl = el;
+    if (!el) return;
+    this.fitPlanPaper();
+    const box = el.parentElement;
+    if (box && typeof ResizeObserver !== 'undefined') {
+      this.planFitObserver = new ResizeObserver(() => this.fitPlanPaper());
+      this.planFitObserver.observe(box);
+    }
+  }
+  private fitPlanPaper(): void {
+    const el = this.planFitEl;
+    const box = el ? el.parentElement : null;
+    if (!el || !box) return;
+    const cs = getComputedStyle(box);
+    const avail = box.clientWidth - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0);
+    const PAPER_W = 794; // 210 mm a 96 dpi: el ancho de la hoja en computador
+    const z = avail > 0 ? Math.min(1, avail / PAPER_W) : 1;
+    (el.style as any).zoom = z < 0.999 ? String(z) : '';
   }
 
   // AI Study Plan modal
@@ -391,7 +420,7 @@ gradesData: { [studentId: number]: { [noteIndex: number]: number | null } } = {}
     try {
       if (typeof fetch === 'function') {
         const token = this.authService.getToken();
-        fetch(url, {
+        fetch(apiUrl(url), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -415,6 +444,7 @@ gradesData: { [studentId: number]: { [noteIndex: number]: number | null } } = {}
   }
 
   ngOnDestroy() {
+    this.planFitObserver?.disconnect();
     if (this.periodCheckInterval) {
       clearInterval(this.periodCheckInterval);
     }
@@ -3452,7 +3482,7 @@ if (!response.ok) {
    * reintenta.
    */
   private async authFetch(url: string, init: RequestInit = {}): Promise<Response> {
-    const send = (token: string | null) => fetch(url, {
+    const send = (token: string | null) => fetch(apiUrl(url), {
       ...init,
       headers: {
         ...((init.headers as Record<string, string>) || {}),
@@ -3652,6 +3682,7 @@ if (!response.ok) {
     }
 
     const printNode = printContent.cloneNode(true) as HTMLElement;
+    printNode.style.zoom = ''; // el zoom de pantalla (celular) no debe pasar a la impresión
     // Imágenes que aún no se resolvieron: fuera (no imprimir "Buscando imagen…")
     printNode.querySelectorAll('figure.pp-photo:not([data-done])').forEach(f => f.remove());
 

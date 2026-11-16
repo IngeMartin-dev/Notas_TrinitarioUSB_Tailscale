@@ -28,3 +28,15 @@ export const API_BASE_URL = calcularApiBase();
 
 /** Prefijo "viejo" que sigue escrito tal cual en el resto del código. */
 export const LOCALHOST_API_PREFIX = LOCALHOST_API;
+
+
+/**
+ * Convierte una URL escrita con el prefijo fijo "http://localhost:8080" a la URL real del
+ * backend según desde dónde se abrió la app. Hace lo mismo que `api-rewrite.interceptor.ts`,
+ * pero para las llamadas con `fetch()` (que NO pasan por los interceptores de HttpClient).
+ * Sin esto, en el celular (o por Tailscale) esas llamadas iban al propio teléfono y fallaban.
+ */
+export function apiUrl(url: string): string {
+  if (API_BASE_URL === LOCALHOST_API_PREFIX || !url.startsWith(LOCALHOST_API_PREFIX)) return url;
+  return API_BASE_URL + url.slice(LOCALHOST_API_PREFIX.length);
+}

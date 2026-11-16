@@ -1650,3 +1650,14 @@
 .pct-labels { margin-top: 10px; }
 .pct-labels summary { cursor: pointer; font-size: 13px; font-weight: 600; }
 .pct-labels-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 6px; margin-top: 8px; }
+
+
+/* Celular: el modal del plan usa toda la pantalla y la hoja (escalada) aprovecha el ancho. */
+@media (max-width: 640px) {
+  /* Debajo de la barra superior de la app (que queda por encima del modal): así se ve la cabecera y el botón de cerrar. */
+  .fullscreen-modal-overlay:has(> .spm) { align-items: flex-end; padding-top: var(--topbar-h, 64px); }
+  .fullscreen-modal-content.spm { width: 100%; height: calc(100vh - var(--topbar-h, 64px)); height: calc(100dvh - var(--topbar-h, 64px)); max-height: none; border-radius: 0; border: 0; }
+  .spm-header { border-radius: 0; }
+  .spm-body { padding: 10px 8px; }
+  .plan-content-fullscreen { padding: 10px 6px; border-radius: 10px; }
+}

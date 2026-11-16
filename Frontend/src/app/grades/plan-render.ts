@@ -14,7 +14,7 @@
 export const PLAN_PAPER_CSS = `
 .plan-paper {
   --pp-ink: #1f2937; --pp-muted: #64748b; --pp-brand: #1e3a8a; --pp-accent: #2563eb; --pp-line: #dbe3f0;
-  box-sizing: border-box; width: 210mm; max-width: 100%; min-height: 297mm; margin: 0 auto;
+  box-sizing: border-box; width: 210mm; max-width: none; min-height: 297mm; margin: 0 auto;
   padding: 16mm 17mm 18mm; background: #fff; color: var(--pp-ink);
   font-family: Georgia, 'Times New Roman', serif; font-size: 11.5pt; line-height: 1.6;
   box-shadow: 0 10px 40px rgba(15, 23, 42, .18), 0 0 0 1px rgba(15, 23, 42, .06);
@@ -52,7 +52,7 @@ export const PLAN_PAPER_CSS = `
 .plan-paper .fn-legend { display: flex; flex-wrap: wrap; gap: 4px 16px; justify-content: center; margin-top: 4px; font-size: 10pt; color: var(--pp-ink); }
 .plan-paper .fn-legend i { display: inline-block; width: 18px; height: 3px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
 .plan-paper .pp-foot { margin-top: 22px; padding-top: 8px; border-top: 1px solid var(--pp-line); font-family: Arial, Helvetica, sans-serif; font-size: 8pt; color: var(--pp-muted); text-align: center; }
-@media screen and (max-width: 820px) { .plan-paper { padding: 22px 18px; min-height: 0; font-size: 11pt; } .plan-paper .pp-meta { grid-template-columns: 1fr; } .plan-paper .pp-meta div:nth-child(odd) { border-right: 0; } .plan-paper .pp-meta div:nth-last-child(-n+2) { border-bottom: 1px solid var(--pp-line); } .plan-paper .pp-meta div:last-child { border-bottom: 0; } .plan-paper .pp-head { flex-wrap: wrap; } .plan-paper .pp-doc { text-align: left; } }
+/* En pantallas angostas la hoja NO se re-acomoda: se escala completa (ver fitPlanPaper en grades.ts) para verse igual que en computador. */
 @media print { .plan-paper { box-shadow: none; width: auto; min-height: 0; padding: 0; } }
 
 /* ── Color por sección ─────────────────────────────────────────────── */
@@ -93,6 +93,36 @@ export const PLAN_PAPER_CSS = `
 .plan-paper .pp-photo figcaption { font-family: Arial, Helvetica, sans-serif; font-size: 8.5pt; color: var(--pp-muted); margin-top: 5px; line-height: 1.3; }
 .plan-paper .pp-photo .pp-credit { display: block; font-size: 7pt; opacity: .85; }
 .plan-paper .pp-photo-loading { font-family: Arial, Helvetica, sans-serif; font-size: 9pt; color: var(--pp-muted); padding: 22px 0; }
+
+/* ── Modo oscuro (solo en pantalla; al imprimir la hoja sigue siendo blanca) ── */
+@media screen {
+html[data-theme="dark"] .plan-paper { --pp-ink: #e5e7eb; --pp-muted: #94a3b8; --pp-brand: #93c5fd; --pp-accent: #60a5fa; --pp-line: #334155; background: #111827; box-shadow: 0 10px 40px rgba(0,0,0,.55), 0 0 0 1px rgba(148,163,184,.18); }
+html[data-theme="dark"] .plan-paper .pp-meta div { background: #1e293b; }
+/* styles-dark.css fuerza (con !important) fondo azul en todos los títulos del plan y aplana los colores: aquí se les gana dentro de la hoja. */
+html[data-theme="dark"] .plan-paper .plan-text h2 { background: linear-gradient(90deg, #1e3a8a, #2563eb) !important; color: #fff !important; border: 0 !important; text-shadow: none; }
+html[data-theme="dark"] .plan-paper .plan-text h2[data-sec] { background: linear-gradient(90deg, var(--sec), var(--sec2)) !important; }
+html[data-theme="dark"] .plan-paper .plan-text h3 { background: transparent !important; border: 0 !important; border-bottom: 1px solid var(--pp-line) !important; color: var(--pp-brand) !important; text-shadow: none; }
+html[data-theme="dark"] .plan-paper .plan-text th { background: #1e293b; }
+html[data-theme="dark"] .plan-paper [data-sec="obj"]  { --sec-bg: rgba(59,130,246,.14); }
+html[data-theme="dark"] .plan-paper [data-sec="intro"]{ --sec-bg: rgba(20,184,166,.14); }
+html[data-theme="dark"] .plan-paper [data-sec="des"]  { --sec-bg: rgba(129,140,248,.14); }
+html[data-theme="dark"] .plan-paper [data-sec="err"]  { --sec-bg: rgba(248,113,113,.14); }
+html[data-theme="dark"] .plan-paper [data-sec="cons"] { --sec-bg: rgba(245,158,11,.14); }
+html[data-theme="dark"] .plan-paper [data-sec="tall"] { --sec-bg: rgba(74,222,128,.12); }
+html[data-theme="dark"] .plan-paper [data-sec="prof"] { --sec-bg: rgba(192,132,252,.14); }
+html[data-theme="dark"] .plan-paper [data-sec="cier"] { --sec-bg: rgba(244,114,182,.14); }
+html[data-theme="dark"] .plan-paper .plan-text h3[data-sec] { color: var(--sec2) !important; border-bottom: 2px solid var(--sec2) !important; }
+html[data-theme="dark"] .plan-paper .plan-text [data-sec] strong { color: var(--sec2); }
+html[data-theme="dark"] .plan-paper .plan-text li[data-sec]::marker, html[data-theme="dark"] .plan-paper .plan-text [data-sec] li::marker { color: var(--sec2); }
+html[data-theme="dark"] .plan-paper .pp-def  { --bx: #93c5fd; --bx2: rgba(147,197,253,.35); --bxbg: rgba(59,130,246,.14); }
+html[data-theme="dark"] .plan-paper .pp-ex   { --bx: #86efac; --bx2: rgba(134,239,172,.35); --bxbg: rgba(34,197,94,.14); }
+html[data-theme="dark"] .plan-paper .pp-tip  { --bx: #fcd34d; --bx2: rgba(252,211,77,.35);  --bxbg: rgba(245,158,11,.14); }
+html[data-theme="dark"] .plan-paper .pp-warn { --bx: #fca5a5; --bx2: rgba(252,165,165,.35); --bxbg: rgba(239,68,68,.16); }
+html[data-theme="dark"] .plan-paper .fn-figure { background: #0f172a; }
+html[data-theme="dark"] .plan-paper .fn-figure svg { filter: invert(.92) hue-rotate(180deg); }
+html[data-theme="dark"] .plan-paper .pp-photo { background: #1e293b; box-shadow: 0 2px 8px rgba(0,0,0,.4); }
+html[data-theme="dark"] .plan-paper .pp-photo img { background: #0f172a; }
+}
 `;
 
 /** Inserta una sola vez los estilos de la hoja en la página (vista previa). */
