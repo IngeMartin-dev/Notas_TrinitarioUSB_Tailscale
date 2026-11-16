@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, inject, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, NgZone } from '@angular/core';
+import { Component, OnInit, AfterViewInit, inject, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, NgZone, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -8,6 +8,7 @@ import { GlobalRealtimeService } from '../services/global-realtime.service';
 import { AuthService } from '../services/auth.service';
 import { DialogService } from '../services/dialog.service';
 import { Subscription } from 'rxjs';
+import { renderPlanHtml, ensurePlanPaperStyles, hydratePlanImages, PLAN_PAPER_CSS } from '../grades/plan-render';
 
 interface Subject {
   id: number;
@@ -415,6 +416,7 @@ hasTeacherGradeRange: boolean | null = null; // null = checking, false = no subj
   }
 
   ngOnDestroy() {
+    this.planFitObserver?.disconnect();
     if (this.periodCheckInterval) {
       clearInterval(this.periodCheckInterval);
     }
@@ -674,8 +676,48 @@ hasTeacherGradeRange: boolean | null = null; // null = checking, false = no subj
   viewPlan(plan: RecoveryPlan) {
     this.selectedPlan = plan;
     this.showPlanModal = true;
-    this.safePlanContent = this.sanitizer.bypassSecurityTrustHtml(plan.planContent || plan.day1Content || '');
+    ensurePlanPaperStyles();
+    this.safePlanContent = this.sanitizer.bypassSecurityTrustHtml(renderPlanHtml(plan.planContent || plan.day1Content || ''));
     setTimeout(() => this.renderMathInPlan(), 100);
+  }
+
+  get planMeta() {
+    const p = this.selectedPlan;
+    const d = p && p.createdAt ? new Date(p.createdAt) : new Date();
+    return {
+      student: p?.studentName || '',
+      grade: [p?.grade, p?.classGroup].filter(Boolean).join(' - '),
+      subject: p?.subjectName || '',
+      period: p?.period ? `Período ${p.period}` : '',
+      date: (isNaN(d.getTime()) ? new Date() : d).toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' })
+    };
+  }
+
+  // Hoja del plan: en pantallas angostas se escala (zoom) para verse igual que en computador.
+  private planFitEl: HTMLElement | null = null;
+  private planFitObserver: ResizeObserver | null = null;
+  @ViewChild('planPaper') set planPaperRef(ref: ElementRef<HTMLElement> | undefined) {
+    const el = ref ? ref.nativeElement : null;
+    if (el === this.planFitEl) return;
+    this.planFitObserver?.disconnect();
+    this.planFitObserver = null;
+    this.planFitEl = el;
+    if (!el) return;
+    this.fitPlanPaper();
+    const box = el.parentElement;
+    if (box && typeof ResizeObserver !== 'undefined') {
+      this.planFitObserver = new ResizeObserver(() => this.fitPlanPaper());
+      this.planFitObserver.observe(box);
+    }
+  }
+  private fitPlanPaper(): void {
+    const el = this.planFitEl;
+    const box = el ? el.parentElement : null;
+    if (!el || !box) return;
+    const cs = getComputedStyle(box);
+    const avail = box.clientWidth - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0);
+    const z = avail > 0 ? Math.min(1, avail / 794) : 1;
+    (el.style as any).zoom = z < 0.999 ? String(z) : '';
   }
 
   closePlanModal() {
@@ -690,78 +732,80 @@ hasTeacherGradeRange: boolean | null = null; // null = checking, false = no subj
       return;
     }
 
-    const printContentHTML = printContent.innerHTML;
-    if (!printContentHTML.trim()) {
+    if (!printContent.innerHTML.trim()) {
       this.dialogService.alert('El contenido del plan está vacío', 'Nada que imprimir');
       return;
     }
-    
+
+    const printNode = printContent.cloneNode(true) as HTMLElement;
+    printNode.style.zoom = '';
+    printNode.querySelectorAll('figure.pp-photo:not([data-done])').forEach(f => f.remove());
+    (window as any).__printRecoveryPlanNode = printNode;
+
     const printHTML = `
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Plan de Recuperación</title>
+        <meta charset="utf-8">
+        <title>Plan de Estudio</title>
+        <link href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" rel="stylesheet">
         <style>
-          body { font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; }
-          h1, h2, h3 { color: #2c3e50; }
-          h2 { border-bottom: 2px solid #3498db; padding-bottom: 8px; }
-          h3 { color: #1b6aeb; }
-          table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-          table th { background: #3498db; color: white; padding: 12px; text-align: left; border: 1px solid #ddd; }
-          table td { padding: 10px; border: 1px solid #ddd; }
-          table tr:nth-child(even) td { background: #f8f9fa; }
-          ul, ol { margin: 10px 0 15px 20px; }
-          li { margin: 6px 0; }
-          strong { color: #1b6aeb; }
-          a { color: #e74c3c; text-decoration: none; }
-          @page { margin: 10mm; size: A4; }
+          @page { size: A4; margin: 14mm 14mm 16mm; }
+          html, body { margin: 0; padding: 0; background: #fff; }
+          img, svg { max-width: 100%; }
           * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+          ${PLAN_PAPER_CSS}
+          .plan-paper { box-shadow: none !important; width: auto !important; min-height: 0 !important; padding: 0 !important; }
         </style>
       </head>
-      <body>${printContentHTML}</body>
+      <body>
+        <div class="print-body"></div>
+        <script>
+          (function(){
+            var host = window.parent && window.parent.__printRecoveryPlanNode;
+            var body = document.querySelector('.print-body');
+            if (host && body) { body.appendChild(host); }
+            var imgs = Array.prototype.slice.call(document.images || []);
+            var waits = imgs.map(function(im){
+              return new Promise(function(res){
+                if (im.complete) return res();
+                im.addEventListener('load', res); im.addEventListener('error', function(){
+                  var f = im.closest && im.closest('figure'); if (f) f.remove(); res();
+                });
+              });
+            });
+            var limit = new Promise(function(res){ setTimeout(res, 6000); });
+            Promise.race([Promise.all(waits), limit]).then(function(){
+              setTimeout(function(){ window.print(); }, 1200);
+            });
+          })();
+        </script>
+      </body>
       </html>
     `;
-    
+
     const iframe = document.createElement('iframe');
     iframe.style.position = 'fixed';
-    iframe.style.top = '0';
-    iframe.style.left = '0';
-    iframe.style.width = '100%';
-    iframe.style.height = '100%';
+    iframe.style.top = '-10000px';
+    iframe.style.left = '-10000px';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
     iframe.style.border = 'none';
-    iframe.style.zIndex = '-1';
-    
     document.body.appendChild(iframe);
-    
-    const writeAndPrint = () => {
-      if (iframe.contentDocument) {
-        iframe.contentDocument.open();
-        iframe.contentDocument.write(printHTML);
-        iframe.contentDocument.close();
-        
-        iframe.onload = null;
-        
+
+    setTimeout(() => {
+      try {
+        const doc = iframe.contentDocument || iframe.contentWindow?.document;
+        if (doc) { doc.open(); doc.write(printHTML); doc.close(); }
+      } catch (e) {
+        this.dialogService.alert('Error al imprimir. Intente nuevamente.', 'Error de impresión');
+      } finally {
         setTimeout(() => {
-          try {
-            iframe.contentWindow?.print();
-          } catch (e) {
-            console.error('Print error:', e);
-          } finally {
-            setTimeout(() => {
-              if (iframe.parentNode) {
-                iframe.parentNode.removeChild(iframe);
-              }
-            }, 1000);
-          }
-        }, 250);
+          (window as any).__printRecoveryPlanNode = null;
+          if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
+        }, 60000);
       }
-    };
-    
-    if (iframe.contentDocument?.readyState === 'complete') {
-      writeAndPrint();
-    } else {
-      iframe.onload = writeAndPrint;
-    }
+    }, 100);
   }
 
   getGradeColor(grade: number): string {
@@ -823,6 +867,7 @@ hasTeacherGradeRange: boolean | null = null; // null = checking, false = no subj
   private renderMathInPlan() {
     const planContent = document.getElementById('recovery-plan-content');
     if (!planContent) return;
+    hydratePlanImages(planContent).catch(() => { /* noop */ });
 
     const waitForKatex = (callback: () => void, maxAttempts = 30) => {
       let attempts = 0;

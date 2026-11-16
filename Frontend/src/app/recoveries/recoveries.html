@@ -156,18 +156,22 @@
       </div>
 
       <div class="modal-body-fullscreen">
-        <div class="plan-meta-top">
-          <p>
-            <strong>Estudiante:</strong> {{ selectedPlan.studentName }}
-          </p>
-          <p>
-            <strong>Grado:</strong> {{ selectedPlan.grade }} | <strong>Grupo:</strong>
-            {{ selectedPlan.classGroup }} | <strong>Período:</strong>
-            {{ selectedPlan.period }}
-          </p>
-        </div>
-
-        <div class="plan-content-fullscreen plan-text" id="recovery-plan-content" [innerHTML]="safePlanContent">
+        <div class="rp-desk">
+          <article class="plan-paper" id="recovery-plan-content" #planPaper>
+            <header class="pp-head">
+              <img class="pp-logo" src="/Logo Colegio.png" alt="" />
+              <div class="pp-inst"><b>Corporación Colegio Trinitario</b><span>Cartagena de Indias, Bolívar</span></div>
+              <div class="pp-doc"><h1>Plan de Estudio</h1><span>Refuerzo académico personalizado</span></div>
+            </header>
+            <div class="pp-meta">
+              <div><b>Estudiante:</b> {{ planMeta.student }}</div>
+              <div><b>Grado:</b> {{ planMeta.grade }}</div>
+              <div><b>Asignatura:</b> {{ planMeta.subject }}</div>
+              <div><b>Período:</b> {{ planMeta.period }}</div>
+            </div>
+            <div class="plan-text" [innerHTML]="safePlanContent"></div>
+            <footer class="pp-foot">Generado el {{ planMeta.date }} · Notas Trinitario</footer>
+          </article>
         </div>
       </div>
 
