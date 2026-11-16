@@ -2992,18 +2992,27 @@ loadTeacherSubjectsForGradeRange() {
     // seleccionada. Esto le da al modelo contexto pedagógico real (no solo
     // "grado Xº") y mejora MUCHO la calidad del plan cuando es matemáticas
     // vs. ciencias vs. humanidades vs. inglés.
-    const subjectName = (this.selectedSubject || this.teacherSubjectName || '').toLowerCase();
+    const subjectLabel = (this.selectedSubject || this.teacherSubjectName || '').toString().trim();
+    const norm = (t: string) => (t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const subjectName = norm(subjectLabel);
+    const topicsNorm = norm(this.studyPlanTopics || '');
+    const detectArea = (n: string): string =>
+        /(matem|algebra|geometr|calculo|aritmet|estadistic|trigonometr)/.test(n) ? 'Matemáticas' :
+        /(fisica|quimica|biolog)/.test(n)                                  ? 'Ciencias Naturales' :
+        /(ingles|english|language)/.test(n)                                 ? 'Inglés' :
+        /(lengua|literat|espanol|comprension\s*lectora|lectura)/.test(n)  ? 'Lengua y Literatura' :
+        /(social|historia|geograf|civica|filosof)/.test(n)                  ? 'Ciencias Sociales' :
+        /(informat|tecnolog|programac|\btic\b)/.test(n)                         ? 'Tecnología e Informática' :
+        /(artistica|m[uú]sica|pintura|dibujo)/.test(n)                      ? 'Educación Artística' :
+        /(educacion\s*fisica|deporte)/.test(n)                              ? 'Educación Física' :
+        /(religion|etica)/.test(n)                                                    ? 'Formación Integral' :
+                                                                                       '';
+    // Primero la asignatura; si no dice nada (p. ej. "General"), se deduce de los temas.
+    const topicHistory = /(guerra|batalla|independencia|colonia|conquista|revolucion|masacre|bananera|violencia|constituci|republic|imperio|dictadura|esclavitud|descubrimiento|historia|gobierno|presidente|siglo|edad media|prehispanic|indigena|frente nacional|bogotazo|gaitan)/;
     const subjectArea =
-        /(matem|algebra|geometr|calculo|aritmet|estadistic|trigonometr)/.test(subjectName) ? 'Matemáticas' :
-        /(fisica|quimica|biolog)/.test(subjectName)                                  ? 'Ciencias Naturales' :
-        /(ingles|english|language)/.test(subjectName)                                 ? 'Inglés' :
-        /(lengua|literat|español|comprensi[oó]n\s*lectora|lectura)/.test(subjectName)  ? 'Lengua y Literatura' :
-        /(social|historia|geograf|civica|filosof)/.test(subjectName)                  ? 'Ciencias Sociales' :
-        /(informat|tecnolog|programac|tic)/.test(subjectName)                         ? 'Tecnología e Informática' :
-        /(artistica|m[uú]sica|pintura|dibujo)/.test(subjectName)                      ? 'Educación Artística' :
-        /(educacion\s*fisica|deporte)/.test(subjectName)                              ? 'Educación Física' :
-        /(religion|etica)/.test(subjectName)                                          ? 'Formación Integral' :
-                                                                                       'Área académica general';
+        detectArea(subjectName) ||
+        (topicHistory.test(topicsNorm) ? 'Ciencias Sociales' : detectArea(topicsNorm)) ||
+        'Área académica general';
 
     // Nivel de andamiaje pedagógico según el grado. Grados menores requieren
     // instrucciones más concretas y atomizadas; grados mayores, más autonomía.
@@ -3023,6 +3032,20 @@ loadTeacherSubjectsForGradeRange() {
      const prompt = `ROL Y PERSONALIDAD:
 Eres un pedagogo senior con más de 20 años de experiencia diseñando planes de estudio personalizados. Combinas instrucción explicícita, andamiajecognitivo, práctica deliberada y ciencia del aprendizaje (práctica espaciada, retrieval practice, interleaving, dual coding, elaboración, metacognición). Tu tono es cálido, directo y respetuoso con el estudiante. Nunca condescendiente.
 
+CONTEXTO ACADÉMICO (LÉELO ANTES DE ESCRIBIR):
+- Institución: colegio de Cartagena de Indias, Bolívar, COLOMBIA. El plan sigue el currículo colombiano (Estándares Básicos de Competencias y DBA del MEN).
+- Asignatura: ${subjectLabel || 'no especificada'}
+- Área detectada: ${subjectArea}
+- Grado: ${this.selectedGrade}
+
+INTERPRETACIÓN INTELIGENTE DE LOS TEMAS (regla prioritaria):
+Los temas escritos por el docente deben entenderse SIEMPRE dentro de la asignatura y el grado indicados, y con el significado que tienen en Colombia. Antes de escribir, resuelve mentalmente cualquier ambigüedad eligiendo el sentido propio de la asignatura. Ejemplos:
+- En Ciencias Sociales / Historia, "las bananeras" o "el ataque de las bananeras" es la MASACRE DE LAS BANANERAS (Ciénaga, Magdalena, 1928: huelga de trabajadores de la United Fruit Company), NO el fruto banano. Debes explicar contexto, causas, hechos, consecuencias y su importancia histórica.
+- En Ciencias Naturales, "célula" es la unidad biológica; en Matemáticas, "potencia" es la operación de exponentes; en Física, "potencia" es energía por tiempo.
+- Si el tema es un hecho, personaje o proceso histórico o geográfico, desarróllalo como HISTORIA (qué pasó, cuándo, por qué, quiénes, qué consecuencias), nunca como definición de palabras sueltas.
+Si el tema no encaja con la asignatura indicada, prioriza la asignatura y, si hace falta, el sentido más probable para un estudiante colombiano de ${this.selectedGrade}.
+Adapta el vocabulario, la profundidad y los ejemplos al grado ${this.selectedGrade}: ni infantil para grados altos, ni técnico en exceso para grados bajos. Usa ejemplos cercanos a Colombia y a la región Caribe cuando ayuden.
+
 PERFIL DEL PLAN:
 - Área/materia detectada: ${subjectArea}
 - Nombre del estudiante (solo para personalizar, NO usar en datos sensibles): ${studentName}
@@ -3038,7 +3061,7 @@ Este plan debe leerse como un TEXTO CORRIDO de lectura agradable, NO como un man
 REGLAS INQUEBRANTABLES DE FORMATO (incumplir cualquiera = respuesta inválida):
 1. SALIDA = SOLO HTML válido y bien formado. PROHIBIDO: bloques de código (\`\`\`html, \`\`\`), comillas invertidas, markdown, fences, texto fuera de etiquetas HTML.
 2. PROHIBIDO todo contenido audiovisual externo: nada de videos, YouTube, "ver video", "no disponible", "enlace roto", links a plataformas de video. Solo recursos TEXTUALES (libros, guías, apuntes, fichas).
-3. PROHIBIDO fechas concretas o años. NO incluir cronogramas por días, semanas ni horarios. NO usar bloques tipo "Día 1", "Bloque 1", "Sesión 1", "Semana X", "Minuto X", ni divisiones temporales de ningún tipo. El plan es continuo, no calendarizado.
+3. PROHIBIDO fechas concretas o años en cronogramas: NO incluir calendarios de estudio por días, semanas ni horarios. EXCEPCIÓN: en Ciencias Sociales/Historia SÍ debes citar las fechas y años históricos reales de los hechos que se estudian (ej. 1928), porque son contenido, no cronograma. NO usar bloques tipo "Día 1", "Bloque 1", "Sesión 1", "Semana X", "Minuto X", ni divisiones temporales de ningún tipo. El plan es continuo, no calendarizado.
 4. Fórmulas matemáticas SIEMPRE entre signos de dólar, en LaTeX válido y completo: \$...\$ (ej: \$\\frac{a}{b} \\times \\frac{c}{d}\$). Esto incluye integrales (\$\\int_{0}^{2} x^2\\,dx\$), derivadas (\$\\frac{d}{dx}\\left(x^3\\right)=3x^2\$ o \$f'(x)=2x\$), límites (\$\\lim_{x \\to 2}\\frac{x^2-4}{x-2}\$), sumatorias y raíces. NUNCA escribas comandos LaTeX (\\int, \\frac, \\lim…) fuera de los signos de dólar. NUNCA rompas una operación en varias líneas. NUNCA uses \[...\] ni $$...$$.
 5. SI el área es matemáticas o ciencias: TODA fórmula debe ir en \$...\$, inline. SI el área es lengua/inglés/sociales: NO uses notación matemática; usa texto natural entrecomillado si necesitas ejemplos.
 6. El documento DEBE terminar EXACTAMENTE con la línea: PLAN DE ESTUDIO COMPLETO.
@@ -3412,7 +3435,7 @@ if (!response.ok) {
      const payload = {
        studentId: this.selectedStudentForPlan!.id,
        studentName: `${this.selectedStudentForPlan!.surname} ${this.selectedStudentForPlan!.name}`,
-       subjectName: '',
+       subjectName: this.selectedSubject || this.teacherSubjectName || '',
        period: this.selectedPeriod!,
        topics: this.studyPlanTopics || '',
        planContent: this.studyPlanContent || '',
