@@ -728,6 +728,30 @@ gradesData: { [studentId: number]: { [noteIndex: number]: number | null } } = {}
     if (this.gradesLoaded) this.saveAllNFinal();
   }
 
+  /** Recalcula AL INSTANTE la nota final de un estudiante en pantalla (sin esperar al servidor). */
+  private recalcFinalLocal(studentId: number) {
+    if (!this.weightsReady || this.pctOver) return;
+    const p80 = this.get80PercentValue(studentId);
+    const p20 = this.get20PercentValue(studentId);
+    const finalGrade = (p80 !== null || p20 !== null) ? (p80 ?? 0) + (p20 ?? 0) : null;
+    if (!this.gradesData[studentId]) {
+      this.gradesData[studentId] = { 1: null, 2: null, 3: null, 4: null, 5: null, 6: null, 7: null, 8: null, 9: null, 10: null, 11: null };
+    }
+    this.gradesData[studentId][11] = finalGrade;
+    this.cdr.markForCheck();
+  }
+
+  private nFinalTimers: { [studentId: number]: any } = {};
+  /** Pantalla: instantáneo. Servidor: se guarda con una pequeña espera para no saturar. */
+  private onGradeEdited(studentId: number) {
+    this.recalcFinalLocal(studentId);
+    if (this.nFinalTimers[studentId]) clearTimeout(this.nFinalTimers[studentId]);
+    this.nFinalTimers[studentId] = setTimeout(() => {
+      delete this.nFinalTimers[studentId];
+      this.saveNFinal(studentId);
+    }, 500);
+  }
+
   private saveAllNFinal() {
     for (const student of this.students) {
       this.saveNFinal(student.id);
@@ -862,6 +886,7 @@ gradesData: { [studentId: number]: { [noteIndex: number]: number | null } } = {}
   }
 
   private onPctsChanged(recalculate = true) {
+    if (recalculate) for (const st of this.students) this.recalcFinalLocal(st.id);
     this.cdr.markForCheck();
     // Guardado con pequeña espera para no golpear el servidor en cada tecla.
     if (this.saveConfigTimer) clearTimeout(this.saveConfigTimer);
@@ -1070,6 +1095,7 @@ gradesData: { [studentId: number]: { [noteIndex: number]: number | null } } = {}
 
     if (!this.dynamicGradeValues[studentId]) this.dynamicGradeValues[studentId] = {};
     this.dynamicGradeValues[studentId] = { ...this.dynamicGradeValues[studentId], [column.id]: clamped };
+    this.recalcFinalLocal(studentId);
 
     this.saveDynamicGrade(studentId, column, clamped);
   }
@@ -1831,6 +1857,7 @@ loadTeacherSubjectsForGradeRange() {
        this.gradesData[studentId][noteIndex] = null;
        // Save as null to clear the grade in database
        this.saveGrade(studentId, noteIndex, null);
+       this.onGradeEdited(studentId);
        return;
      }
 
@@ -1864,6 +1891,7 @@ loadTeacherSubjectsForGradeRange() {
 
 // Auto-save to database on typing
       this.saveGrade(studentId, noteIndex, numValue);
+      this.onGradeEdited(studentId);
     }
 
    // Handle click to save
@@ -1901,6 +1929,7 @@ loadTeacherSubjectsForGradeRange() {
        this.gradesData[studentId][noteIndex] = numValue;
        input.value = numValue.toString().replace('.', ',');
        this.saveGrade(studentId, noteIndex, numValue);
+       this.onGradeEdited(studentId);
      }
    }
 
@@ -2128,6 +2157,7 @@ loadTeacherSubjectsForGradeRange() {
 
   saveNFinal(studentId: number) {
     if (!this.weightsReady || this.pctOver) return;
+    this.recalcFinalLocal(studentId);
     const p80 = this.get80PercentValue(studentId);
     const p20 = this.get20PercentValue(studentId);
 
