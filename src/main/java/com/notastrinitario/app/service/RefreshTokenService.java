@@ -7,8 +7,12 @@ import com.notastrinitario.app.security.JwtUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class RefreshTokenService {
@@ -31,6 +35,24 @@ public class RefreshTokenService {
     @Transactional
     public RefreshToken createRefreshToken(User user, String deviceInfo, String ipAddress) {
         refreshTokenRepository.deleteAllExpired(LocalDateTime.now());
+
+        // Una sola sesión por usuario + IP + dispositivo: si ya hay una igual (el mismo equipo
+        // volviendo a iniciar sesión) se reemplaza en vez de acumular filas en "Sesiones activas".
+        // De paso se limpian los duplicados viejos que ya hubiera, dejando el más reciente.
+        List<RefreshToken> toDelete = new ArrayList<>();
+        Set<String> seen = new HashSet<>();
+        for (RefreshToken rt : refreshTokenRepository.findByUserIdOrderByLastUsedAtDesc(user.getId())) {
+            boolean sameAsNew = Objects.equals(rt.getIpAddress(), ipAddress)
+                    && Objects.equals(rt.getDeviceInfo(), deviceInfo);
+            String key = rt.getIpAddress() + "|" + rt.getDeviceInfo();
+            if (sameAsNew || !seen.add(key)) {
+                toDelete.add(rt);
+            }
+        }
+        if (!toDelete.isEmpty()) {
+            refreshTokenRepository.deleteAll(toDelete);
+            refreshTokenRepository.flush();
+        }
 
         RefreshToken refreshToken = new RefreshToken();
         refreshToken.setUser(user);

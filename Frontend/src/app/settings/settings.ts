@@ -558,6 +558,15 @@ export class Settings implements OnInit, OnDestroy {
   }
 
   /** "13 nov 2026, 10:00 p. m." (en español; antes la plantilla usaba el pipe date, que no estaba importado y rompía la lista). */
+  /** Ícono según el tipo de dispositivo que detectó el servidor (PC / Android / iOS). */
+  sessionIcon(device: string | null | undefined): string {
+    const d = device || '';
+    if (d.includes('iPad')) return 'tablet_mac';
+    if (d.startsWith('Android') || d.startsWith('iOS')) return 'smartphone';
+    if (d.startsWith('PC')) return 'computer';
+    return 'devices';
+  }
+
   formatSessionDate(iso: string | null | undefined): string {
     if (!iso) return 'sin datos';
     try {

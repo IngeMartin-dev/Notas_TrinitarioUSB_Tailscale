@@ -77,22 +77,26 @@ public class AuthController {
         }
     }
 
-    /** Arma un texto legible de dispositivo a partir del User-Agent, para
-     *  mostrarlo en "Sesiones Activas" (ej: "Chrome en Windows"). */
+    /** Arma un texto legible de dispositivo a partir del User-Agent, para mostrarlo en
+     *  "Sesiones Activas": tipo (PC / Android / iOS), sistema y navegador. Ej.:
+     *  "PC (Windows) · Chrome", "Android · Chrome", "iOS (iPhone) · Safari". */
     private String describeDevice(HttpServletRequest request) {
         String ua = request.getHeader("User-Agent");
         if (ua == null || ua.isBlank()) return "Dispositivo desconocido";
         // El sistema se revisa en este orden a propósito: el User-Agent de un iPhone dice
-        // "like Mac OS X" y el de Android dice "Linux"; con el orden anterior un iPhone
-        // aparecía como "macOS" y un Xiaomi como "Linux".
-        String os = "Desconocido";
-        if (ua.contains("iPhone")) os = "iPhone";
-        else if (ua.contains("iPad")) os = "iPad";
-        else if (ua.contains("Android")) os = "Android";
-        else if (ua.contains("Windows")) os = "Windows";
-        else if (ua.contains("CrOS")) os = "ChromeOS";
-        else if (ua.contains("Mac OS")) os = "macOS";
-        else if (ua.contains("Linux")) os = "Linux";
+        // "like Mac OS X" y el de Android dice "Linux"; con otro orden un iPhone
+        // aparecía como "macOS" y un Xiaomi como "Linux". (iPadOS 13+ se identifica como Mac,
+        // pero el navegador de iPad móvil igual manda "iPad" en la mayoría de los casos.)
+        String tipo;
+        if (ua.contains("iPhone")) tipo = "iOS (iPhone)";
+        else if (ua.contains("iPad")) tipo = "iOS (iPad)";
+        else if (ua.contains("iPod")) tipo = "iOS (iPod)";
+        else if (ua.contains("Android")) tipo = "Android";
+        else if (ua.contains("Windows")) tipo = "PC (Windows)";
+        else if (ua.contains("CrOS")) tipo = "PC (ChromeOS)";
+        else if (ua.contains("Mac OS")) tipo = "PC (macOS)";
+        else if (ua.contains("Linux") || ua.contains("X11")) tipo = "PC (Linux)";
+        else tipo = "Dispositivo desconocido";
         // Los navegadores basados en Chrome también dicen "Chrome/" y "Safari/": se revisan primero.
         String browser = "Navegador";
         if (ua.contains("EdgA/") || ua.contains("EdgiOS/") || ua.contains("Edg/")) browser = "Edge";
@@ -102,7 +106,7 @@ public class AuthController {
         else if (ua.contains("FxiOS/") || ua.contains("Firefox/")) browser = "Firefox";
         else if (ua.contains("CriOS/") || ua.contains("Chrome/")) browser = "Chrome";
         else if (ua.contains("Safari/")) browser = "Safari";
-        return browser + " en " + os;
+        return tipo + " · " + browser;
     }
 
     private String clientIp(HttpServletRequest request) {

@@ -270,7 +270,7 @@
           <ul class="sessions-list">
             @for (session of activeSessions(); track session.id) {
               <li class="session-item" [class.session-current]="session.current">
-                <span class="material-icons session-icon">devices</span>
+                <span class="material-icons session-icon">{{ sessionIcon(session.device) }}</span>
                 <div class="session-info">
                   <strong>{{ session.device }}</strong>
                   @if (session.current) {
