@@ -1,3 +1,4 @@
+import { APP_BUILD } from '../app-build';
 import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
@@ -19,6 +20,7 @@ import { RefundContentComponent } from '../legal/refund-content/refund-content';
   styleUrl: './settings.css',
 })
 export class Settings implements OnInit, OnDestroy {
+  readonly appBuild = APP_BUILD;
   private authService = inject(AuthService);
   private http = inject(HttpClient);
   private router = inject(Router);

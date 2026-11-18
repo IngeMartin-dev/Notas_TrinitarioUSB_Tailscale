@@ -100,7 +100,17 @@ export class PwaService {
 
     swUpdate.versionUpdates
       .pipe(filter((e): e is VersionReadyEvent => e.type === 'VERSION_READY'))
-      .subscribe(() => this.updateReady.set(true));
+      .subscribe(() => {
+        // Al abrir la app (primeros segundos, antes de que se estén digitando notas) o con la
+        // app en segundo plano, la versión nueva se aplica sola: así la PWA instalada nunca se
+        // queda con una versión vieja por no tocar el aviso. Si ya se está usando, solo se avisa.
+        const justOpened = (typeof performance !== 'undefined' ? performance.now() : 0) < 30000;
+        if (justOpened || document.visibilityState === 'hidden') {
+          this.applyUpdate();
+        } else {
+          this.updateReady.set(true);
+        }
+      });
 
     // Si el service worker queda en un estado irrecuperable (caché corrupta),
     // lo único seguro es recargar para traer todo de nuevo.
