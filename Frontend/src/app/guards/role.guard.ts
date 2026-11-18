@@ -34,7 +34,13 @@ export function roleGuard(allowedRoles: string[]): CanActivateFn {
       try {
         user = await firstValueFrom(authService.getCurrentUser());
       } catch {
-        return router.createUrlTree(['/login']);
+        // Si el servidor rechazó la sesión, el interceptor ya la cerró (borró el token) -> al login.
+        // Cualquier otro fallo (sin red, servidor reiniciándose, 5xx) NO es una sesión
+        // inválida: se deja entrar y la pantalla reintenta, en vez de mandar al login.
+        if (!authService.isAuthenticated()) {
+          return router.createUrlTree(['/login']);
+        }
+        return true;
       }
     }
 

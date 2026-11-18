@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { guestGuard } from './guards/guest.guard';
 import { roleGuard, ADMIN_ONLY, TEACHER_OR_DIRECTOR, DIRECTOR_OR_ADMIN, GRADES_VISIBLE_TO, BOLETINES_VISIBLE_TO, ANY_KNOWN_ROLE, PARENT_ONLY } from './guards/role.guard';
 
 export const routes: Routes = [
@@ -9,6 +10,7 @@ export const routes: Routes = [
   },
   {
     path: 'login',
+    canActivate: [guestGuard],
     loadComponent: () => import('./login/login').then(m => m.Login)
   },
   {
