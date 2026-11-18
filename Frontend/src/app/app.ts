@@ -168,9 +168,41 @@ export class App implements OnInit, OnDestroy {
     this.greetingLetters.set(greeting.split(''));
   }
 
+  // ── Cierre de sesión remoto en tiempo real ──────────────────────────────
+  // Si desde "Sesiones activas" (en otro equipo) se cierra la sesión de ESTE dispositivo, el
+  // servidor rechaza su token; aquí se sondea cada pocos segundos para enterarse al instante
+  // (y al volver a la pestaña/app). El interceptor ya se encarga del resto: intenta renovar,
+  // el servidor la rechaza, y se cierra la sesión y se pasa al login automáticamente.
+  private sessionWatchTimer: any = null;
+  private sessionCheckBusy = false;
+  private readonly onSessionWake = () => {
+    if (document.visibilityState === 'visible') this.checkSessionAlive();
+  };
+
+  private startSessionWatch() {
+    if (this.sessionWatchTimer || typeof window === 'undefined') return;
+    this.sessionWatchTimer = setInterval(() => {
+      if (document.visibilityState === 'visible') this.checkSessionAlive();
+    }, 3000);
+    document.addEventListener('visibilitychange', this.onSessionWake);
+    window.addEventListener('focus', this.onSessionWake);
+  }
+
+  private checkSessionAlive() {
+    if (this.sessionCheckBusy || !this.authService.isAuthenticated()) return;
+    this.sessionCheckBusy = true;
+    // GET sin efectos: si la sesión fue cerrada, el interceptor la cierra aquí mismo.
+    this.http.get('http://localhost:8080/api/auth/me').subscribe({
+      next: () => { this.sessionCheckBusy = false; },
+      error: () => { this.sessionCheckBusy = false; },
+      complete: () => { this.sessionCheckBusy = false; }
+    });
+  }
+
   ngOnInit() {
     // Generate greeting on init
     this.generateGreeting();
+    this.startSessionWatch();
     
     // Con sesión guardada se muestra YA el menú con el último usuario conocido
     // (mientras llega /me), así la barra lateral no depende de que esa única
@@ -529,6 +561,9 @@ export class App implements OnInit, OnDestroy {
 
   // Lifecycle hooks
   ngOnDestroy() {
+    if (this.sessionWatchTimer) { clearInterval(this.sessionWatchTimer); this.sessionWatchTimer = null; }
+    document.removeEventListener('visibilitychange', this.onSessionWake);
+    window.removeEventListener('focus', this.onSessionWake);
     this.realtimeService.stopPolling();
     this.generationService.stopPolling();
     if (this.unreadChatPollHandle) clearInterval(this.unreadChatPollHandle);

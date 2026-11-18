@@ -24,7 +24,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final RefreshTokenService refreshTokenService;
 
     /** Cuánto se recuerda si una sesión sigue activa (evita consultar la base en cada petición). */
-    private static final long SESSION_CACHE_MS = 10_000L;
+    private static final long SESSION_CACHE_MS = 2_000L;
     private final java.util.concurrent.ConcurrentHashMap<Long, long[]> sessionCache =
             new java.util.concurrent.ConcurrentHashMap<>();
 
@@ -48,7 +48,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return "/api/auth/refresh".equals(path) || "/api/auth/logout".equals(path);
     }
 
-    /** true si la sesión con este id sigue existiendo (con un recuerdo de 10 s). */
+    /** true si la sesión con este id sigue existiendo (con un recuerdo de 2 s). */
     private boolean sessionActive(long sessionId) {
         long now = System.currentTimeMillis();
         long[] hit = sessionCache.get(sessionId);
