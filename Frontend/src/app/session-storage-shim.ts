@@ -12,8 +12,6 @@
  * El resto del código sigue usando localStorage.getItem/setItem/removeItem tal cual: este módulo
  * debe importarse ANTES que cualquier otro en main.ts.
  */
-import { logAuth } from './session-debug';
-
 const SESSION_KEYS = new Set(['token', 'refreshToken', 'role', 'currentUser', 'userName']);
 
 const hasStorage = typeof window !== 'undefined' && typeof Storage !== 'undefined';
@@ -76,16 +74,8 @@ export function adoptAlternateSession(): { token: string; refreshToken: string }
     if (!proto || !rawGet || !rawSet || !rawRemove || !S() || !L()) return;
     const local = L();
 
-    logAuth('arranque', {
-      ruta: location.pathname,
-      pestanaTieneSesion: !!rg(S(), 'token'),
-      guardadaTieneSesion: !!rg(local, 'token'),
-      guardadaTieneRefresh: !!rg(local, 'refreshToken'),
-      modoApp: window.matchMedia?.('(display-mode: standalone)').matches ? 'instalada' : 'navegador'
-    });
     // Pestaña nueva (sin sesión propia): hereda la última sesión usada.
     if (!rg(S(), 'token') && rg(local, 'token')) {
-      logAuth('hereda la sesion guardada');
       SESSION_KEYS.forEach((k) => {
         const v = rg(local, k);
         if (v !== null) rs(S(), k, v);

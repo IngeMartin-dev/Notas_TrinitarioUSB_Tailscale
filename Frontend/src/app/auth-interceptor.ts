@@ -4,7 +4,6 @@ import { catchError, switchMap, throwError, of, Observable, EMPTY, defer, map, f
 import { AuthService } from './services/auth.service';
 import { ConnectionService } from './services/connection.service';
 import { adoptAlternateSession } from './session-storage-shim';
-import { logAuth } from './session-debug';
 
 interface RenewResult { token: string | null; rejected: boolean; error?: any; }
 let renewal$: Observable<RenewResult> | null = null;
@@ -64,7 +63,6 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
           return handleConnectionError(error);
         }
         if (error.status === 401 && !req.url.includes('/auth/login') && !req.url.includes('/auth/refresh')) {
-          logAuth('401 en', req.url.replace(/https?:\/\/[^/]+/, '').slice(0, 60));
           // Otra pestaña con la MISMA cuenta pudo renovar la sesión (el servidor invalida el
           // refresh token anterior): se toma esa sesión vigente en vez de cerrar esta pestaña.
           const alt = adoptAlternateSession();
@@ -75,7 +73,6 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
           // resultado (antes la segunda petición veía "renovación en curso" y cerraba la sesión).
           return renewSession(authService).pipe(
             switchMap((r) => {
-              logAuth('renovacion', { ok: !!r.token, rechazada: r.rejected, status: r.error?.status });
               if (r.token) {
                 return next(req.clone({ setHeaders: { Authorization: `Bearer ${r.token}` } }));
               }

@@ -4,8 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { NotificationService } from '../services/notification.service';
-import { APP_BUILD } from '../app-build';
-import { readAuthLog } from '../session-debug';
 
 @Component({
   selector: 'app-login',
@@ -25,16 +23,6 @@ export class Login {
   isFadingOut = signal(false);
   passwordVisible = signal(false);
   currentYear = new Date().getFullYear();
-  readonly appBuild = APP_BUILD;
-  showDiag = signal(false);
-  diagLog = signal('');
-  toggleDiag() {
-    this.diagLog.set(readAuthLog() || '(sin registros todavía)');
-    this.showDiag.set(!this.showDiag());
-  }
-  copyDiag() {
-    try { navigator.clipboard?.writeText(`Compilación ${APP_BUILD}\n${this.diagLog()}`); } catch { /* manual */ }
-  }
   private minLoadingTime = 1500; // Minimum spinner display time in ms
   private loadingStartTime = 0;
 

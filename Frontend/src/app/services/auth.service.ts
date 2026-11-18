@@ -1,4 +1,3 @@
-import { logAuth, callerStack } from '../session-debug';
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError, BehaviorSubject } from 'rxjs';
@@ -99,7 +98,6 @@ export class AuthService {
   }
 
   logout(): void {
-    logAuth('LOGOUT', callerStack());
     // Cierra también la sesión en el servidor. Antes solo se borraban los datos del
     // navegador: la sesión seguía viva en la base y "Sesiones activas" se llenaba de
     // dispositivos que ya no estaban conectados. Es "dispara y olvida": si no hay red,
