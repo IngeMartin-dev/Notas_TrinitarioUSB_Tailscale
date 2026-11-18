@@ -1,12 +1,37 @@
 import { HttpInterceptorFn, HttpErrorResponse, HttpEvent } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { catchError, switchMap, throwError, of, Observable, EMPTY } from 'rxjs';
+import { catchError, switchMap, throwError, of, Observable, EMPTY, defer, map, finalize, shareReplay } from 'rxjs';
 import { AuthService } from './services/auth.service';
 import { ConnectionService } from './services/connection.service';
 import { adoptAlternateSession } from './session-storage-shim';
 
-let isRefreshing = false;
-let refreshTokenSubject: any = null;
+interface RenewResult { token: string | null; rejected: boolean; error?: any; }
+let renewal$: Observable<RenewResult> | null = null;
+
+/** Renueva la sesión una sola vez aunque varias peticiones fallen al mismo tiempo. */
+function renewSession(authService: AuthService): Observable<RenewResult> {
+  if (!renewal$) {
+    renewal$ = defer(() => authService.refreshToken()).pipe(
+      map((res: any): RenewResult => {
+        if (res && res.token) {
+          localStorage.setItem('token', res.token);
+          if (res.refreshToken) localStorage.setItem('refreshToken', res.refreshToken);
+          return { token: res.token, rejected: false };
+        }
+        return { token: null, rejected: true };
+      }),
+      catchError((err: any) => {
+        const st = err?.status;
+        // Sin status (p. ej. no hay refresh token) o 400/401/403 = rechazo definitivo.
+        const rejected = st === undefined || st === 400 || st === 401 || st === 403;
+        return of<RenewResult>({ token: null, rejected, error: err });
+      }),
+      finalize(() => { renewal$ = null; }),
+      shareReplay(1)
+    );
+  }
+  return renewal$;
+}
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
@@ -44,56 +69,26 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
           if (alt && alt.token !== token) {
             return next(req.clone({ setHeaders: { Authorization: `Bearer ${alt.token}` } }));
           }
-          if (!isRefreshing) {
-            isRefreshing = true;
-            refreshTokenSubject = of(null);
-            
-            return authService.refreshToken().pipe(
-              switchMap((refreshResponse: any) => {
-                isRefreshing = false;
-                if (refreshResponse.token) {
-                  localStorage.setItem('token', refreshResponse.token);
-                  localStorage.setItem('refreshToken', refreshResponse.refreshToken);
-                  refreshTokenSubject = of(refreshResponse.token);
-                  const retryReq = req.clone({
-                    setHeaders: {
-                      Authorization: `Bearer ${refreshResponse.token}`
-                    }
-                  });
-                  return next(retryReq);
-                }
+          // Todas las peticiones que fallen a la vez comparten UNA sola renovación y esperan su
+          // resultado (antes la segunda petición veía "renovación en curso" y cerraba la sesión).
+          return renewSession(authService).pipe(
+            switchMap((r) => {
+              if (r.token) {
+                return next(req.clone({ setHeaders: { Authorization: `Bearer ${r.token}` } }));
+              }
+              const alt2 = adoptAlternateSession();
+              if (alt2) {
+                return next(req.clone({ setHeaders: { Authorization: `Bearer ${alt2.token}` } }));
+              }
+              // La sesión solo se cierra si el servidor RECHAZA el refresh token. Un fallo pasajero
+              // (servidor reiniciándose, 502/503/504, timeout) conserva la sesión guardada.
+              if (r.rejected) {
                 authService.logout();
                 window.location.href = '/login';
-                return throwError(() => error);
-              }),
-              catchError((refreshError) => {
-                isRefreshing = false;
-                const alt2 = adoptAlternateSession();
-                if (alt2) {
-                  return next(req.clone({ setHeaders: { Authorization: `Bearer ${alt2.token}` } }));
-                }
-                authService.logout();
-                window.location.href = '/login';
-                return throwError(() => refreshError);
-              })
-            );
-          } else {
-            return refreshTokenSubject.pipe(
-              switchMap((newToken: string) => {
-                if (newToken) {
-                  const retryReq = req.clone({
-                    setHeaders: {
-                      Authorization: `Bearer ${newToken}`
-                    }
-                  });
-                  return next(retryReq);
-                }
-                authService.logout();
-                window.location.href = '/login';
-                return throwError(() => error);
-              })
-            );
-          }
+              }
+              return throwError(() => r.error || error);
+            })
+          );
         }
         return throwError(() => error);
       })

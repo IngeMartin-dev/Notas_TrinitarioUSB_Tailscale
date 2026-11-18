@@ -35,7 +35,7 @@ public class RefreshTokenService {
         RefreshToken refreshToken = new RefreshToken();
         refreshToken.setUser(user);
         refreshToken.setToken(jwtUtil.generateRefreshToken(user.getId().toString()));
-        refreshToken.setExpiresAt(LocalDateTime.now().plusDays(30));
+        refreshToken.setExpiresAt(LocalDateTime.now().plusDays(365));
         refreshToken.setDeviceInfo(deviceInfo);
         refreshToken.setIpAddress(ipAddress);
         refreshToken.setLastUsedAt(LocalDateTime.now());
@@ -127,7 +127,7 @@ public class RefreshTokenService {
         RefreshToken newToken = new RefreshToken();
         newToken.setUser(user);
         newToken.setToken(jwtUtil.generateRefreshToken(user.getId().toString()));
-        newToken.setExpiresAt(LocalDateTime.now().plusDays(30));
+        newToken.setExpiresAt(LocalDateTime.now().plusDays(365));
         newToken.setDeviceInfo(deviceInfo != null ? deviceInfo : oldToken.getDeviceInfo());
         newToken.setIpAddress(ipAddress != null ? ipAddress : oldToken.getIpAddress());
         newToken.setLastUsedAt(LocalDateTime.now());

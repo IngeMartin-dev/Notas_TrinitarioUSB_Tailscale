@@ -23,7 +23,7 @@ public class AppProperties {
         // el antiguo valor filtrado, y la aplicación no arrancará si falta.
         private String secret;
         private long expiration = 604800000;
-        private long refreshExpiration = 2592000000L;
+        private long refreshExpiration = 31536000000L; // 365 días: la sesión dura hasta que el usuario cierre sesión
 
         public String getSecret() { return secret; }
         public void setSecret(String secret) { this.secret = secret; }
