@@ -121,6 +121,14 @@
 
           <div class="footer-text">
             <p>&copy; {{ currentYear }} Notas Trinitario</p>
+            <p style="margin-top:6px;font-size:11px;opacity:.7">
+              Compilación {{ appBuild }} ·
+              <a href="javascript:void(0)" (click)="toggleDiag()" style="color:inherit;text-decoration:underline">Diagnóstico de sesión</a>
+            </p>
+            @if (showDiag()) {
+              <textarea readonly rows="8" style="width:100%;margin-top:8px;font-size:11px;font-family:monospace" [value]="diagLog()"></textarea>
+              <button type="button" class="secondary-link-btn" (click)="copyDiag()">Copiar diagnóstico</button>
+            }
           </div>
         </div>
       </div>

@@ -1,3 +1,4 @@
+import { logAuth } from '../session-debug';
 import { CanActivateFn, Router } from '@angular/router';
 import { inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
@@ -21,6 +22,7 @@ export function roleGuard(allowedRoles: string[]): CanActivateFn {
 
     // Sin sesión: al login (en vez de rebotar entre rutas protegidas).
     if (!authService.isAuthenticated()) {
+      logAuth('guard: sin token, va al login desde', state.url);
       return router.createUrlTree(['/login']);
     }
 
