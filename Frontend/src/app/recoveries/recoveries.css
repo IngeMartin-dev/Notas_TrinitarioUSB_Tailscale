@@ -1311,6 +1311,9 @@ details[open] > summary {
 
 @media (max-width: 768px) {
   .recoveries-container { padding: var(--sp-4); }
+  .grades-sidebar { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .grades-row { width: max-content; min-width: 100%; justify-content: flex-start; }
+  .grade-section { flex: 0 0 auto; }
   .modal-footer {
     flex-direction: column-reverse;
   }

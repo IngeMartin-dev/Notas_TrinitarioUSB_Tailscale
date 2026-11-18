@@ -14,7 +14,7 @@
       <span style="color: #2c3e50; font-size: 1.1rem; font-weight: 600;">Verificando materias asignadas...</span>
     </div>
   } @else {
-    <div class="grades-sidebar">
+    <div class="grades-sidebar" #gradeSelector>
       @if (teacherGradeRange) {
         <div class="grade-range-indicator">
           Grados {{ teacherGradeRange.min }}° - {{ teacherGradeRange.max }}°

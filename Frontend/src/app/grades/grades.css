@@ -1169,6 +1169,19 @@
   .grade-section h3 { font-size: .8rem; }
   .classroom-btn { padding: 8px 12px; font-size: .75rem; }
   .right-content { padding: 12px; }
+  /* La planilla de ingreso ocupa todo el ancho del teléfono; se conservan
+     márgenes cómodos en el encabezado y en los controles de selección. */
+  .right-content .grades-list {
+    width: calc(100% + 48px);
+    margin-left: -24px;
+    margin-right: -24px;
+  }
+  .grades-list .report-header,
+  .grades-list .table-container {
+    border-left: 0;
+    border-right: 0;
+    border-radius: 0;
+  }
   .table-container { border: 1px solid var(--border); margin-top: 0; overflow-x: auto; border-radius: 0 0 var(--r-md) var(--r-md); }
   .grades-table { font-size: .65rem; min-width: 820px; }
   .grades-table th { font-size: .6rem; padding: 2px; }
@@ -1192,6 +1205,13 @@
   .grade-section { min-width: 80px; }
   .classroom-btn { padding: 6px 10px; font-size: .7rem; }
   .grades-table { font-size: .6rem; min-width: 720px; }
+}
+
+/* En móvil, comenzar desde el primer grado y permitir recorrer todos los grados. */
+@media (max-width: 768px) {
+  .grades-sidebar { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .grades-row { width: max-content; min-width: 100%; justify-content: flex-start; }
+  .grade-section { flex: 0 0 auto; }
 }
 
 /* Enfoque accesible y estados hover sutiles */

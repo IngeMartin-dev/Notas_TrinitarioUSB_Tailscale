@@ -53,7 +53,8 @@ import { apiUrl } from '../config/api-base';
   styleUrl: './grades.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class Grades implements OnInit {
+export class Grades implements OnInit, AfterViewInit {
+  @ViewChild('gradeSelector') gradeSelector?: ElementRef<HTMLElement>;
   allGrades: string[] = ['Grado 1º', 'Grado 2º', 'Grado 3º', 'Grado 4º', 'Grado 5º', 'Grado 6º', 'Grado 7º', 'Grado 8º', 'Grado 9º', 'Grado 10º', 'Grado 11º'];
   grades: string[] = [...this.allGrades];
   classrooms: string[] = ['Salon A', 'Salon B'];
@@ -1424,6 +1425,7 @@ loadTeacherSubjectsForGradeRange() {
     if (!animate) {
       this.grades = newGrades;
       this.cdr.markForCheck();
+      this.resetGradeSelectorScroll();
       return;
     }
 
@@ -1438,12 +1440,24 @@ loadTeacherSubjectsForGradeRange() {
       this.isFadingOut = false;
       this.isFadingIn = true;
       this.cdr.markForCheck();
+      this.resetGradeSelectorScroll();
 
       setTimeout(() => {
         this.isFadingIn = false;
         this.cdr.markForCheck();
       }, 300);
     }, 300);
+  }
+
+  private resetGradeSelectorScroll() {
+    setTimeout(() => {
+      const selector = this.gradeSelector?.nativeElement;
+      if (selector && window.matchMedia('(max-width: 768px)').matches) selector.scrollLeft = 0;
+    });
+  }
+
+  ngAfterViewInit() {
+    this.resetGradeSelectorScroll();
   }
 
   private stringArraysEqual(a: string[], b: string[]): boolean {
@@ -1855,9 +1869,9 @@ loadTeacherSubjectsForGradeRange() {
      if (value === '' || value === '-' || value === ',' || value === '.') {
        if (!this.gradesData[studentId]) this.gradesData[studentId] = {};
        this.gradesData[studentId][noteIndex] = null;
+       this.gradesData[studentId][11] = null;
        // Save as null to clear the grade in database
        this.saveGrade(studentId, noteIndex, null);
-       this.onGradeEdited(studentId);
        return;
      }
 
@@ -1885,13 +1899,15 @@ loadTeacherSubjectsForGradeRange() {
 
      if (!this.gradesData[studentId]) this.gradesData[studentId] = {};
      this.gradesData[studentId][noteIndex] = numValue;
+     // Descarta el nFinal guardado anterior para que la vista calcule el nuevo
+     // resultado con el valor recién digitado, sin esperar al blur ni al servidor.
+     this.gradesData[studentId][11] = null;
 
      // Update display value to show clamped value
      input.value = numValue.toString();
 
 // Auto-save to database on typing
       this.saveGrade(studentId, noteIndex, numValue);
-      this.onGradeEdited(studentId);
     }
 
    // Handle click to save

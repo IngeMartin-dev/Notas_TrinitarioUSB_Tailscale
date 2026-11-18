@@ -61,6 +61,7 @@ interface StudentWithRecovery {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Recoveries implements OnInit, AfterViewInit {
+  @ViewChild('gradeSelector') gradeSelector?: ElementRef<HTMLElement>;
   allGrades: string[] = ['Grado 1º', 'Grado 2º', 'Grado 3º', 'Grado 4º', 'Grado 5º', 'Grado 6º', 'Grado 7º', 'Grado 8º', 'Grado 9º', 'Grado 10º', 'Grado 11º'];
   grades: string[] = [...this.allGrades];
   classrooms: string[] = ['Salon A', 'Salon B'];
@@ -340,6 +341,7 @@ hasTeacherGradeRange: boolean | null = null; // null = checking, false = no subj
     if (!animate) {
       this.grades = newGrades;
       this.cdr.markForCheck();
+      this.resetGradeSelectorScroll();
       return;
     }
 
@@ -354,12 +356,20 @@ hasTeacherGradeRange: boolean | null = null; // null = checking, false = no subj
       this.isFadingOut = false;
       this.isFadingIn = true;
       this.cdr.markForCheck();
+      this.resetGradeSelectorScroll();
 
       setTimeout(() => {
         this.isFadingIn = false;
         this.cdr.markForCheck();
       }, 300);
     }, 300);
+  }
+
+  private resetGradeSelectorScroll() {
+    setTimeout(() => {
+      const selector = this.gradeSelector?.nativeElement;
+      if (selector && window.matchMedia('(max-width: 768px)').matches) selector.scrollLeft = 0;
+    });
   }
 
   private stringArraysEqual(a: string[], b: string[]): boolean {
@@ -425,7 +435,9 @@ hasTeacherGradeRange: boolean | null = null; // null = checking, false = no subj
     }
   }
 
-  ngAfterViewInit() {}
+  ngAfterViewInit() {
+    this.resetGradeSelectorScroll();
+  }
 
   loadUnlockedPeriods() {
     this.http.get<any[]>('http://localhost:8080/api/periods').subscribe({
