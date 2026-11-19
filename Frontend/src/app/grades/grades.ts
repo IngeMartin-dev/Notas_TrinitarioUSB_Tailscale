@@ -191,7 +191,7 @@ gradesData: { [studentId: number]: { [noteIndex: number]: number | null } } = {}
   planSaved: boolean = false;
 
   // Track generated recovery plans for students
-  generatedPlans: { [studentId: number]: { [period: number]: boolean } } = {};
+  generatedPlans: { [studentId: number]: { [key: string]: boolean } } = {};
 
   // ----- Cola de guardado para no perder notas al cambiar de salón/período o recargar -----
   private gradeSaveQueue = new Map<string, { studentId: number; noteIndex: number; value: number | null }>();
@@ -501,7 +501,7 @@ gradesData: { [studentId: number]: { [noteIndex: number]: number | null } } = {}
             if (!this.generatedPlans[studentId]) {
               this.generatedPlans[studentId] = {};
             }
-            this.generatedPlans[studentId][period] = true;
+            this.generatedPlans[studentId][this.planKey(period, plan.subjectName)] = true;
           }
         }
         this.cdr.markForCheck();
@@ -514,7 +514,18 @@ gradesData: { [studentId: number]: { [noteIndex: number]: number | null } } = {}
 
   // Check if a student has a generated recovery plan
   hasRecoveryPlan(studentId: number, period: number): boolean {
-    return this.generatedPlans[studentId]?.[period] === true;
+    const plans = this.generatedPlans[studentId];
+    if (!plans) return false;
+    // El plan es de UNA materia: el botón solo aparece en la materia donde se generó.
+    if (plans[this.planKey(period, this.selectedSubject || this.teacherSubjectName)] === true) return true;
+    // Planes viejos guardados sin materia: solo cuentan donde el estudiante está perdiendo.
+    return plans[this.planKey(period, '')] === true && this.needsRecovery(studentId);
+  }
+
+  /** Clave de un plan: período + materia (sin tildes ni mayúsculas). */
+  private planKey(period: number, subject: string | null | undefined): string {
+    const sub = (subject || '').toString().trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    return `${period}|${sub}`;
   }
 
  async selectGrade(grade: string, classroom: string) {
@@ -2585,7 +2596,10 @@ loadTeacherSubjectsForGradeRange() {
     this.http.get<any[]>(`http://localhost:8080/api/grades/study-plans/${studentId}${this.teacherIdQuery()}`).subscribe({
       next: (plans) => {
         // Find the plan for the current period
-        const plan = plans.find((p: any) => p.period === period);
+        const curKey = this.planKey(period, this.selectedSubject || this.teacherSubjectName);
+        const plan = plans.find((p: any) => this.planKey(p.period, p.subjectName) === curKey)
+          // planes viejos sin materia: se abren solo si el estudiante está perdiendo esta materia
+          || (this.needsRecovery(studentId) ? plans.find((p: any) => this.planKey(p.period, p.subjectName) === this.planKey(period, '')) : undefined);
         if (plan) {
           this.studyPlanTopics = plan.topics || '';
           let content = plan.planContent || '';
@@ -2607,7 +2621,7 @@ loadTeacherSubjectsForGradeRange() {
           if (!this.generatedPlans[studentId]) {
             this.generatedPlans[studentId] = {};
           }
-          this.generatedPlans[studentId][period] = true;
+          this.generatedPlans[studentId][this.planKey(period, plan.subjectName || this.selectedSubject || this.teacherSubjectName)] = true;
           this.cdr.markForCheck();
         }
       },
@@ -3499,7 +3513,7 @@ if (!response.ok) {
           if (!this.generatedPlans[studentId]) {
             this.generatedPlans[studentId] = {};
           }
-          this.generatedPlans[studentId][period] = true;
+          this.generatedPlans[studentId][this.planKey(period, this.selectedSubject || this.teacherSubjectName)] = true;
         }
         // Mark as saved
         this.planSaved = true;

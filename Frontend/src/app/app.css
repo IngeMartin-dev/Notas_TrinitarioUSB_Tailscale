@@ -1177,3 +1177,8 @@ input:checked + .slider:before {
 @media (max-width: 768px), (pointer: coarse) and (max-height: 500px) {
   .pwa-update-toast { bottom: 84px; }
 }
+
+/* Celular horizontal: menos relleno (sin barra inferior) para aprovechar el poco alto disponible. */
+@media (pointer: coarse) and (max-height: 500px) {
+  .content-wrapper { padding: 10px 14px; }
+}

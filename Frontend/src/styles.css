@@ -606,3 +606,9 @@ body {
     display: none !important;
   }
 }
+
+/* Celular horizontal: sin barra inferior (queda el botón de las tres rayitas) y, con una conversación abierta, sin barra superior (como WhatsApp). */
+@media (pointer: coarse) and (max-height: 500px) {
+  .mobile-nav { display: none !important; }
+  html:has(.chats-page.chat-open) .top-bar { display: none !important; }
+}
