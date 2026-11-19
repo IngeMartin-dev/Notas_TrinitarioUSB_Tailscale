@@ -1553,3 +1553,9 @@ details[open] > summary {
   .fullscreen-modal-content:has(.rp-desk) .modal-footer .print-btn,
   .fullscreen-modal-content:has(.rp-desk) .modal-footer .close-modal-btn { width: auto; padding: 8px 16px; }
 }
+
+/* Celular horizontal: el plan se abre a pantalla completa, de arriba a abajo (la barra superior se oculta). */
+@media (pointer: coarse) and (max-height: 500px) {
+  .fullscreen-modal-overlay:has(.rp-desk) { padding-top: 0; }
+  .fullscreen-modal-content:has(.rp-desk) { height: 100vh; height: 100dvh; max-height: none; }
+}

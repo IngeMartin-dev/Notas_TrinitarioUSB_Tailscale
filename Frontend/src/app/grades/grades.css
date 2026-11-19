@@ -1695,3 +1695,9 @@
   .spm-footer { flex-direction: row; justify-content: flex-end; padding: 6px 10px; gap: 8px; }
   .spm-btn { width: auto; padding: 8px 16px; }
 }
+
+/* Celular horizontal: el modal del plan ocupa TODA la pantalla (la barra superior se oculta mientras está abierto). */
+@media (pointer: coarse) and (max-height: 500px) {
+  .fullscreen-modal-overlay:has(> .spm) { padding-top: 0; }
+  .fullscreen-modal-content.spm { height: 100vh; height: 100dvh; }
+}

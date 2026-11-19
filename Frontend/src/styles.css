@@ -596,3 +596,13 @@ body {
   overflow-x: hidden;
   overflow-x: clip;
 }
+
+/* Celular horizontal: el plan de estudio se abre a pantalla completa, por encima de la barra superior. */
+@media (pointer: coarse) and (max-height: 500px) {
+  html:has(.fullscreen-modal-content.spm) .top-bar,
+  html:has(.rp-desk) .top-bar,
+  html:has(.fullscreen-modal-content.spm) .mobile-nav,
+  html:has(.rp-desk) .mobile-nav {
+    display: none !important;
+  }
+}
