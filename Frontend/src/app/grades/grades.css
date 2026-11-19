@@ -1646,7 +1646,7 @@
 .spm-btn-ghost { color: var(--text-1); background: transparent; border-color: var(--border-strong, var(--border)); }
 .spm-btn-ghost:hover { background: var(--surface); }
 
-@media (max-width: 640px) {
+@media (max-width: 640px), (pointer: coarse) and (max-height: 500px) {
   .spm-header { padding: 14px 16px; }
   .spm-body { padding: 14px; }
   .spm-student { flex-wrap: wrap; }
@@ -1673,11 +1673,25 @@
 
 
 /* Celular: el modal del plan usa toda la pantalla y la hoja (escalada) aprovecha el ancho. */
-@media (max-width: 640px) {
+@media (max-width: 640px), (pointer: coarse) and (max-height: 500px) {
   /* Debajo de la barra superior de la app (que queda por encima del modal): así se ve la cabecera y el botón de cerrar. */
   .fullscreen-modal-overlay:has(> .spm) { align-items: flex-end; padding-top: var(--topbar-h, 64px); }
   .fullscreen-modal-content.spm { width: 100%; height: calc(100vh - var(--topbar-h, 64px)); height: calc(100dvh - var(--topbar-h, 64px)); max-height: none; border-radius: 0; border: 0; }
   .spm-header { border-radius: 0; }
   .spm-body { padding: 10px 8px; }
   .plan-content-fullscreen { padding: 10px 6px; border-radius: 10px; }
+}
+
+/* Celular horizontal (pantalla baja): menos marcos para que la hoja del plan ocupe la pantalla. */
+@media (pointer: coarse) and (max-height: 500px) {
+  .spm-header { padding: 6px 14px; gap: 10px; }
+  .spm-header-icon { width: 30px; height: 30px; font-size: 1rem; }
+  .spm-header-text h2 { font-size: 1rem; }
+  .spm-header-text span { display: none; }
+  .spm-close { width: 30px; height: 30px; }
+  .spm-body { padding: 8px; gap: 8px; }
+  .spm-body:has(.plan-content-fullscreen) .spm-student { display: none; }
+  .spm-body > .plan-content-fullscreen { flex: none; overflow: visible; max-width: none; }
+  .spm-footer { flex-direction: row; justify-content: flex-end; padding: 6px 10px; gap: 8px; }
+  .spm-btn { width: auto; padding: 8px 16px; }
 }

@@ -1535,7 +1535,7 @@ details[open] > summary {
 .fullscreen-modal-overlay:has(.rp-desk) { padding-top: var(--topbar-h, 64px); box-sizing: border-box; }
 .fullscreen-modal-content:has(.rp-desk) { height: calc(100dvh - var(--topbar-h, 64px) - 16px); max-height: calc(100dvh - var(--topbar-h, 64px) - 16px); }
 :host-context([data-theme="dark"]) .rp-desk { background: #0f172a; border-color: #1e293b; }
-@media (max-width: 640px) {
+@media (max-width: 640px), (pointer: coarse) and (max-height: 500px) {
   .modal-body-fullscreen { padding: 10px 8px; }
   .rp-desk { padding: 10px 6px; border-radius: 10px; }
   .fullscreen-modal-overlay:has(.rp-desk) { align-items: flex-end; }
@@ -1543,3 +1543,13 @@ details[open] > summary {
   .fullscreen-modal-content:has(.rp-desk) .modal-header { border-radius: 0; }
 }
 .fullscreen-modal-content:has(.rp-desk) .modal-header h2 { color: #fff !important; background: transparent !important; -webkit-text-fill-color: #fff; text-shadow: none; }
+
+/* Celular horizontal (pantalla baja): cabecera y pie compactos para ver más del plan. */
+@media (pointer: coarse) and (max-height: 500px) {
+  .fullscreen-modal-content:has(.rp-desk) .modal-header { padding: 6px 14px; }
+  .fullscreen-modal-content:has(.rp-desk) .modal-header h2 { font-size: 1rem; }
+  .fullscreen-modal-content:has(.rp-desk) .close-btn { width: 30px; height: 30px; }
+  .fullscreen-modal-content:has(.rp-desk) .modal-footer { flex-direction: row; padding: 6px 10px; }
+  .fullscreen-modal-content:has(.rp-desk) .modal-footer .print-btn,
+  .fullscreen-modal-content:has(.rp-desk) .modal-footer .close-modal-btn { width: auto; padding: 8px 16px; }
+}

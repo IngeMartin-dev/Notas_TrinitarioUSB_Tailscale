@@ -203,6 +203,8 @@ export class App implements OnInit, OnDestroy {
     // Generate greeting on init
     this.generateGreeting();
     this.startSessionWatch();
+    [300, 1200, 3000].forEach(ms => setTimeout(() => this.updateTopbarHeight(), ms));
+    this.router.events.subscribe(e => { if (e instanceof NavigationEnd) setTimeout(() => this.updateTopbarHeight(), 120); });
     window.addEventListener('orientationchange', this.onViewportChange);
     window.addEventListener('resize', this.onViewportChange);
     
@@ -303,9 +305,18 @@ export class App implements OnInit, OnDestroy {
 
   /** Al girar el celular (o cambiar el tamaño) se cierra el menú lateral si había quedado abierto,
    *  para que no aparezca la barra lateral sobre la pantalla: solo el botón de las tres rayitas. */
+  /** Altura real de la barra superior -> variable CSS que usan los modales a pantalla completa
+   *  para quedar justo debajo de ella (en horizontal/vertical la barra mide distinto). */
+  private updateTopbarHeight() {
+    const el = document.querySelector('.top-bar') as HTMLElement | null;
+    const h = el ? Math.round(el.getBoundingClientRect().height) : 0;
+    if (h > 0) document.documentElement.style.setProperty('--topbar-h', h + 'px');
+  }
+
   private lastViewportWidth = typeof window !== 'undefined' ? window.innerWidth : 0;
   private readonly onViewportChange = () => {
     // Solo si cambió el ANCHO (giro): el resize por ocultarse la barra de direcciones no cuenta.
+    setTimeout(() => this.updateTopbarHeight(), 150);
     const w = window.innerWidth;
     if (w === this.lastViewportWidth) return;
     this.lastViewportWidth = w;

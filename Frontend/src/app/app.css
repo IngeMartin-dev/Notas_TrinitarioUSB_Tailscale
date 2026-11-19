@@ -957,7 +957,7 @@ input:checked + .slider:before {
   max-width: 100%;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 768px), (pointer: coarse) and (max-height: 500px) {
   .sidebar,
   .sidebar.sidebar-animated {
     width: min(280px, 86vw) !important;
@@ -1064,7 +1064,7 @@ input:checked + .slider:before {
   to { opacity: 1; }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 768px), (pointer: coarse) and (max-height: 500px) {
   .sidebar,
   .sidebar.sidebar-animated {
     animation: none;
@@ -1174,6 +1174,6 @@ input:checked + .slider:before {
 .pwa-update-close .material-icons { font-size: 18px; color: inherit; }
 
 /* Por encima de la barra de navegación inferior en móvil */
-@media (max-width: 768px) {
+@media (max-width: 768px), (pointer: coarse) and (max-height: 500px) {
   .pwa-update-toast { bottom: 84px; }
 }
