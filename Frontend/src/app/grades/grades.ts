@@ -3137,6 +3137,7 @@ REGLAS INQUEBRANTABLES DE FORMATO (incumplir cualquiera = respuesta inválida):
    - Para una DERIVADA, grafica en la misma figura la función y su derivada (data-fn="x^3-3*x;3*x^2-3").
    - data-caption: una frase corta que diga qué muestra la gráfica.
    - La función de la gráfica DEBE ser la misma que explicas en el texto. NO inventes gráficas decorativas. Si el tema no es graficable (lengua, sociales, inglés, etc.), NO incluyas ninguna.
+11. SI te ponen mas de un tema pues has es taller muchisimo mas largo para que puedan estar todos los temas y al final un taller con preguntas respectivamente a los temas mencionados 
 
 ESTRUCTURA OBLIGATORIA (encabezados <h2> en este orden EXACTO, sin saltarse ninguno, sin agregar secciones extra):
 
