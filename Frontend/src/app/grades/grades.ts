@@ -808,6 +808,7 @@ gradesData: { [studentId: number]: { [noteIndex: number]: number | null } } = {}
   onActLabelInput(n: number, event: Event) {
     // Sin llaves, comillas ni barras: el servidor lee este texto con una expresión regular.
     const value = (event.target as HTMLInputElement).value.replace(/[{}"\\]/g, '').slice(0, 14);
+    this.actLabelDraft[n] = value;
     this.actLabels[n - 1] = value.trim() === `${this.actName}${n}` ? '' : value;
     this.onPctsChanged(false);
   }
@@ -845,8 +846,15 @@ gradesData: { [studentId: number]: { [noteIndex: number]: number | null } } = {}
     this.onPctsChanged();
   }
 
+  /** Lo que se está escribiendo en cada casilla de nombre (se muestra tal cual, aunque quede vacío,
+   *  hasta que se sale de la casilla; así no se vuelve a poner el nombre anterior mientras se borra). */
+  actNameDraft: string | null = null;
+  actLabelDraft: { [n: number]: string } = {};
+  catNameDraft: { [id: string]: string } = {};
+
   onActNameInput(event: Event) {
-    const name = (event.target as HTMLInputElement).value.trim();
+    this.actNameDraft = (event.target as HTMLInputElement).value;
+    const name = this.actNameDraft.trim();
     if (!name) return; // no se permite dejarlo vacío
     this.actName = name;
     this.onPctsChanged(false);
@@ -854,7 +862,12 @@ gradesData: { [studentId: number]: { [noteIndex: number]: number | null } } = {}
 
   onActNameBlur(event: Event) {
     const input = event.target as HTMLInputElement;
+    this.actNameDraft = null;
     if (!input.value.trim()) input.value = this.actName;
+  }
+  onActLabelBlur(n: number, event: Event) {
+    delete this.actLabelDraft[n];
+    (event.target as HTMLInputElement).value = this.actHeader(n);
   }
 
   onEvalPctInput(event: Event) {
@@ -886,7 +899,8 @@ gradesData: { [studentId: number]: { [noteIndex: number]: number | null } } = {}
   }
 
   onCategoryNameInput(cat: PctCategory, event: Event) {
-    const name = (event.target as HTMLInputElement).value.trim();
+    this.catNameDraft[cat.id] = (event.target as HTMLInputElement).value;
+    const name = this.catNameDraft[cat.id].trim();
     if (!name) return;
     this.categories = this.categories.map(c => c.id === cat.id ? { ...c, name } : c);
     this.onPctsChanged(false);
@@ -894,6 +908,7 @@ gradesData: { [studentId: number]: { [noteIndex: number]: number | null } } = {}
 
   onCategoryNameBlur(cat: PctCategory, event: Event) {
     const input = event.target as HTMLInputElement;
+    delete this.catNameDraft[cat.id];
     if (!input.value.trim()) input.value = cat.name;
   }
 

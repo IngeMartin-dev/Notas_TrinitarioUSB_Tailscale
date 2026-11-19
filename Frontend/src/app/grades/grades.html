@@ -117,7 +117,7 @@
 
                     <div class="pct-rows">
                       <div class="pct-row-item">
-                        <input type="text" class="pct-name-input" name="act-name" [value]="actName" (input)="onActNameInput($event)" (blur)="onActNameBlur($event)" maxlength="12" autocomplete="off" aria-label="Nombre del grupo" />
+                        <input type="text" class="pct-name-input" name="act-name" [value]="actNameDraft ?? actName" (input)="onActNameInput($event)" (blur)="onActNameBlur($event)" maxlength="12" autocomplete="off" aria-label="Nombre del grupo" />
                         <input type="text" inputmode="numeric" class="pct-input" name="act-pct" [value]="actPct ?? ''" (input)="onActPctInput($event)" placeholder="%" maxlength="3" autocomplete="off" aria-label="Porcentaje del grupo" />
                         <span class="pct-row-note">todas las {{ actName }} juntas</span>
                       </div>
@@ -128,7 +128,7 @@
                       </div>
                       @for (cat of categories; track cat.id) {
                         <div class="pct-row-item">
-                          <input type="text" class="pct-name-input" [name]="'name-' + cat.id" [value]="cat.name" (input)="onCategoryNameInput(cat, $event)" (blur)="onCategoryNameBlur(cat, $event)" maxlength="20" autocomplete="off" [attr.aria-label]="'Nombre ' + cat.name" />
+                          <input type="text" class="pct-name-input" [name]="'name-' + cat.id" [value]="catNameDraft[cat.id] ?? cat.name" (input)="onCategoryNameInput(cat, $event)" (blur)="onCategoryNameBlur(cat, $event)" maxlength="20" autocomplete="off" [attr.aria-label]="'Nombre ' + cat.name" />
                           <input type="text" inputmode="numeric" class="pct-input" [name]="'pct-' + cat.id" [value]="cat.pct ?? ''" (input)="onCategoryPctInput(cat, $event)" placeholder="%" maxlength="3" autocomplete="off" [attr.aria-label]="'Porcentaje ' + cat.name" />
                           <button type="button" class="pct-remove" (click)="removeCategory(cat)" title="Quitar">×</button>
                         </div>
@@ -139,7 +139,7 @@
                       <summary>Nombre de cada columna ({{ actName }}1 a {{ actName }}7)</summary>
                       <div class="pct-labels-grid">
                         @for (n of [1,2,3,4,5,6,7]; track n) {
-                          <input type="text" class="pct-name-input" [name]="'act-label-' + n" [value]="actHeader(n)" (input)="onActLabelInput(n, $event)" maxlength="14" autocomplete="off" [attr.aria-label]="'Nombre de la columna ' + n" />
+                          <input type="text" class="pct-name-input" [name]="'act-label-' + n" [value]="actLabelDraft[n] ?? actHeader(n)" (input)="onActLabelInput(n, $event)" (blur)="onActLabelBlur(n, $event)" maxlength="14" autocomplete="off" [attr.aria-label]="'Nombre de la columna ' + n" />
                         }
                       </div>
                       <p class="pct-hint">Solo cambia lo que se ve en el encabezado; por dentro siguen siendo {{ actName }}1 a {{ actName }}7 y los porcentajes no cambian.</p>
