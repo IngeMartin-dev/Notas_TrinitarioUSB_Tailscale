@@ -233,52 +233,52 @@
                       <td class="student-cell">{{ student.surname }} {{ student.name }}</td>
 
                       <td class="note-cell" [class]="getGradeColor(getGrade(student.id, 1))">
-                        <input type="text" class="grade-input" [id]="'grade-input-' + student.id + '-1'" [name]="'grade-' + student.id + '-1'" [value]="getGradeDisplay(student.id, 1)" (input)="onGradeChange(student.id, 1, $event)" (click)="onGradeClick(student.id, 1, $event)" (blur)="onGradeBlur(student.id, 1, $event)" (focus)="onCellFocus(student.id, 1)" (keydown)="handleKeydown($event)" placeholder="-" maxlength="4" autocomplete="off" aria-labelledby="th-act1" />
+                        <input type="text" inputmode="decimal" class="grade-input" [id]="'grade-input-' + student.id + '-1'" [name]="'grade-' + student.id + '-1'" [value]="getGradeDisplay(student.id, 1)" (input)="onGradeChange(student.id, 1, $event)" (click)="onGradeClick(student.id, 1, $event)" (blur)="onGradeBlur(student.id, 1, $event)" (focus)="onCellFocus(student.id, 1)" (keydown)="handleKeydown($event)" placeholder="-" maxlength="4" autocomplete="off" aria-labelledby="th-act1" />
                       </td>
 
                       <td class="note-cell" [class]="getGradeColor(getGrade(student.id, 2))">
-                        <input type="text" class="grade-input" [id]="'grade-input-' + student.id + '-2'" [name]="'grade-' + student.id + '-2'" [value]="getGradeDisplay(student.id, 2)" (input)="onGradeChange(student.id, 2, $event)" (click)="onGradeClick(student.id, 2, $event)" (blur)="onGradeBlur(student.id, 2, $event)" (focus)="onCellFocus(student.id, 2)" (keydown)="handleKeydown($event)" placeholder="-" maxlength="4" autocomplete="off" aria-labelledby="th-act2" />
+                        <input type="text" inputmode="decimal" class="grade-input" [id]="'grade-input-' + student.id + '-2'" [name]="'grade-' + student.id + '-2'" [value]="getGradeDisplay(student.id, 2)" (input)="onGradeChange(student.id, 2, $event)" (click)="onGradeClick(student.id, 2, $event)" (blur)="onGradeBlur(student.id, 2, $event)" (focus)="onCellFocus(student.id, 2)" (keydown)="handleKeydown($event)" placeholder="-" maxlength="4" autocomplete="off" aria-labelledby="th-act2" />
                       </td>
 
                       <td class="note-cell" [class]="getGradeColor(getGrade(student.id, 3))">
-                        <input type="text" class="grade-input" [id]="'grade-input-' + student.id + '-3'" [name]="'grade-' + student.id + '-3'" [value]="getGradeDisplay(student.id, 3)" (input)="onGradeChange(student.id, 3, $event)" (click)="onGradeClick(student.id, 3, $event)" (blur)="onGradeBlur(student.id, 3, $event)" (focus)="onCellFocus(student.id, 3)" (keydown)="handleKeydown($event)" placeholder="-" maxlength="4" autocomplete="off" aria-labelledby="th-act3" />
+                        <input type="text" inputmode="decimal" class="grade-input" [id]="'grade-input-' + student.id + '-3'" [name]="'grade-' + student.id + '-3'" [value]="getGradeDisplay(student.id, 3)" (input)="onGradeChange(student.id, 3, $event)" (click)="onGradeClick(student.id, 3, $event)" (blur)="onGradeBlur(student.id, 3, $event)" (focus)="onCellFocus(student.id, 3)" (keydown)="handleKeydown($event)" placeholder="-" maxlength="4" autocomplete="off" aria-labelledby="th-act3" />
                       </td>
 
                       <td class="note-cell" [class]="getGradeColor(getGrade(student.id, 4))">
-                        <input type="text" class="grade-input" [id]="'grade-input-' + student.id + '-4'" [name]="'grade-' + student.id + '-4'" [value]="getGradeDisplay(student.id, 4)" (input)="onGradeChange(student.id, 4, $event)" (click)="onGradeClick(student.id, 4, $event)" (blur)="onGradeBlur(student.id, 4, $event)" (focus)="onCellFocus(student.id, 4)" (keydown)="handleKeydown($event)" placeholder="-" maxlength="4" autocomplete="off" aria-labelledby="th-act4" />
+                        <input type="text" inputmode="decimal" class="grade-input" [id]="'grade-input-' + student.id + '-4'" [name]="'grade-' + student.id + '-4'" [value]="getGradeDisplay(student.id, 4)" (input)="onGradeChange(student.id, 4, $event)" (click)="onGradeClick(student.id, 4, $event)" (blur)="onGradeBlur(student.id, 4, $event)" (focus)="onCellFocus(student.id, 4)" (keydown)="handleKeydown($event)" placeholder="-" maxlength="4" autocomplete="off" aria-labelledby="th-act4" />
                       </td>
 
                       <td class="note-cell" [class]="getGradeColor(getGrade(student.id, 5))">
-                        <input type="text" class="grade-input" [id]="'grade-input-' + student.id + '-5'" [name]="'grade-' + student.id + '-5'" [value]="getGradeDisplay(student.id, 5)" (input)="onGradeChange(student.id, 5, $event)" (click)="onGradeClick(student.id, 5, $event)" (blur)="onGradeBlur(student.id, 5, $event)" (focus)="onCellFocus(student.id, 5)" (keydown)="handleKeydown($event)" placeholder="-" maxlength="4" autocomplete="off" aria-labelledby="th-act5" />
+                        <input type="text" inputmode="decimal" class="grade-input" [id]="'grade-input-' + student.id + '-5'" [name]="'grade-' + student.id + '-5'" [value]="getGradeDisplay(student.id, 5)" (input)="onGradeChange(student.id, 5, $event)" (click)="onGradeClick(student.id, 5, $event)" (blur)="onGradeBlur(student.id, 5, $event)" (focus)="onCellFocus(student.id, 5)" (keydown)="handleKeydown($event)" placeholder="-" maxlength="4" autocomplete="off" aria-labelledby="th-act5" />
                       </td>
 
                       <td class="note-cell" [class]="getGradeColor(getGrade(student.id, 6))">
-                        <input type="text" class="grade-input" [id]="'grade-input-' + student.id + '-6'" [name]="'grade-' + student.id + '-6'" [value]="getGradeDisplay(student.id, 6)" (input)="onGradeChange(student.id, 6, $event)" (click)="onGradeClick(student.id, 6, $event)" (blur)="onGradeBlur(student.id, 6, $event)" (focus)="onCellFocus(student.id, 6)" (keydown)="handleKeydown($event)" placeholder="-" maxlength="4" autocomplete="off" aria-labelledby="th-act6" />
+                        <input type="text" inputmode="decimal" class="grade-input" [id]="'grade-input-' + student.id + '-6'" [name]="'grade-' + student.id + '-6'" [value]="getGradeDisplay(student.id, 6)" (input)="onGradeChange(student.id, 6, $event)" (click)="onGradeClick(student.id, 6, $event)" (blur)="onGradeBlur(student.id, 6, $event)" (focus)="onCellFocus(student.id, 6)" (keydown)="handleKeydown($event)" placeholder="-" maxlength="4" autocomplete="off" aria-labelledby="th-act6" />
                       </td>
 
                       <td class="note-cell" [class]="getGradeColor(getGrade(student.id, 7))">
-                        <input type="text" class="grade-input" [id]="'grade-input-' + student.id + '-7'" [name]="'grade-' + student.id + '-7'" [value]="getGradeDisplay(student.id, 7)" (input)="onGradeChange(student.id, 7, $event)" (click)="onGradeClick(student.id, 7, $event)" (blur)="onGradeBlur(student.id, 7, $event)" (focus)="onCellFocus(student.id, 7)" (keydown)="handleKeydown($event)" placeholder="-" maxlength="4" autocomplete="off" aria-labelledby="th-act7" />
+                        <input type="text" inputmode="decimal" class="grade-input" [id]="'grade-input-' + student.id + '-7'" [name]="'grade-' + student.id + '-7'" [value]="getGradeDisplay(student.id, 7)" (input)="onGradeChange(student.id, 7, $event)" (click)="onGradeClick(student.id, 7, $event)" (blur)="onGradeBlur(student.id, 7, $event)" (focus)="onCellFocus(student.id, 7)" (keydown)="handleKeydown($event)" placeholder="-" maxlength="4" autocomplete="off" aria-labelledby="th-act7" />
                       </td>
 
                       @for (col of gradeColumns; track col.id) {
                         <td class="note-cell" [class]="getGradeColor(getDynamicGradeValue(student.id, col.id))">
-                          <input type="text" class="grade-input" [name]="'dyn-' + student.id + '-' + col.id" [value]="getDynamicGradeDisplay(student.id, col.id)" (input)="onDynamicGradeInput(student.id, col, $event)" placeholder="-" maxlength="4" autocomplete="off" [attr.aria-label]="colHeader(col)" />
+                          <input type="text" inputmode="decimal" class="grade-input" [name]="'dyn-' + student.id + '-' + col.id" [value]="getDynamicGradeDisplay(student.id, col.id)" (input)="onDynamicGradeInput(student.id, col, $event)" placeholder="-" maxlength="4" autocomplete="off" [attr.aria-label]="colHeader(col)" />
                         </td>
                       }
                       @if (isTeacher()) { <td class="plus-cell"></td> }
 
                       <td class="note-cell" [class]="getGradeColor(getGrade(student.id, 9))">
-                        <input type="text" class="grade-input" [id]="'grade-input-' + student.id + '-9'" [name]="'grade-' + student.id + '-9'" [value]="getGradeDisplay(student.id, 9)" (input)="onGradeChange(student.id, 9, $event)" (click)="onGradeClick(student.id, 9, $event)" (blur)="onGradeBlur(student.id, 9, $event)" (focus)="onCellFocus(student.id, 9)" (keydown)="handleKeydown($event)" placeholder="-" maxlength="4" autocomplete="off" aria-labelledby="th-auto-eval" />
+                        <input type="text" inputmode="decimal" class="grade-input" [id]="'grade-input-' + student.id + '-9'" [name]="'grade-' + student.id + '-9'" [value]="getGradeDisplay(student.id, 9)" (input)="onGradeChange(student.id, 9, $event)" (click)="onGradeClick(student.id, 9, $event)" (blur)="onGradeBlur(student.id, 9, $event)" (focus)="onCellFocus(student.id, 9)" (keydown)="handleKeydown($event)" placeholder="-" maxlength="4" autocomplete="off" aria-labelledby="th-auto-eval" />
                       </td>
 
                       <td class="note-cell" [class]="getGradeColor(getGrade(student.id, 10))">
-                        <input type="text" class="grade-input" [id]="'grade-input-' + student.id + '-10'" [name]="'grade-' + student.id + '-10'" [value]="getGradeDisplay(student.id, 10)" (input)="onGradeChange(student.id, 10, $event)" (click)="onGradeClick(student.id, 10, $event)" (blur)="onGradeBlur(student.id, 10, $event)" (focus)="onCellFocus(student.id, 10)" (keydown)="handleKeydown($event)" placeholder="-" maxlength="4" autocomplete="off" aria-labelledby="th-prom-parc" />
+                        <input type="text" inputmode="decimal" class="grade-input" [id]="'grade-input-' + student.id + '-10'" [name]="'grade-' + student.id + '-10'" [value]="getGradeDisplay(student.id, 10)" (input)="onGradeChange(student.id, 10, $event)" (click)="onGradeClick(student.id, 10, $event)" (blur)="onGradeBlur(student.id, 10, $event)" (focus)="onCellFocus(student.id, 10)" (keydown)="handleKeydown($event)" placeholder="-" maxlength="4" autocomplete="off" aria-labelledby="th-prom-parc" />
                       </td>
 
                       <td class="calc-cell" [class]="get80Color(student.id)">{{ get80Percent(student.id) }}</td>
 
                       <td class="note-cell" [class]="getGradeColor(getGrade(student.id, 8))">
-                        <input type="text" class="grade-input" [id]="'grade-input-' + student.id + '-8'" [name]="'grade-' + student.id + '-8'" [value]="getGradeDisplay(student.id, 8)" (input)="onGradeChange(student.id, 8, $event)" (click)="onGradeClick(student.id, 8, $event)" (blur)="onGradeBlur(student.id, 8, $event)" (focus)="onCellFocus(student.id, 8)" (keydown)="handleKeydown($event)" placeholder="-" maxlength="4" autocomplete="off" aria-labelledby="th-eval-period" />
+                        <input type="text" inputmode="decimal" class="grade-input" [id]="'grade-input-' + student.id + '-8'" [name]="'grade-' + student.id + '-8'" [value]="getGradeDisplay(student.id, 8)" (input)="onGradeChange(student.id, 8, $event)" (click)="onGradeClick(student.id, 8, $event)" (blur)="onGradeBlur(student.id, 8, $event)" (focus)="onCellFocus(student.id, 8)" (keydown)="handleKeydown($event)" placeholder="-" maxlength="4" autocomplete="off" aria-labelledby="th-eval-period" />
                       </td>
 
                       <td class="calc-cell" [class]="get20Color(student.id)">{{ get20Percent(student.id) }}</td>
@@ -290,21 +290,21 @@
                       </td>
 
                       <td class="recovery-cell comp-social-cell" [class]="getCompSocialColor(student.id)">
-                        <input type="text" class="grade-input" [id]="'recovery-compsocial-' + student.id" [name]="'recovery-compsocial-' + student.id" [value]="getCompSocialDisplay(student.id)" (input)="onCompSocialChange(student.id, $event)" (keydown)="handleKeydown($event)" (focus)="onCellFocus(student.id, 8)" placeholder="-" maxlength="4" autocomplete="off" aria-labelledby="th-compsocial" />
+                        <input type="text" inputmode="decimal" class="grade-input" [id]="'recovery-compsocial-' + student.id" [name]="'recovery-compsocial-' + student.id" [value]="getCompSocialDisplay(student.id)" (input)="onCompSocialChange(student.id, $event)" (keydown)="handleKeydown($event)" (focus)="onCellFocus(student.id, 8)" placeholder="-" maxlength="4" autocomplete="off" aria-labelledby="th-compsocial" />
                         <span class="comp-social-label">{{ getCompSocialScaleLabel(student.id) }}</span>
                       </td>
 
                       <td class="recovery-cell comp-social-cell" [class]="getValoracionAcudienteColor(student.id)">
-                        <input type="text" class="grade-input" [id]="'recovery-acudiente-' + student.id" [name]="'recovery-acudiente-' + student.id" [value]="getValoracionAcudienteDisplay(student.id)" (input)="onValoracionAcudienteChange(student.id, $event)" (keydown)="handleKeydown($event)" (focus)="onCellFocus(student.id, 8)" placeholder="-" maxlength="4" autocomplete="off" aria-labelledby="th-val-acudiente" />
+                        <input type="text" inputmode="decimal" class="grade-input" [id]="'recovery-acudiente-' + student.id" [name]="'recovery-acudiente-' + student.id" [value]="getValoracionAcudienteDisplay(student.id)" (input)="onValoracionAcudienteChange(student.id, $event)" (keydown)="handleKeydown($event)" (focus)="onCellFocus(student.id, 8)" placeholder="-" maxlength="4" autocomplete="off" aria-labelledby="th-val-acudiente" />
                         <span class="comp-social-label">{{ getValoracionAcudienteScaleLabel(student.id) }}</span>
                       </td>
 
                       <td class="note-cell">
-                        <input type="text" class="grade-input" [id]="'recup-escrita-' + student.id" [name]="'recup-escrita-' + student.id" [value]="(getCurrentSubjectRecoveryData(student.id)?.written ?? '').toString().replace('.', ',')" (input)="onRecoveryWrittenChange(student.id, $event)" (keydown)="handleKeydown($event)" (focus)="onCellFocus(student.id, 8)" placeholder="-" maxlength="4" autocomplete="off" aria-labelledby="th-recup-escrita" />
+                        <input type="text" inputmode="decimal" class="grade-input" [id]="'recup-escrita-' + student.id" [name]="'recup-escrita-' + student.id" [value]="(getCurrentSubjectRecoveryData(student.id)?.written ?? '').toString().replace('.', ',')" (input)="onRecoveryWrittenChange(student.id, $event)" (keydown)="handleKeydown($event)" (focus)="onCellFocus(student.id, 8)" placeholder="-" maxlength="4" autocomplete="off" aria-labelledby="th-recup-escrita" />
                       </td>
 
                       <td class="note-cell">
-                        <input type="text" class="grade-input" [id]="'recup-oral-' + student.id" [name]="'recup-oral-' + student.id" [value]="(getCurrentSubjectRecoveryData(student.id)?.oral ?? '').toString().replace('.', ',')" (input)="onRecoveryOralChange(student.id, $event)" (keydown)="handleKeydown($event)" (focus)="onCellFocus(student.id, 8)" placeholder="-" maxlength="4" autocomplete="off" aria-labelledby="th-recup-oral" />
+                        <input type="text" inputmode="decimal" class="grade-input" [id]="'recup-oral-' + student.id" [name]="'recup-oral-' + student.id" [value]="(getCurrentSubjectRecoveryData(student.id)?.oral ?? '').toString().replace('.', ',')" (input)="onRecoveryOralChange(student.id, $event)" (keydown)="handleKeydown($event)" (focus)="onCellFocus(student.id, 8)" placeholder="-" maxlength="4" autocomplete="off" aria-labelledby="th-recup-oral" />
                       </td>
 
                       <td class="calc-cell">{{ getNotaRecup(student.id) }}</td>

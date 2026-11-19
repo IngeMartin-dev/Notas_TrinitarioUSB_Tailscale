@@ -722,7 +722,8 @@ input:checked + .slider:before {
 }
 
 /* Teléfono: sidebar como cajón lateral (oculto) + hamburguesa + nav inferior */
-@media (max-width: 768px) {
+/* Teléfono: vertical (≤768px) y también horizontal (pantalla baja con puntero táctil), siempre con las tres rayitas. */
+@media (max-width: 768px), (pointer: coarse) and (max-height: 500px) {
   .menu-toggle-btn {
     display: inline-flex;
   }

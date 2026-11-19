@@ -203,6 +203,8 @@ export class App implements OnInit, OnDestroy {
     // Generate greeting on init
     this.generateGreeting();
     this.startSessionWatch();
+    window.addEventListener('orientationchange', this.onViewportChange);
+    window.addEventListener('resize', this.onViewportChange);
     
     // Con sesión guardada se muestra YA el menú con el último usuario conocido
     // (mientras llega /me), así la barra lateral no depende de que esa única
@@ -298,6 +300,17 @@ export class App implements OnInit, OnDestroy {
     this.sidebarAnimated.set(true);
     console.log('✅ Sidebar animated set to:', this.sidebarAnimated());
   }
+
+  /** Al girar el celular (o cambiar el tamaño) se cierra el menú lateral si había quedado abierto,
+   *  para que no aparezca la barra lateral sobre la pantalla: solo el botón de las tres rayitas. */
+  private lastViewportWidth = typeof window !== 'undefined' ? window.innerWidth : 0;
+  private readonly onViewportChange = () => {
+    // Solo si cambió el ANCHO (giro): el resize por ocultarse la barra de direcciones no cuenta.
+    const w = window.innerWidth;
+    if (w === this.lastViewportWidth) return;
+    this.lastViewportWidth = w;
+    if (this.sidebarOpen()) this.sidebarOpen.set(false);
+  };
 
   toggleSidebar() {
     this.sidebarOpen.set(!this.sidebarOpen());
@@ -562,6 +575,8 @@ export class App implements OnInit, OnDestroy {
   // Lifecycle hooks
   ngOnDestroy() {
     if (this.sessionWatchTimer) { clearInterval(this.sessionWatchTimer); this.sessionWatchTimer = null; }
+    window.removeEventListener('orientationchange', this.onViewportChange);
+    window.removeEventListener('resize', this.onViewportChange);
     document.removeEventListener('visibilitychange', this.onSessionWake);
     window.removeEventListener('focus', this.onSessionWake);
     this.realtimeService.stopPolling();
