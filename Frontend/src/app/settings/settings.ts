@@ -206,6 +206,7 @@ export class Settings implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    this.stopSessionsPolling();
     // Complete shutdown of notification system
     this.isComponentActive = false;
     this.lockdownNotifications();
@@ -503,26 +504,50 @@ export class Settings implements OnInit, OnDestroy {
   }
 
   // ========== SESIONES ACTIVAS ==========
+  private sessionsPollTimer: any = null;
+
   openActiveSessionsModal() {
     this.showSessionsModal.set(true);
     this.loadActiveSessions();
+    // Tiempo real: mientras el cuadro está abierto, la lista se actualiza sola cuando otro
+    // dispositivo inicia o cierra sesión (sin parpadeo de "Cargando…").
+    this.stopSessionsPolling();
+    this.sessionsPollTimer = setInterval(() => {
+      if (document.visibilityState === 'visible') this.loadActiveSessions(true);
+    }, 3000);
   }
 
   closeActiveSessionsModal() {
     this.showSessionsModal.set(false);
+    this.stopSessionsPolling();
   }
 
-  loadActiveSessions() {
-    this.loadingSessions.set(true);
-    this.sessionsError.set(null);
+  private stopSessionsPolling() {
+    if (this.sessionsPollTimer) {
+      clearInterval(this.sessionsPollTimer);
+      this.sessionsPollTimer = null;
+    }
+  }
+
+  loadActiveSessions(silent = false) {
+    if (silent && (this.revokingSessionId() !== null || this.revokingOthers())) return;
+    if (!silent) {
+      this.loadingSessions.set(true);
+      this.sessionsError.set(null);
+    }
     const myRefreshToken = localStorage.getItem('refreshToken') || '';
     const params = myRefreshToken ? `?currentRefreshToken=${encodeURIComponent(myRefreshToken)}` : '';
     this.http.get<any[]>(`${this.authService.API_BASE_URL}/auth/sessions${params}`).subscribe({
       next: (sessions) => {
-        this.activeSessions.set(sessions || []);
+        const next = sessions || [];
+        // Solo se vuelve a pintar si algo cambió (sesión nueva, cerrada o actividad distinta).
+        if (!silent || JSON.stringify(next) !== JSON.stringify(this.activeSessions())) {
+          this.activeSessions.set(next);
+        }
         this.loadingSessions.set(false);
       },
       error: (err) => {
+        if (silent) return;
         console.error('Error loading active sessions:', err);
         this.sessionsError.set('No se pudieron cargar las sesiones activas. Intenta de nuevo.');
         this.loadingSessions.set(false);
