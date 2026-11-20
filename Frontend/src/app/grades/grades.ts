@@ -3181,7 +3181,7 @@ ESTRUCTURA OBLIGATORIA (encabezados <h2> en este orden EXACTO, sin saltarse ning
 7. <h2>PARA PROFUNDIZAR</h2>
    3-5 párrafos cortos sugiriendo lecturas, ejercicios opcionales o ideas para que el estudiante siga avanzando por su cuenta. NO enlaces web ni videos; solo referencias TEXTUALES (capítulos de libros, tipos de problemas para buscar, etc.).
 
-8. <h2>CIERRE MOTIVADOR</h2>
+8. <h2>CIERRE</h2>
    2-3 párrafos cortos, personalizados (usa ${studentName} una vez), con mentalidad de crecimiento. Tono cálido y realista, nada de frases vacías.
 
 11. IMÁGENES (opcional, máximo 2 en todo el documento, solo si realmente ayudan: un lugar, un personaje histórico, un animal, un órgano, un fenómeno natural, una obra, etc.). Pon el marcador EXACTO, vacío y cerrado, dentro de DESARROLLO DEL TEMA o INTRODUCCIÓN:
